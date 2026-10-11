@@ -6,7 +6,7 @@ import Icon from './Icon.astro';
 import SiteFooter from './SiteFooter.astro';
 import SiteHeader from './SiteHeader.astro';
 import { copyFor } from '../i18n';
-import { LOCALE_PATH, RELEASE, SITE, withBase, type Locale } from '../lib/site';
+import { LOCALE_PATH, RELEASE, SITE, localeHref, type Locale } from '../lib/site';
 
 interface Props {
   locale: Locale;
@@ -82,7 +82,7 @@ const d = copy.details;
         <a class="more" href={RELEASE.notesUrl}>{d.links.notes}</a>
         <a class="more" href={SITE.appRepository}>{d.links.source}</a>
         <a class="more" href={SITE.siteRepository}>{d.links.site}</a>
-        <a class="more" href={withBase(LOCALE_PATH[locale])}>{d.back}</a>
+        <a class="more" href={localeHref(locale)}>{d.back}</a>
       </nav>
     </div>
   </main>

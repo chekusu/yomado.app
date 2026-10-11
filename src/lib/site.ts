@@ -36,6 +36,15 @@ export function withBase(path = ''): string {
   return `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}${path.replace(/^\//, '')}`;
 }
 
+/**
+ * Link to a locale's version of a page ('' for home, 'details/'). The bare home page follows the
+ * browser's language, so a link to the English home says ?lang=en: choosing English then sticks
+ * even where storage is off. Canonical and hreflang URLs stay without it.
+ */
+export function localeHref(locale: Locale, route = ''): string {
+  return withBase(LOCALE_PATH[locale] + route) + (locale === 'en' && route === '' ? '?lang=en' : '');
+}
+
 /** Absolute canonical URL on the configured production origin. */
 export function canonical(path = ''): string {
   return new URL(path.replace(/^\//, ''), `${config.siteUrl.replace(/\/?$/, '/')}`).href;

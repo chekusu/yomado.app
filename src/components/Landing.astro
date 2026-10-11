@@ -23,6 +23,7 @@ const copy = copyFor(locale);
   description={copy.meta.description}
   path={LOCALE_PATH[locale]}
   ogAlt={copy.meta.ogAlt}
+  autoLanguage={locale === 'en'}
 >
   <Fragment slot="head">
     <link rel="preload" as="image" href={withBase('media/film-wide-poster.webp')} media="(min-width: 641px)" fetchpriority="high" />

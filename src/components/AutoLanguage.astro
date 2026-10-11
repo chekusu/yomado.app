@@ -1,0 +1,48 @@
+---
+// The bare home page speaks the visitor's language. Rendered only on the English home page and as
+// early in <head> as possible, so a Chinese or Japanese browser moves on before English paints.
+//
+// Order: a valid ?lang= in the address, then a language picked by hand from the menu or footer
+// (stored by src/scripts/page.ts), then the first supported entry of navigator.languages
+// (navigator.language only when that list is empty), then English. Any zh-* is Simplified
+// Chinese. Detection stores nothing. The Chinese and Japanese pages and every details page never
+// redirect, so there is no loop; without JavaScript the English page simply stays.
+import { LANGUAGE_KEY } from '../lib/language';
+import { LOCALE_PATH, withBase } from '../lib/site';
+
+const base = withBase();
+---
+
+<script is:inline define:vars={{ base, paths: LOCALE_PATH, key: LANGUAGE_KEY }}>
+  (function () {
+    var here = location.pathname;
+    if (here !== base && here !== base + 'index.html') return;
+    var known = function (value) {
+      return value && Object.prototype.hasOwnProperty.call(paths, value) ? value : null;
+    };
+    var fromTag = function (tag) {
+      var primary = String(tag || '').toLowerCase().split('-')[0];
+      return primary === 'zh' ? 'zh-cn' : known(primary);
+    };
+    var choice = known((new URLSearchParams(location.search).get('lang') || '').toLowerCase());
+    if (!choice) {
+      try {
+        choice = known(localStorage.getItem(key));
+      } catch (e) {
+        // Storage may be off; the browser's languages still decide.
+      }
+    }
+    if (!choice) {
+      var tags = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
+      for (var i = 0; i < tags.length && !choice; i++) choice = fromTag(tags[i]);
+    }
+    if (!choice || choice === 'en') return;
+    // Keep the English page from flashing while the browser moves on; show it if that stalls.
+    var root = document.documentElement;
+    root.style.visibility = 'hidden';
+    setTimeout(function () {
+      root.style.visibility = '';
+    }, 3000);
+    location.replace(base + paths[choice] + location.search + location.hash);
+  })();
+</script>

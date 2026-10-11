@@ -1,6 +1,6 @@
 ---
 import Brand from './Brand.astro';
-import { LOCALES, LOCALE_NAME, LOCALE_PATH, LOCALE_TAG, RELEASE, withBase, type Locale } from '../lib/site';
+import { LOCALES, LOCALE_NAME, LOCALE_PATH, LOCALE_TAG, RELEASE, localeHref, withBase, type Locale } from '../lib/site';
 import type { Copy } from '../i18n';
 
 interface Props {
@@ -16,7 +16,7 @@ const onDetails = route === 'details/';
 
 <header class="site-header" data-header>
   <div class="bar wrap">
-    <a class="home" href={withBase(LOCALE_PATH[locale])} aria-label={copy.nav.home}>
+    <a class="home" href={localeHref(locale)} aria-label={copy.nav.home}>
       <Brand size={26} />
     </a>
     <nav aria-label={copy.nav.label}>
@@ -35,11 +35,12 @@ const onDetails = route === 'details/';
             LOCALES.map((l) => (
               <li>
                 <a
-                  href={withBase(LOCALE_PATH[l] + route)}
+                  href={localeHref(l, route)}
                   hreflang={LOCALE_TAG[l]}
                   lang={LOCALE_TAG[l]}
                   aria-current={l === locale ? 'page' : undefined}
                   data-lang-switch
+                  data-locale={l}
                 >
                   {LOCALE_NAME[l].full}
                   {l === locale && (

@@ -2,6 +2,7 @@
 // Macs render the system font (SF Pro); Inter stands in elsewhere and only downloads there.
 import '@fontsource-variable/inter/opsz.css';
 import '../styles/global.css';
+import AutoLanguage from '../components/AutoLanguage.astro';
 import { LOCALES, LOCALE_PATH, LOCALE_TAG, OG_LOCALE, RELEASE, SITE, canonical, withBase, type Locale } from '../lib/site';
 
 interface Props {
@@ -16,9 +17,11 @@ interface Props {
   /** The page's path below each locale's root, e.g. '' for home or 'details/'. */
   route?: string;
   noindex?: boolean;
+  /** The English home page sends Chinese and Japanese browsers on to their language. */
+  autoLanguage?: boolean;
 }
 
-const { locale, title, description, path, ogAlt, localized = true, route = '' } = Astro.props;
+const { locale, title, description, path, ogAlt, localized = true, route = '', autoLanguage = false } = Astro.props;
 const noindex = Astro.props.noindex || process.env.SITE_NOINDEX === '1';
 const url = canonical(path);
 const ogImage = canonical(`og/${locale}.png`);
@@ -47,6 +50,7 @@ const structuredData = {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {autoLanguage && <AutoLanguage />}
     <title>{title}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}

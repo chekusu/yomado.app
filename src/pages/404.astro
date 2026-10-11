@@ -2,11 +2,11 @@
 import Base from '../layouts/Base.astro';
 import Brand from '../components/Brand.astro';
 import { copyFor } from '../i18n';
-import { LOCALES, LOCALE_PATH, LOCALE_TAG, RELEASE, withBase } from '../lib/site';
+import { LOCALES, LOCALE_TAG, RELEASE, localeHref, withBase } from '../lib/site';
 
 // One page for every address: English first, then each other language in its own words.
 const en = copyFor('en');
-const others = LOCALES.filter((l) => l !== 'en').map((l) => ({ tag: LOCALE_TAG[l], path: LOCALE_PATH[l], copy: copyFor(l) }));
+const others = LOCALES.filter((l) => l !== 'en').map((l) => ({ tag: LOCALE_TAG[l], href: localeHref(l), copy: copyFor(l) }));
 ---
 
 <Base locale="en" title={en.notFound.meta} description={en.meta.description} path="404/" ogAlt={en.meta.ogAlt} localized={false} noindex>
@@ -16,8 +16,8 @@ const others = LOCALES.filter((l) => l !== 'en').map((l) => ({ tag: LOCALE_TAG[l
     <p class="sub">{en.notFound.text}</p>
     {others.map(({ tag, copy }) => <p class="sub" lang={tag}>{copy.notFound.title} {copy.notFound.text}</p>)}
     <div class="actions">
-      <a class="btn btn-ivory" href={withBase()}>{en.notFound.home}</a>
-      {others.map(({ tag, path, copy }) => <a class="more" href={withBase(path)} lang={tag}>{copy.notFound.home}</a>)}
+      <a class="btn btn-ivory" href={localeHref('en')}>{en.notFound.home}</a>
+      {others.map(({ tag, href, copy }) => <a class="more" href={href} lang={tag}>{copy.notFound.home}</a>)}
       <a class="more" href={RELEASE.url}>{en.hero.cta}</a>
     </div>
   </main>

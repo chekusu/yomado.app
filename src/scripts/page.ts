@@ -1,4 +1,5 @@
 // Small progressive enhancements shared by every page. The pages work without them.
+import { LANGUAGE_KEY } from '../lib/language';
 
 // The header turns to night over night sections.
 const header = document.querySelector<HTMLElement>('[data-header]');
@@ -61,6 +62,13 @@ for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-lang-swit
   link.addEventListener('click', () => {
     const id = decodeURIComponent(location.hash.slice(1));
     link.hash = id && document.getElementById(id) ? location.hash : '';
+    // Remember a language picked by hand for the bare home page. If storage is off the link still
+    // works, and links to the English home carry ?lang=en for exactly that case.
+    try {
+      if (link.dataset.locale) localStorage.setItem(LANGUAGE_KEY, link.dataset.locale);
+    } catch {
+      // Private browsing or blocked storage.
+    }
   });
 }
 
