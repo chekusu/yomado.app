@@ -14,7 +14,14 @@ screen. It is not an agent, a remote desktop or an MCP replacement — it only s
 - English at `/`, Simplified Chinese at `/zh-cn/`, Japanese at `/ja/`; install, checksum and
   requirements at `/details/`, `/zh-cn/details/` and `/ja/details/`
 - A language menu in the header (and a list in the footer) links every page to the same page in
-  the other languages and keeps the section in view; there is no automatic redirect
+  the other languages and keeps the section in view
+- The bare home page (`/`, or the `SITE_BASE` root) follows the browser: a valid `?lang=` first,
+  then a language picked by hand from the menu or footer (remembered in `localStorage`), then the
+  first supported entry of `navigator.languages` (any `zh-*` is Simplified Chinese), then English.
+  It moves with `location.replace`, keeping the query and hash. `/zh-cn/`, `/ja/` and every
+  details page never redirect, detection itself stores nothing, links to the English home carry
+  `?lang=en` so the choice holds without storage, and canonical and `hreflang` URLs carry no query.
+  Without JavaScript the home page stays English and the menu still works
 - Every download button points at the configured GitHub Release archive
 - `sitemap.xml`, `robots.txt`, per-locale Open Graph cards, `hreflang` alternates, structured data
 
@@ -86,6 +93,13 @@ scroll story and the finale, the language menu between every pair of locales on 
 details pages (with the section kept), the details page with checksum copy, the page without
 JavaScript, the header on phones with classic scrollbars, 404, sitemap and robots.txt.
 `SCREENSHOT_DIR=dir npm test` also saves screenshots.
+
+`npm test` then runs `tests/language.mjs` (also `npm run test:language`): first visits with
+Chinese, Japanese, English, mixed (`fr, ja, en`; `en, ja`) and unsupported browser languages,
+`navigator.language` only when the list is empty, `?lang=` (valid and not), query and hash kept,
+a remembered choice, the other languages' pages and details deep links left alone, English
+surviving a reload with storage blocked, and the page without JavaScript. Each case runs in its
+own browser context with the languages replaced by an init script.
 
 `npm run test:download` clicks the hero download button on each locale's home page in a real
 browser and checks that the file is the configured app archive: SHA-256, size, bundle identifier,
