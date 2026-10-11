@@ -1,0 +1,21 @@
+{
+  "siteUrl": "https://yomado.app",
+  "appRepository": "https://github.com/chekusu/yomado",
+  "siteRepository": "https://github.com/chekusu/yomado.dev",
+  "release": {
+    "version": "0.3.1",
+    "build": "7",
+    "tag": "v0.3.1",
+    "publishedAt": "2026-10-11",
+    "prerelease": true,
+    "url": "https://github.com/chekusu/yomado/releases/download/v0.3.1/Yomado-v0.3.1.zip",
+    "fileName": "Yomado-v0.3.1.zip",
+    "bytes": 2049683,
+    "sha256": "44655ddb6fb6309a553f1be6109ba31bca671c39b5955ae02f7c72502f035b2c",
+    "bundleIdentifier": "dev.chekusu.yomado",
+    "architecture": "arm64",
+    "minimumSystemVersion": "14.0",
+    "notesUrl": "https://github.com/chekusu/yomado/releases/tag/v0.3.1",
+    "checksumsUrl": "https://github.com/chekusu/yomado/releases/download/v0.3.1/yomado-v0.3.1-SHA256SUMS.txt"
+  }
+}

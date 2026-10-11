@@ -1,0 +1,159 @@
+---
+import { Picture } from 'astro:assets';
+import concept from '../assets/usage-concept.jpg';
+import { phrased } from '../lib/text';
+import type { Copy } from '../i18n';
+
+interface Props {
+  copy: Copy;
+}
+
+const { copy } = Astro.props;
+---
+
+<section class="why wrap" id="why" aria-labelledby="why-title">
+  <div class="intro">
+    <header>
+      <p class="kicker">{copy.why.kicker}</p>
+      <h2 id="why-title" class="display" set:html={phrased(copy.why.title)} />
+    </header>
+    <div class="body">
+      {copy.why.paragraphs.map((p) => <p class="prose">{p}</p>)}
+      <dl class="roles">
+        {
+          copy.why.roles.map((role) => (
+            <div class="role">
+              <dt>{role.name}</dt>
+              <dd>{role.text}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <p class="shared">
+        <strong>{copy.why.sharedTitle}</strong>
+        {copy.why.sharedText}
+      </p>
+    </div>
+  </div>
+
+  <figure class="plate">
+    <Picture
+      src={concept}
+      formats={['avif', 'webp']}
+      widths={[640, 960, 1280, 1672]}
+      sizes="(min-width: 1260px) 1200px, calc(100vw - 2 * var(--gutter))"
+      alt={copy.why.plateAlt}
+      loading="lazy"
+      decoding="async"
+      quality={78}
+    />
+    <figcaption>{copy.why.plateCaption}</figcaption>
+  </figure>
+
+  <p class="not display" set:html={phrased(copy.why.notHtml, { html: true })} />
+</section>
+
+<style>
+  .why {
+    padding-block: clamp(40px, 7vw, 96px) clamp(72px, 10vw, 140px);
+  }
+
+  .intro {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(28px, 6vw, 96px);
+    align-items: start;
+  }
+
+  .intro header {
+    position: sticky;
+    top: 32px;
+  }
+
+  .roles {
+    margin-top: 40px;
+    border-top: 1px solid rgb(252 248 225 / 0.14);
+  }
+
+  .role {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, 0.36fr) 1fr;
+    gap: 8px 24px;
+    padding-block: 18px;
+    border-bottom: 1px solid rgb(252 248 225 / 0.14);
+  }
+
+  dt {
+    color: var(--ivory-50);
+    font: italic 300 1.45rem/1.25 var(--font-display);
+  }
+
+  dd {
+    color: var(--mist-200);
+  }
+
+  .shared {
+    max-width: 60ch;
+    margin-top: 28px;
+    padding-left: 18px;
+    border-left: 2px solid var(--ember);
+    color: var(--mist-300);
+  }
+
+  .shared strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ivory-100);
+    font-weight: 600;
+  }
+
+  .plate {
+    margin-top: clamp(56px, 8vw, 104px);
+  }
+
+  .plate :global(img) {
+    width: 100%;
+    border-radius: clamp(14px, 2vw, 22px);
+    box-shadow:
+      0 0 0 1px rgb(252 248 225 / 0.08),
+      0 40px 90px -40px rgb(0 0 0 / 0.8);
+  }
+
+  .plate figcaption {
+    margin-top: 12px;
+    color: var(--mist-400);
+    font-size: 0.8125rem;
+  }
+
+  .not {
+    max-width: 22em;
+    margin-top: clamp(56px, 8vw, 96px);
+    color: var(--mist-300);
+    font-size: clamp(1.5rem, 1.1rem + 1.5vw, 2.35rem);
+    line-height: 1.22;
+  }
+
+  :lang(zh-CN) dt {
+    font-style: normal;
+  }
+
+  :lang(zh-CN) .not {
+    line-height: 1.5;
+  }
+
+  @media (max-width: 860px) {
+    .intro {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .intro header {
+      position: static;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .role {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

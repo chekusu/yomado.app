@@ -1,0 +1,176 @@
+---
+import HeroScene from './HeroScene.astro';
+import Icon from './Icon.astro';
+import { phrased } from '../lib/text';
+import { RELEASE, SITE } from '../lib/site';
+import type { Copy } from '../i18n';
+
+interface Props {
+  copy: Copy;
+}
+
+const { copy } = Astro.props;
+---
+
+<section class="hero wrap" aria-labelledby="hero-title">
+  <div class="hero-head">
+    <p class="eyebrow">{copy.hero.eyebrow}</p>
+    <h1 id="hero-title" class="display" set:html={phrased(copy.hero.titleHtml, { html: true })} />
+  </div>
+  <div class="hero-copy">
+    <p class="lede">{copy.hero.lede}</p>
+    <p class="aside">{copy.hero.aside}</p>
+    <div class="actions">
+      <a class="btn btn-lit btn-download" href={RELEASE.url} data-download="hero">
+        <Icon name="download" size={22} />
+        <span class="btn-text">
+          <span class="btn-label">{copy.hero.cta}</span>
+          <span class="btn-meta">{copy.hero.ctaMeta}</span>
+        </span>
+      </a>
+      <a class="btn btn-ghost" href={SITE.appRepository}>
+        <Icon name="github" size={18} />
+        {copy.hero.secondary}
+      </a>
+    </div>
+    <p class="fine" set:html={copy.hero.fineHtml} />
+  </div>
+  <HeroScene copy={copy} />
+</section>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+    grid-template-areas:
+      'head head'
+      'copy scene';
+    align-items: center;
+    column-gap: clamp(32px, 6vw, 96px);
+    row-gap: clamp(28px, 4vw, 52px);
+    padding-block: clamp(20px, 5vw, 72px) clamp(56px, 9vw, 128px);
+  }
+
+  .hero-head {
+    grid-area: head;
+  }
+
+  .hero-copy {
+    grid-area: copy;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero > :global(.hero-figure) {
+    grid-area: scene;
+  }
+
+  .eyebrow {
+    margin-bottom: 22px;
+    color: var(--mist-300);
+    font: 400 0.8125rem/1.4 var(--font-mono);
+    letter-spacing: 0.06em;
+  }
+
+  h1 {
+    max-width: 13.5em;
+    font-size: clamp(2.6rem, 1.2rem + 5vw, 6rem);
+    line-height: 0.98;
+  }
+
+  .lede {
+    max-width: 34rem;
+    color: var(--mist-200);
+    font-size: clamp(1.125rem, 1.02rem + 0.35vw, 1.3rem);
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  .aside {
+    max-width: 34rem;
+    margin-top: 14px;
+    color: var(--mist-300);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin-top: 34px;
+  }
+
+  .btn-download {
+    min-height: 64px;
+    padding: 10px 28px 10px 22px;
+    border-radius: 20px;
+  }
+
+  .btn-text {
+    display: grid;
+    gap: 3px;
+    text-align: left;
+  }
+
+  .btn-label {
+    font-size: 1.0625rem;
+  }
+
+  .actions .btn-ghost {
+    min-height: 64px;
+    border-radius: 20px;
+  }
+
+  .fine {
+    margin-top: 18px;
+    color: var(--mist-400);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .fine :global(a) {
+    color: var(--mist-300);
+  }
+
+  :lang(zh-CN) h1 {
+    font-size: clamp(2.6rem, 1.4rem + 4vw, 5rem);
+    line-height: 1.16;
+  }
+
+  @media (max-width: 960px) {
+    .hero {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'head' 'copy' 'scene';
+    }
+
+    .hero-copy {
+      max-width: 40rem;
+    }
+  }
+
+  /* Phones: the download button comes straight after the one-sentence pitch. */
+  @media (max-width: 520px) {
+    .aside {
+      order: 3;
+      margin-top: 22px;
+    }
+
+    .fine {
+      order: 4;
+    }
+
+    .actions {
+      margin-top: 26px;
+    }
+
+    .actions .btn {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .actions .btn-ghost {
+      min-height: 52px;
+      justify-content: center;
+    }
+  }
+</style>

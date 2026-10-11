@@ -1,0 +1,90 @@
+---
+import '@fontsource/spectral/300.css';
+import '@fontsource/spectral/300-italic.css';
+import '@fontsource/spectral/400.css';
+import '@fontsource-variable/schibsted-grotesk';
+import '@fontsource/fragment-mono/400.css';
+import '../styles/global.css';
+import displayFont from '@fontsource/spectral/files/spectral-latin-300-normal.woff2?url';
+import { LOCALES, LOCALE_PATH, LOCALE_TAG, RELEASE, SITE, canonical, withBase, type Locale } from '../lib/site';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  /** Site-relative path of this page, e.g. '' or 'zh-cn/'. */
+  path: string;
+  ogAlt: string;
+  /** Pages outside the locale set (404) skip hreflang alternates and structured data. */
+  localized?: boolean;
+  noindex?: boolean;
+}
+
+const { locale, title, description, path, ogAlt, localized = true } = Astro.props;
+const noindex = Astro.props.noindex || process.env.SITE_NOINDEX === '1';
+const url = canonical(path);
+const ogImage = canonical(`og/${locale}.png`);
+const ogLocale = { en: 'en_US', 'zh-cn': 'zh_CN' } as const;
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'yomado',
+  alternateName: '夜窗',
+  url: canonical(),
+  description,
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: `macOS ${RELEASE.minimumSystemVersion} or later (Apple Silicon)`,
+  softwareVersion: RELEASE.version,
+  downloadUrl: RELEASE.url,
+  releaseNotes: RELEASE.notesUrl,
+  license: 'https://opensource.org/license/mit',
+  isAccessibleForFree: true,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  codeRepository: SITE.appRepository,
+};
+---
+
+<!doctype html>
+<html lang={LOCALE_TAG[locale]}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="canonical" href={url} />
+    {
+      localized &&
+        LOCALES.map((l) => <link rel="alternate" hreflang={LOCALE_TAG[l]} href={canonical(LOCALE_PATH[l])} />)
+    }
+    {localized && <link rel="alternate" hreflang="x-default" href={canonical()} />}
+
+    <meta name="theme-color" content="#0a1434" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href={withBase('favicon.svg')} type="image/svg+xml" />
+    <link rel="icon" href={withBase('favicon-32.png')} sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href={withBase('apple-touch-icon.png')} />
+    <link rel="preload" href={displayFont} as="font" type="font/woff2" crossorigin />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="yomado" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta property="og:locale" content={ogLocale[locale]} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={ogAlt} />
+    {localized && <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />}
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

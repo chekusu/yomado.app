@@ -1,0 +1,84 @@
+---
+import Brand from './Brand.astro';
+import { LOCALE_PATH, LOCALE_TAG, SITE, withBase, type Locale } from '../lib/site';
+import type { Copy } from '../i18n';
+
+interface Props {
+  locale: Locale;
+  copy: Copy;
+}
+
+const { locale, copy } = Astro.props;
+const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <Brand size={30} />
+        <p class="tagline">{copy.footer.tagline}</p>
+      </div>
+      <nav aria-label={copy.footer.navLabel}>
+        <a href={SITE.appRepository}>GitHub</a>
+        <a href={`${SITE.appRepository}/releases`}>{copy.footer.releases}</a>
+        <a href={`${SITE.appRepository}/blob/main/LICENSE`}>{copy.footer.license}</a>
+        <a href={withBase(LOCALE_PATH[other])} hreflang={LOCALE_TAG[other]} lang={LOCALE_TAG[other]} data-lang-switch>
+          {copy.nav.switchLabel}
+        </a>
+      </nav>
+    </div>
+    <p class="fine">{copy.footer.fine}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    padding-block: 48px 56px;
+    border-top: 1px solid rgb(252 248 225 / 0.1);
+    background: var(--night-950);
+  }
+
+  .top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 28px;
+  }
+
+  .tagline {
+    margin-top: 14px;
+    color: var(--mist-300);
+    font: italic 300 1.15rem/1.4 var(--font-display);
+  }
+
+  :lang(zh-CN) .tagline {
+    font-style: normal;
+  }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 26px;
+  }
+
+  nav a {
+    color: var(--mist-300);
+    font-size: 0.9375rem;
+    text-decoration: none;
+  }
+
+  nav a:hover {
+    color: var(--ivory-50);
+    text-decoration: underline;
+  }
+
+  .fine {
+    max-width: 52rem;
+    margin-top: 36px;
+    color: var(--mist-400);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+  }
+</style>

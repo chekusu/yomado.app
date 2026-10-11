@@ -1,0 +1,87 @@
+---
+import Brand from './Brand.astro';
+import { LOCALE_PATH, LOCALE_TAG, RELEASE, SITE, withBase, type Locale } from '../lib/site';
+import type { Copy } from '../i18n';
+
+interface Props {
+  locale: Locale;
+  copy: Copy;
+}
+
+const { locale, copy } = Astro.props;
+const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
+---
+
+<header class="site-header wrap">
+  <a class="home" href={withBase(LOCALE_PATH[locale])} aria-label={copy.nav.home}>
+    <Brand />
+  </a>
+  <nav aria-label={copy.nav.label}>
+    <a class="nav-link wide" href="#how">{copy.nav.how}</a>
+    <a class="nav-link wide" href="#faq">{copy.nav.faq}</a>
+    <a class="nav-link wide" href={SITE.appRepository}>{copy.nav.github}</a>
+    <a
+      class="nav-link lang"
+      href={withBase(LOCALE_PATH[other])}
+      hreflang={LOCALE_TAG[other]}
+      lang={LOCALE_TAG[other]}
+      aria-label={copy.nav.switchLabel}
+      data-lang-switch
+    >
+      {copy.nav.switchText}
+    </a>
+    <a class="btn btn-lit btn-small" href={RELEASE.url} data-download="header">{copy.nav.download}</a>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-block: 22px;
+  }
+
+  .home {
+    color: var(--ivory-100);
+    text-decoration: none;
+    border-radius: 10px;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(6px, 1.6vw, 26px);
+  }
+
+  .nav-link {
+    padding: 8px 4px;
+    color: var(--mist-300);
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: color 200ms var(--ease);
+  }
+
+  .nav-link:hover {
+    color: var(--ivory-50);
+  }
+
+  .lang {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 760px) {
+    .wide {
+      display: none;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .site-header :global(.kanji) {
+      display: none;
+    }
+  }
+</style>

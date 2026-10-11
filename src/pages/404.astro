@@ -1,0 +1,55 @@
+---
+import Base from '../layouts/Base.astro';
+import Brand from '../components/Brand.astro';
+import { copyFor } from '../i18n';
+import { RELEASE, withBase } from '../lib/site';
+
+const en = copyFor('en');
+const zh = copyFor('zh-cn');
+---
+
+<Base locale="en" title={en.notFound.meta} description={en.meta.description} path="404/" ogAlt={en.meta.ogAlt} localized={false} noindex>
+  <main class="not-found wrap">
+    <a class="home" href={withBase()} aria-label={en.nav.home}><Brand /></a>
+    <h1 class="display">{en.notFound.title}</h1>
+    <p class="prose">{en.notFound.text}</p>
+    <p class="prose zh" lang="zh-CN">{zh.notFound.title} {zh.notFound.text}</p>
+    <div class="actions">
+      <a class="btn btn-lit" href={withBase()}>{en.notFound.home}</a>
+      <a class="btn btn-ghost" href={withBase('zh-cn/')} lang="zh-CN">{zh.notFound.home}</a>
+      <a class="btn btn-ghost" href={RELEASE.url}>{en.hero.cta}</a>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .not-found {
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 22px;
+    min-height: 100vh;
+    padding-block: 64px;
+  }
+
+  .home {
+    margin-bottom: 28px;
+    color: var(--ivory-100);
+    text-decoration: none;
+  }
+
+  h1 {
+    font-size: clamp(2.6rem, 1.5rem + 4vw, 5rem);
+  }
+
+  .zh {
+    color: var(--mist-300);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+  }
+</style>

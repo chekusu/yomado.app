@@ -1,0 +1,51 @@
+---
+// The night-window app icon with the lowercase wordmark.
+import { Image } from 'astro:assets';
+import icon from '../assets/night-window.png';
+
+interface Props {
+  size?: number;
+  kanji?: boolean;
+}
+
+const { size = 34, kanji = true } = Astro.props;
+---
+
+<span class="brand-lockup" style={`--icon:${size}px`}>
+  <Image src={icon} alt="" width={size} height={size} densities={[1, 2, 3]} loading="eager" class="brand-icon" />
+  <span class="wordmark">yomado</span>
+  {kanji && <span class="kanji" lang="zh-CN">夜窗</span>}
+</span>
+
+<style>
+  .brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .brand-icon {
+    width: var(--icon);
+    height: var(--icon);
+    filter: drop-shadow(0 2px 10px rgb(252 248 225 / 0.14));
+  }
+
+  .wordmark {
+    font: 400 calc(var(--icon) * 0.7) / 1 var(--font-display);
+    letter-spacing: -0.01em;
+    transform: translateY(-0.04em);
+  }
+
+  .kanji {
+    padding-left: 10px;
+    border-left: 1px solid rgb(252 248 225 / 0.22);
+    color: var(--mist-300);
+    font: 400 calc(var(--icon) * 0.42) / 1 var(--font-display);
+    letter-spacing: 0.14em;
+  }
+
+  :global(.lit) .kanji {
+    border-color: rgb(12 25 64 / 0.2);
+    color: var(--ink-faint);
+  }
+</style>

@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+import SiteHeader from './SiteHeader.astro';
+import Hero from './Hero.astro';
+import Why from './Why.astro';
+import How from './How.astro';
+import AppPanel from './AppPanel.astro';
+import Download from './Download.astro';
+import Faq from './Faq.astro';
+import SiteFooter from './SiteFooter.astro';
+import { copyFor } from '../i18n';
+import { LOCALE_PATH, type Locale } from '../lib/site';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = copyFor(locale);
+---
+
+<Base
+  locale={locale}
+  title={copy.meta.title}
+  description={copy.meta.description}
+  path={LOCALE_PATH[locale]}
+  ogAlt={copy.meta.ogAlt}
+>
+  <a class="skip-link" href="#main">{copy.skip}</a>
+  <SiteHeader locale={locale} copy={copy} />
+  <main id="main">
+    <Hero copy={copy} />
+    <Why copy={copy} />
+    <How copy={copy} />
+    <AppPanel copy={copy} />
+    <Download copy={copy} />
+    <Faq copy={copy} />
+  </main>
+  <SiteFooter locale={locale} copy={copy} />
+</Base>
+
+<script>
+  import '../scripts/page';
+</script>

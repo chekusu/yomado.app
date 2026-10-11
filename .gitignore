@@ -1,7 +1,10 @@
 node_modules/
 dist/
+dist-sub/
 .astro/
+test-output/
 .env
 .env.*
 !.env.example
+.dev.vars
 .DS_Store
