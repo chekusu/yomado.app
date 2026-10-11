@@ -13,8 +13,7 @@ export default (r: ReleaseFacts): Copy => ({
     label: 'Primary',
     details: 'Details',
     download: 'Download',
-    switchText: '中文',
-    switchLabel: '简体中文',
+    language: 'Language',
     home: 'yomado home',
   },
   hero: {

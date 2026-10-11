@@ -55,9 +55,23 @@ for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')
   });
 }
 
-// Keep the reader's place when switching language.
+// Keep the reader's place when switching language: every locale has the same sections, so a
+// hash that points at something on this page points at the same thing on the other.
 for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-lang-switch]')) {
   link.addEventListener('click', () => {
-    if (location.hash) link.hash = location.hash;
+    const id = decodeURIComponent(location.hash.slice(1));
+    link.hash = id && document.getElementById(id) ? location.hash : '';
+  });
+}
+
+// The language menu is a native <details>; close it on Escape or a click elsewhere.
+for (const menu of document.querySelectorAll<HTMLDetailsElement>('[data-lang-menu]')) {
+  document.addEventListener('click', (event) => {
+    if (menu.open && !menu.contains(event.target as Node)) menu.open = false;
+  });
+  menu.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !menu.open) return;
+    menu.open = false;
+    menu.querySelector('summary')?.focus();
   });
 }

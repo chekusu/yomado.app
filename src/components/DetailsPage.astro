@@ -15,8 +15,6 @@ interface Props {
 const { locale } = Astro.props;
 const copy = copyFor(locale);
 const d = copy.details;
-const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
-const otherPath = `${LOCALE_PATH[other]}details/`;
 ---
 
 <Base
@@ -28,7 +26,7 @@ const otherPath = `${LOCALE_PATH[other]}details/`;
   ogAlt={copy.meta.ogAlt}
 >
   <a class="skip" href="#main">{copy.skip}</a>
-  <SiteHeader locale={locale} copy={copy} otherPath={otherPath} />
+  <SiteHeader locale={locale} copy={copy} route="details/" />
   <main id="main" class="details">
     <header class="head wrap">
       <p class="eyebrow">{d.eyebrow}</p>
@@ -88,7 +86,7 @@ const otherPath = `${LOCALE_PATH[other]}details/`;
       </nav>
     </div>
   </main>
-  <SiteFooter locale={locale} copy={copy} otherPath={otherPath} />
+  <SiteFooter locale={locale} copy={copy} route="details/" />
 </Base>
 
 <script>
@@ -113,7 +111,8 @@ const otherPath = `${LOCALE_PATH[other]}details/`;
     max-width: 34ch;
   }
 
-  :lang(zh-CN) .head .sub {
+  :lang(zh-CN) .head .sub,
+  :lang(ja) .head .sub {
     max-width: 24em;
   }
 

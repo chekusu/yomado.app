@@ -8,8 +8,8 @@ export interface Copy {
     label: string;
     details: string;
     download: string;
-    switchText: string;
-    switchLabel: string;
+    /** Names the language menu; the languages themselves are listed by their own names. */
+    language: string;
     home: string;
   };
   hero: {

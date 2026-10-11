@@ -22,9 +22,13 @@
   --ivory: #fcf8e1;
   --ivory-50: #fffcef;
 
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter Variable', 'Helvetica Neue',
+  --font-sans-sc: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter Variable', 'Helvetica Neue',
     'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Noto Sans CJK SC', 'Source Han Sans SC', 'Microsoft YaHei',
     'WenQuanYi Zen Hei', sans-serif;
+  --font-sans-ja: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter Variable', 'Helvetica Neue',
+    'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Noto Sans CJK JP', 'Source Han Sans JP', 'Yu Gothic UI',
+    'Yu Gothic', Meiryo, sans-serif;
+  --font-sans: var(--font-sans-sc);
   --font-mono: ui-monospace, 'SF Mono', 'Fragment Mono', Menlo, Consolas, monospace;
 
   --gutter: clamp(20px, 5vw, 48px);
@@ -59,8 +63,24 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Japanese text takes Japanese fonts, so kanji get their Japanese forms. Inside a Japanese page
+   the brand's 夜窗 and the 简体中文 menu entry stay Chinese, and vice versa. */
+:lang(ja) {
+  --font-sans: var(--font-sans-ja);
+}
+
+:lang(zh-CN) {
+  --font-sans: var(--font-sans-sc);
+}
+
+[lang]:not(html) {
+  font-family: var(--font-sans);
+}
+
 :lang(zh-CN) body,
-body:lang(zh-CN) {
+body:lang(zh-CN),
+:lang(ja) body,
+body:lang(ja) {
   letter-spacing: 0;
 }
 
@@ -185,6 +205,44 @@ a:hover {
 :lang(zh-CN) .fine,
 .fine:lang(zh-CN) {
   word-break: keep-all;
+}
+
+/* Japanese titles break only at their marked phrases and punctuation, and run a little smaller
+   than English so the longest phrase, such as エージェントごとに、, fits a 320 px screen. If a
+   phrase still can't fit, it may break rather than overflow. */
+:lang(ja) .headline,
+:lang(ja) .headline-2,
+.headline:lang(ja),
+.headline-2:lang(ja) {
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+:lang(ja) .headline,
+.headline:lang(ja) {
+  font-size: clamp(2rem, 1.05rem + 4.1vw, 4.25rem);
+}
+
+:lang(ja) .headline-2,
+.headline-2:lang(ja) {
+  font-size: clamp(1.625rem, 0.95rem + 2.9vw, 3.25rem);
+}
+
+/* Running Japanese text breaks between phrases where the browser can (word-break: auto-phrase),
+   and between characters with the usual line-breaking rules elsewhere. */
+:lang(ja) .sub,
+.sub:lang(ja) {
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+  word-break: auto-phrase;
+}
+
+:lang(ja) .fine,
+.fine:lang(ja) {
+  word-break: auto-phrase;
 }
 
 /* ---------- Actions ---------- */

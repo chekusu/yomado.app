@@ -1,19 +1,17 @@
 ---
 import Brand from './Brand.astro';
-import { LOCALE_PATH, LOCALE_TAG, RELEASE, withBase, type Locale } from '../lib/site';
+import { LOCALES, LOCALE_NAME, LOCALE_PATH, LOCALE_TAG, RELEASE, withBase, type Locale } from '../lib/site';
 import type { Copy } from '../i18n';
 
 interface Props {
   locale: Locale;
   copy: Copy;
-  /** Site-relative path of the same page in the other language. */
-  otherPath?: string;
+  /** This page's path below each locale's root: '' for home, 'details/' for the details page. */
+  route?: string;
 }
 
-const { locale, copy } = Astro.props;
-const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
-const otherPath = Astro.props.otherPath ?? LOCALE_PATH[other];
-const onDetails = Astro.url.pathname.endsWith('/details/');
+const { locale, copy, route = '' } = Astro.props;
+const onDetails = route === 'details/';
 ---
 
 <header class="site-header" data-header>
@@ -25,16 +23,36 @@ const onDetails = Astro.url.pathname.endsWith('/details/');
       <a class="nav-link details" href={withBase(`${LOCALE_PATH[locale]}details/`)} aria-current={onDetails ? 'page' : undefined}>
         {copy.nav.details}
       </a>
-      <a
-        class="nav-link lang"
-        href={withBase(otherPath)}
-        hreflang={LOCALE_TAG[other]}
-        lang={LOCALE_TAG[other]}
-        aria-label={copy.nav.switchLabel}
-        data-lang-switch
-      >
-        {copy.nav.switchText}
-      </a>
+      <!-- A native disclosure: it opens without JavaScript; page.ts closes it on Escape or an outside click. -->
+      <details class="langs" data-lang-menu>
+        <summary class="nav-link">
+          <span class="visually-hidden">{copy.nav.language}: </span>
+          <span lang={LOCALE_TAG[locale]}>{LOCALE_NAME[locale].short}</span>
+          <svg class="chevron" viewBox="0 0 10 6" width="10" height="6" aria-hidden="true"><path d="M1 1l4 4 4-4" /></svg>
+        </summary>
+        <ul class="menu">
+          {
+            LOCALES.map((l) => (
+              <li>
+                <a
+                  href={withBase(LOCALE_PATH[l] + route)}
+                  hreflang={LOCALE_TAG[l]}
+                  lang={LOCALE_TAG[l]}
+                  aria-current={l === locale ? 'page' : undefined}
+                  data-lang-switch
+                >
+                  {LOCALE_NAME[l].full}
+                  {l === locale && (
+                    <svg class="check" viewBox="0 0 12 9" width="12" height="9" aria-hidden="true">
+                      <path d="M1 4.5l3.4 3.4L11 1.2" />
+                    </svg>
+                  )}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </details>
       <a class="get" href={RELEASE.url} data-download="header">{copy.nav.download}</a>
     </nav>
   </div>
@@ -100,6 +118,100 @@ const onDetails = Astro.url.pathname.endsWith('/details/');
   .nav-link:hover,
   .nav-link[aria-current='page'] {
     opacity: 1;
+  }
+
+  /* Language menu: the current language in the bar, all three by their own names below it. */
+  .langs {
+    position: relative;
+  }
+
+  .langs summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 6px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .langs summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .langs[open] summary {
+    opacity: 1;
+  }
+
+  .chevron {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 200ms var(--ease);
+  }
+
+  .langs[open] .chevron {
+    transform: rotate(180deg);
+  }
+
+  .menu {
+    position: absolute;
+    top: calc(100% + 14px);
+    right: -10px;
+    z-index: 60;
+    display: grid;
+    min-width: 10rem;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border-radius: 12px;
+    background: rgb(255 255 255 / 0.98);
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.08),
+      0 14px 34px -10px rgb(10 21 56 / 0.3);
+    color: var(--ink);
+  }
+
+  .menu a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: inherit;
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+
+  .menu a:hover {
+    background: rgb(0 0 0 / 0.05);
+  }
+
+  .menu a[aria-current='page'] {
+    font-weight: 600;
+  }
+
+  .check {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  [data-tone='night'] .menu {
+    background: rgb(16 24 56 / 0.98);
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.12),
+      0 14px 34px -10px rgb(0 0 0 / 0.5);
+    color: #f5f5f7;
+  }
+
+  [data-tone='night'] .menu a:hover {
+    background: rgb(255 255 255 / 0.08);
   }
 
   .get {

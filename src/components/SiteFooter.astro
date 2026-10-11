@@ -1,18 +1,16 @@
 ---
 import Brand from './Brand.astro';
-import { LOCALE_PATH, LOCALE_TAG, SITE, withBase, type Locale } from '../lib/site';
+import { LOCALES, LOCALE_NAME, LOCALE_PATH, LOCALE_TAG, SITE, withBase, type Locale } from '../lib/site';
 import type { Copy } from '../i18n';
 
 interface Props {
   locale: Locale;
   copy: Copy;
-  /** Site-relative path of the same page in the other language. */
-  otherPath?: string;
+  /** This page's path below each locale's root: '' for home, 'details/' for the details page. */
+  route?: string;
 }
 
-const { locale, copy } = Astro.props;
-const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
-const otherPath = Astro.props.otherPath ?? LOCALE_PATH[other];
+const { locale, copy, route = '' } = Astro.props;
 ---
 
 <footer class="site-footer night" data-tone="night">
@@ -28,10 +26,26 @@ const otherPath = Astro.props.otherPath ?? LOCALE_PATH[other];
         <a href={SITE.appRepository}>{copy.footer.source}</a>
         <a href={SITE.siteRepository}>{copy.footer.site}</a>
         <a href={`${SITE.appRepository}/blob/main/LICENSE`}>{copy.footer.license}</a>
-        <a href={withBase(otherPath)} hreflang={LOCALE_TAG[other]} lang={LOCALE_TAG[other]} data-lang-switch>{copy.nav.switchLabel}</a>
       </nav>
     </div>
-    <p class="fine">{copy.footer.fine}</p>
+    <div class="bottom">
+      <p class="fine">{copy.footer.fine}</p>
+      <nav class="langs" aria-label={copy.nav.language}>
+        {
+          LOCALES.map((l) => (
+            <a
+              href={withBase(LOCALE_PATH[l] + route)}
+              hreflang={LOCALE_TAG[l]}
+              lang={LOCALE_TAG[l]}
+              aria-current={l === locale ? 'page' : undefined}
+              data-lang-switch
+            >
+              {LOCALE_NAME[l].full}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
   </div>
 </footer>
 
@@ -78,8 +92,25 @@ const otherPath = Astro.props.otherPath ?? LOCALE_PATH[other];
     color: var(--ink);
   }
 
-  .fine {
+  .bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px 40px;
     margin-top: 18px;
+  }
+
+  .fine {
     max-width: 72ch;
+  }
+
+  .langs {
+    gap: 10px 18px;
+  }
+
+  .langs a[aria-current='page'] {
+    color: var(--ink);
+    font-weight: 600;
   }
 </style>
