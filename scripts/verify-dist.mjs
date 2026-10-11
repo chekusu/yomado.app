@@ -5,9 +5,10 @@
 // - every page has lang, title, description, a canonical URL on the configured origin and an OG image
 // - every internal link and asset resolves to a file in the build
 // - the only archive linked anywhere is the configured release download
+// - the concept film and its posters are in the build and stay small
 // - neither the build nor the tracked sources contain machine paths, private hosts or credentials
 import { execFileSync } from 'node:child_process';
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -83,11 +84,24 @@ for (const file of pages) {
   }
 }
 
-const downloads = pages.length ? (await readFile(join(dist, 'index.html'), 'utf8')).split(config.release.url).length - 1 : 0;
-if (downloads < 3) fail('index.html', `expected the release URL in header, hero and download section, found ${downloads}`);
+for (const page of ['index.html', 'zh-cn/index.html']) {
+  const html = await readFile(join(dist, page), 'utf8').catch(() => '');
+  const downloads = (html.match(/data-download="[a-z]+"/g) ?? []).length;
+  if (downloads !== 3) fail(page, `expected download links in header, hero and finale, found ${downloads}`);
+}
+
+// The film is lazy, but it should still be light: every video under 2.5 MB, posters under 200 kB.
+const MEDIA = { 'film-wide.mp4': 2.5e6, 'film-wide.webm': 2.5e6, 'film-tall.mp4': 2.5e6, 'film-tall.webm': 2.5e6, 'film-wide-poster.webp': 2e5, 'film-tall-poster.webp': 2e5, 'story-wide.webp': 2e5, 'story-tall.webp': 2e5 };
+for (const [file, limit] of Object.entries(MEDIA)) {
+  const size = await stat(join(dist, 'media', file)).then((s) => s.size).catch(() => 0);
+  if (!size) fail(`media/${file}`, 'missing');
+  else if (size > limit) fail(`media/${file}`, `${size} bytes, over ${limit}`);
+}
 
 const sitemap = await readFile(join(dist, 'sitemap.xml'), 'utf8').catch(() => '');
-for (const loc of [site, `${site}zh-cn/`]) if (!sitemap.includes(`<loc>${loc}</loc>`)) fail('sitemap.xml', `missing ${loc}`);
+for (const loc of [site, `${site}zh-cn/`, `${site}details/`, `${site}zh-cn/details/`]) {
+  if (!sitemap.includes(`<loc>${loc}</loc>`)) fail('sitemap.xml', `missing ${loc}`);
+}
 
 // Tracked sources: same rules, minus the loopback address used by the local test server.
 let tracked = [];
