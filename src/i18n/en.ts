@@ -5,7 +5,7 @@ export default (r: ReleaseFacts): Copy => ({
   meta: {
     title: 'yomado — a screen for your agents',
     description:
-      'yomado adds named virtual displays to your Mac, so visual agents like Codex can work in apps on a screen of their own while your windows stay put. Free, open source, experimental.',
+      'yomado gives Codex and other visual agents a virtual screen on your Mac, so they can work in apps like Blender and Marvelous Designer through screenshots, clicks and keystrokes — no app-specific MCP required. Free, open source, experimental.',
     ogAlt: 'yomado — A screen for your agents.',
   },
   skip: 'Skip to content',
@@ -18,7 +18,8 @@ export default (r: ReleaseFacts): Copy => ({
   },
   hero: {
     title: 'A screen for your agents.',
-    sub: 'Named virtual displays on your Mac, for agents that work by sight.',
+    // A no-break space keeps Marvelous Designer on one line.
+    sub: 'A virtual screen for Blender, Marvelous\u00a0Designer and more. Codex and other agents work through screenshots, clicks and keystrokes — no app-specific MCP required.',
     cta: 'Download for Mac',
     meta: `Experimental build · v${r.version} · Apple silicon`,
     film: {

@@ -7,7 +7,7 @@ export default (r: ReleaseFacts): Copy => ({
   meta: {
     title: 'yomado 夜窗 — エージェントに、専用の画面を',
     description:
-      'yomado は Mac に名前付きの仮想ディスプレイを追加します。Codex などのエージェントは専用の画面でアプリを操作し、あなたのウィンドウはそのまま。無料・オープンソースの実験版です。',
+      'yomado は Mac に仮想の作業画面を追加します。Codex などのエージェントがスクリーンショットとクリック・入力で Blender や Marvelous Designer などのアプリを操作でき、アプリ専用 MCP は不要です。無料・オープンソースの実験版です。',
     ogAlt: 'yomado 夜窗 — エージェントに、専用の画面を。',
   },
   skip: '本文へ移動',
@@ -20,7 +20,7 @@ export default (r: ReleaseFacts): Copy => ({
   },
   hero: {
     title: 'エージェントに、|専用の画面を。',
-    sub: '画面を見て操作するエージェントに。Mac に、名前を付けられる仮想ディスプレイを。',
+    sub: 'Blender や Marvelous\u00a0Designer に、仮想の作業画面を。Codex などのエージェントがスクリーンショットを見て、クリック・入力。アプリ専用 MCP は不要です。',
     cta: 'Mac 版をダウンロード',
     meta: `実験版 · v${r.version} · Apple シリコン`,
     film: {

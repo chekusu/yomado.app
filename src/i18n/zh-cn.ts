@@ -5,7 +5,7 @@ export default (r: ReleaseFacts): Copy => ({
   meta: {
     title: 'yomado 夜窗 — 给 Agent 一块屏幕',
     description:
-      'yomado 在 Mac 上创建可命名的虚拟屏，让 Codex 等视觉 Agent 在自己的屏幕里操作应用，你的窗口留在原处。免费开源，实验版本。',
+      'yomado 在 Mac 上为 Codex 等视觉 Agent 开一块虚拟屏，让它们通过截图与键鼠操作 Blender、Marvelous Designer 等应用，无需应用专用 MCP。免费开源，实验版本。',
     ogAlt: 'yomado 夜窗 — 给 Agent 一块屏幕。',
   },
   skip: '跳到正文',
@@ -18,7 +18,7 @@ export default (r: ReleaseFacts): Copy => ({
   },
   hero: {
     title: '给 Agent|一块屏幕。',
-    sub: '在 Mac 上，为视觉 Agent 开一块专属虚拟屏。',
+    sub: '为 Blender、Marvelous\u00a0Designer 等应用留一块虚拟屏。Codex 等 Agent 用截图与键鼠操作，无需应用专用 MCP。',
     cta: '下载 Mac 版',
     meta: `实验版本 · v${r.version} · Apple Silicon`,
     film: {

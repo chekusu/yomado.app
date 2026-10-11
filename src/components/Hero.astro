@@ -1,5 +1,4 @@
 ---
-import Brand from './Brand.astro';
 import Film from './Film.astro';
 import Icon from './Icon.astro';
 import { RELEASE } from '../lib/site';
@@ -15,7 +14,6 @@ const { copy } = Astro.props;
 
 <section class="hero" aria-labelledby="hero-title">
   <div class="copy wrap">
-    <p class="brand"><Brand size={40} /></p>
     <h1 id="hero-title" class="headline" set:html={phrased(copy.hero.title)} />
     <p class="sub">{copy.hero.sub}</p>
     <div class="actions">
@@ -41,18 +39,14 @@ const { copy } = Astro.props;
     text-align: center;
   }
 
-  .brand {
-    margin: 0 0 4px;
-    color: var(--ink);
-  }
-
+  /* Wide enough for the purpose to settle into two or three balanced lines. */
   .sub {
-    max-width: 30ch;
+    max-width: 31em;
   }
 
   :lang(zh-CN) .sub,
   :lang(ja) .sub {
-    max-width: 22em;
+    max-width: 26em;
   }
 
   .actions {
