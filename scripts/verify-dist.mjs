@@ -25,6 +25,8 @@ const fail = (where, message) => problems.push(`${where}: ${message}`);
 // Each locale's root below the site base (src/lib/site.ts), and its Open Graph card.
 const LOCALES = { en: '', 'zh-cn': 'zh-cn/', ja: 'ja/' };
 const ROUTES = ['', 'details/'];
+// Links to the English home say ?lang=en, because the bare home page follows the browser.
+const localeHref = (prefix, route) => `${base}${prefix}${route}${prefix === '' && route === '' ? '?lang=en' : ''}`;
 
 // Patterns that must never be published: local paths, private hosts, credentials.
 // VERIFY_DENY adds comma-separated regular expressions for a one-off run.
@@ -71,6 +73,9 @@ for (const file of pages) {
   if (!/<meta name="description" content="[^"]{60,}"/.test(html)) fail(where, 'missing description');
   const canonical = attr(html, /<link rel="canonical" href="([^"]+)"/g)[0];
   if (!canonical?.startsWith(site)) fail(where, `canonical ${canonical} is not on ${site}`);
+  if (/[?#]/.test(canonical ?? '') || attr(html, /hreflang="[^"]+" href="([^"]+)"/g).some((u) => /[?#]/.test(u))) fail(where, 'canonical or hreflang URL has a query or hash');
+  // Only the English home page may move a visitor to another language.
+  if (html.includes('location.replace') !== (where === 'index.html')) fail(where, 'language redirect script on the wrong page');
   const og = attr(html, /<meta property="og:image" content="([^"]+)"/g)[0];
   if (!og?.startsWith(`${site}og/`)) fail(where, `og:image ${og} is not on ${site}`);
 
@@ -97,7 +102,7 @@ for (const [locale, prefix] of Object.entries(LOCALES)) {
   for (const route of ROUTES) {
     const other = await readFile(join(dist, prefix, route, 'index.html'), 'utf8').catch(() => '');
     for (const [l, p] of Object.entries(LOCALES)) {
-      if (!other.includes(`href="${base}${p}${route}"`)) fail(`${prefix}${route}index.html`, `no link to the ${l} version`);
+      if (!other.includes(`href="${localeHref(p, route)}"`)) fail(`${prefix}${route}index.html`, `no link to the ${l} version`);
     }
   }
 }

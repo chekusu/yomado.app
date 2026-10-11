@@ -134,7 +134,8 @@ const browser = await chromium.launch();
 
 async function open(path, options = {}) {
   const { route, ...contextOptions } = options;
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...contextOptions });
+  // An English browser unless a test says otherwise: the bare home page follows the browser's language.
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'en-US', ...contextOptions });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
@@ -393,7 +394,8 @@ for (const locale of LOCALES) {
         const footer = await page.$$eval('footer [data-lang-switch]', (els) => els.map((e) => [e.textContent.trim(), e.getAttribute('aria-current')]));
         assert.deepEqual(footer, LOCALES.map((l) => [l.name, l === locale ? 'page' : null]), 'the footer lists all three too');
         await menu.locator(`a[hreflang="${target.lang}"]`).click();
-        await page.waitForURL((url) => url.href === `${base}${target.path}${route}${hash}`);
+        const query = target.key === 'en' && !route ? '?lang=en' : '';
+        await page.waitForURL((url) => url.href === `${base}${target.path}${route}${query}${hash}`);
         assert.equal(await page.getAttribute('html', 'lang'), target.lang);
         assert.deepEqual(errors, []);
         await context.close();
@@ -458,7 +460,7 @@ for (const locale of LOCALES) {
   });
 
   await check(`${locale.lang}: without JavaScript the story and film still read`, async () => {
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, javaScriptEnabled: false });
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, javaScriptEnabled: false, locale: 'en-US' });
     const page = await context.newPage();
     await page.goto(base + locale.path, { waitUntil: 'networkidle' });
     assert.equal(await page.locator('[data-film] video').evaluate((v) => v.hasAttribute('controls')), true, 'native controls');
@@ -474,7 +476,7 @@ const scrollbars = await chromium.launch({ ignoreDefaultArgs: ['--hide-scrollbar
 for (const locale of LOCALES) {
   await check(`${locale.lang}: header stays on one line with a classic scrollbar at 320–430 px`, async () => {
     for (const width of [320, 375, 390, 430]) {
-      const context = await scrollbars.newContext({ viewport: { width, height: 844 } });
+      const context = await scrollbars.newContext({ viewport: { width, height: 844 }, locale: 'en-US' });
       const page = await context.newPage();
       await page.goto(base + locale.path, { waitUntil: 'networkidle' });
       await page.evaluate(() => document.fonts.ready);

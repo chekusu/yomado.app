@@ -79,7 +79,8 @@ function plistString(xml, key) {
 }
 
 const browser = await chromium.launch();
-const context = await browser.newContext({ acceptDownloads: true });
+// An English browser, so the bare home page stays English rather than following the browser.
+const context = await browser.newContext({ acceptDownloads: true, locale: 'en-US' });
 const page = await context.newPage();
 const fetched = [];
 for (const path of PAGES) {
