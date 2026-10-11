@@ -54,6 +54,7 @@ export interface Copy {
     textHtml: string;
     imageAlt: string;
     caption: string;
+    swipe: string;
     testedTitle: string;
     tested: string[];
     pendingTitle: string;

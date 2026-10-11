@@ -21,7 +21,7 @@ export default (r: ReleaseFacts): Copy => ({
   },
   hero: {
     eyebrow: '为视觉 Agent 准备的 macOS 虚拟屏',
-    titleHtml: '给 Agent 一扇|<em>亮着的窗</em>。',
+    titleHtml: '给 Agent|一扇|<em>亮着的窗</em>。',
     lede: '为 Codex 等视觉 Agent 创建虚拟屏，让它们通过截图与键鼠操作桌面软件，无需应用专用 MCP。',
     aside: '只把 Agent 需要的窗口移过去，你的窗口留在你的屏幕上。',
     cta: '下载 macOS 实验版',
@@ -37,7 +37,7 @@ export default (r: ReleaseFacts): Copy => ({
   },
   why: {
     kicker: '为什么需要它',
-    title: '视觉 Agent|也需要一块屏幕。',
+    title: '视觉 Agent|也需要|一块屏幕。',
     paragraphs: [
       'Codex 等 Agent 可以像人一样工作：看截图、找到控件，再点击和输入。这样它们能直接使用 Blender、Marvelous Designer 等桌面软件的原生界面——适合缺少合适的应用专用 MCP，或需要操作三维视图、菜单和对话框的工作。',
       '但应用只会把界面画在显示器上，截图也需要能截取的画面。只为让后台 Agent 看得见就一直亮着实体显示器，并不划算。yomado 用纯软件为 Agent 的窗口提供一块专属屏幕：不需要显卡欺骗器，也不需要付费显示器软件。',
@@ -49,7 +49,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     sharedTitle: '同一个桌面，共用输入。',
     sharedText: '虚拟屏属于当前登录会话。你和 Agent 共用同一套键盘、指针和焦点——它不是另一台电脑、另一个用户，也不是输入隔离环境。',
-    notHtml: 'yomado 不是 Agent，|不是远程桌面，|也不替代 MCP。|<em>它只负责提供显示桌面。</em>',
+    notHtml: 'yomado 不是 Agent，|不是远程桌面，|也不替代 MCP。|<em>它只负责|提供显示桌面。</em>',
     plateAlt: '概念示意：夜晚书桌上两台熄屏的显示器和一台保持运行的 Mac，旁边漂浮着一块虚拟屏，显示 Blender 和服装设计窗口以及 Agent 的光标。',
     plateCaption: '概念示意，AI 生成。关闭显示器后继续运行是设计目标，尚未完成验证。',
   },
@@ -78,11 +78,12 @@ export default (r: ReleaseFacts): Copy => ({
   },
   app: {
     kicker: '应用本身',
-    title: '一个小面板，|看清|每块屏上有什么。',
+    title: '一个小面板，|看清|每块屏上|有什么。',
     textHtml:
       'yomado 是原生 AppKit 菜单栏应用。面板按桌面顺序、按比例排列实体屏和虚拟屏，应用图标就显示在它所在的屏幕里。悬停可查看应用名和窗口数；<kbd>+</kbd> 新建或重新启动屏幕，<kbd>…</kbd> 用于重命名或关闭。虚拟屏存在期间，yomado 会请求系统和图形桌面保持唤醒。',
     imageAlt: 'yomado 控制面板：两块 Studio Display 实体屏卡片和一块名为 Codex、分辨率 1920 × 1080 的虚拟屏卡片，各自显示应用图标。',
     caption: '控制面板由应用使用示例显示器数据渲染。界面语言为简体中文。',
+    swipe: '左右滑动查看完整面板。',
     testedTitle: '已在 Apple Silicon 上验证',
     tested: [
       '原生 Apple Silicon 构建。',

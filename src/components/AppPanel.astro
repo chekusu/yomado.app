@@ -20,7 +20,7 @@ const { copy } = Astro.props;
   </div>
 
   <figure class="panel">
-    <div class="frame">
+    <div class="frame" tabindex="0" role="region" aria-labelledby="panel-caption">
       <Picture
         src={panel}
         formats={['avif', 'webp']}
@@ -32,7 +32,10 @@ const { copy } = Astro.props;
         quality={88}
       />
     </div>
-    <figcaption>{copy.app.caption}</figcaption>
+    <figcaption id="panel-caption">
+      {copy.app.caption}
+      <span class="swipe">{copy.app.swipe}</span>
+    </figcaption>
   </figure>
 
   <div class="notes">
@@ -94,6 +97,28 @@ const { copy } = Astro.props;
     margin-top: 12px;
     color: var(--mist-400);
     font-size: 0.8125rem;
+  }
+
+  .swipe {
+    display: none;
+  }
+
+  /* Phones: keep the panel legible and let it scroll sideways inside its frame. */
+  @media (max-width: 640px) {
+    .frame {
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: thin;
+    }
+
+    .frame :global(img) {
+      width: 640px;
+      max-width: none;
+    }
+
+    .swipe {
+      display: inline;
+    }
   }
 
   .notes {

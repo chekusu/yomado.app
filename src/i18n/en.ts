@@ -88,6 +88,7 @@ export default (r: ReleaseFacts): Copy => ({
     imageAlt:
       'The yomado control panel: two physical Studio Display cards and a virtual screen card named Codex at 1920 × 1080, each showing app icons.',
     caption: 'The panel, rendered by the app with example display data. Its interface is in Simplified Chinese.',
+    swipe: 'Swipe to see the whole panel.',
     testedTitle: 'Tested on Apple Silicon',
     tested: [
       'Native Apple Silicon build.',
