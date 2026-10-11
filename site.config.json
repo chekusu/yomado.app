@@ -1,7 +1,7 @@
 {
   "siteUrl": "https://yomado.app",
   "appRepository": "https://github.com/chekusu/yomado",
-  "siteRepository": "https://github.com/chekusu/yomado.dev",
+  "siteRepository": "https://github.com/chekusu/yomado.app",
   "release": {
     "version": "0.3.1",
     "build": "7",

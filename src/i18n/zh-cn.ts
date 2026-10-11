@@ -160,7 +160,7 @@ export default (r: ReleaseFacts): Copy => ({
       },
       {
         q: '它开源吗？',
-        aHtml: `开源，采用 MIT 许可证。应用与发布版本位于 <a href="${r.appRepository}">github.com/chekusu/yomado</a>，本网站源码位于 <a href="${r.siteRepository}">github.com/chekusu/yomado.dev</a>。`,
+        aHtml: `开源，采用 MIT 许可证。应用与发布版本位于 <a href="${r.appRepository}">github.com/chekusu/yomado</a>，本网站源码位于 <a href="${r.siteRepository}">github.com/chekusu/yomado.app</a>。`,
       },
     ],
   },

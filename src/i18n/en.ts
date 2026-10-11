@@ -175,7 +175,7 @@ export default (r: ReleaseFacts): Copy => ({
       },
       {
         q: 'Is it open source?',
-        aHtml: `Yes, under the MIT license. The app and its releases are at <a href="${r.appRepository}">github.com/chekusu/yomado</a>; this website is at <a href="${r.siteRepository}">github.com/chekusu/yomado.dev</a>.`,
+        aHtml: `Yes, under the MIT license. The app and its releases are at <a href="${r.appRepository}">github.com/chekusu/yomado</a>; this website is at <a href="${r.siteRepository}">github.com/chekusu/yomado.app</a>.`,
       },
     ],
   },

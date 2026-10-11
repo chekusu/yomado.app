@@ -1,4 +1,4 @@
-# yomado.dev
+# yomado.app
 
 The website for **yomado · 夜窗**, a native macOS virtual display for visual agents —
 live at **[yomado.app](https://yomado.app)**.
