@@ -4,10 +4,11 @@
 //   BASE_URL=https://host/path/ npm test  tests an already deployed copy
 //   SCREENSHOT_DIR=dir npm test           also writes desktop and phone screenshots to dir
 //
-// Covers both locales at desktop, tablet and phone widths: metadata, console errors, failed
-// requests, horizontal overflow, the download entry points, the concept film (autoplay, controls,
-// poster, fallback, reduced motion), the scroll story and finale, language switching, the details
-// page with checksum copy, the page without JavaScript, the header on phones with classic
+// Covers all three locales (English, Simplified Chinese, Japanese) at desktop, laptop, tablet and
+// phone widths: metadata, console errors, failed requests, horizontal overflow, the download entry
+// points, the concept film (autoplay, controls, poster, fallback, reduced motion), the scroll story
+// and finale, the language menu between every pair of locales on home and details pages, the
+// details page with checksum copy, the page without JavaScript, the header on phones with classic
 // scrollbars, 404, sitemap and robots.
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
@@ -21,23 +22,53 @@ const SITE = (process.env.SITE_URL || config.siteUrl).replace(/\/?$/, '/');
 const RELEASE = config.release;
 const SHOTS = process.env.SCREENSHOT_DIR;
 
+// `name` and `short` are how the language menu names each language; `ui` is how each locale says
+// the app's own interface language, which stays Simplified Chinese.
 const LOCALES = [
   {
     key: 'en',
     path: '',
     lang: 'en',
+    og: 'en_US',
+    name: 'English',
+    short: 'EN',
     title: /A screen for your agents/,
     caption: 'Concept demo. Running with physical displays switched off is not yet verified on real hardware.',
-    other: 'zh-cn/',
+    ui: 'Simplified Chinese',
   },
-  { key: 'zh-cn', path: 'zh-cn/', lang: 'zh-CN', title: /给 Agent\s*一块屏幕/, caption: '概念演示；实体屏关闭后的运行尚待实机验证。', other: '' },
+  {
+    key: 'zh-cn',
+    path: 'zh-cn/',
+    lang: 'zh-CN',
+    og: 'zh_CN',
+    name: '简体中文',
+    short: '中文',
+    title: /给 Agent\s*一块屏幕/,
+    caption: '概念演示；实体屏关闭后的运行尚待实机验证。',
+    ui: '简体中文',
+  },
+  {
+    key: 'ja',
+    path: 'ja/',
+    lang: 'ja',
+    og: 'ja_JP',
+    name: '日本語',
+    short: '日本語',
+    title: /エージェントに、\s*専用の画面を。/,
+    caption: 'コンセプト映像です。実際のディスプレイを消した状態での動作は、実機ではまだ検証していません。',
+    ui: '簡体字中国語',
+  },
 ];
+const ROUTES = ['', 'details/'];
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
+  { name: 'laptop', width: 945, height: 800 },
   { name: 'tablet', width: 834, height: 1112 },
   { name: 'mobile', width: 390, height: 844 },
   { name: 'small', width: 320, height: 640 },
 ];
+// hreflang alternates every page should list: one per locale plus x-default (English).
+const alternatesFor = (route) => [...LOCALES.map((l) => `${l.lang} ${SITE}${l.path}${route}`), `x-default ${SITE}${route}`].sort();
 
 let server;
 let base = process.env.BASE_URL;
@@ -159,8 +190,11 @@ for (const locale of LOCALES) {
     assert.ok((await page.getAttribute('meta[name=description]', 'content')).length > 60, 'description');
     assert.equal(await page.getAttribute('link[rel=canonical]', 'href'), SITE + locale.path);
     const alternates = await page.$$eval('link[rel=alternate][hreflang]', (els) => els.map((e) => `${e.hreflang} ${e.href}`));
-    assert.deepEqual(alternates.sort(), [`en ${SITE}`, `x-default ${SITE}`, `zh-CN ${SITE}zh-cn/`].sort());
+    assert.deepEqual(alternates.sort(), alternatesFor(''));
     assert.equal(await page.getAttribute('meta[property="og:url"]', 'content'), SITE + locale.path);
+    assert.equal(await page.getAttribute('meta[property="og:locale"]', 'content'), locale.og);
+    const ogAlternates = await page.$$eval('meta[property="og:locale:alternate"]', (els) => els.map((e) => e.content));
+    assert.deepEqual(ogAlternates.sort(), LOCALES.filter((l) => l !== locale).map((l) => l.og).sort());
     assert.equal(await page.getAttribute('meta[property="og:image"]', 'content'), `${SITE}og/${locale.key}.png`);
     assert.equal(await page.getAttribute('meta[name="twitter:card"]', 'content'), 'summary_large_image');
     const ld = JSON.parse(await page.locator('script[type="application/ld+json"]').innerText());
@@ -208,10 +242,12 @@ for (const locale of LOCALES) {
       assert.deepEqual(broken, []);
       assert.equal(await page.$$eval('img:not([alt])', (imgs) => imgs.length), 0);
       assert.deepEqual(errors, []);
-      if (SHOTS && (viewport.name === 'desktop' || viewport.name === 'mobile')) {
+      if (SHOTS) {
         await mkdir(SHOTS, { recursive: true });
         await page.screenshot({ path: join(SHOTS, `${locale.key}-${viewport.name}-fold.png`) });
-        await page.screenshot({ path: join(SHOTS, `${locale.key}-${viewport.name}-full.png`), fullPage: true });
+        if (viewport.name === 'desktop' || viewport.name === 'mobile') {
+          await page.screenshot({ path: join(SHOTS, `${locale.key}-${viewport.name}-full.png`), fullPage: true });
+        }
       }
       await context.close();
     });
@@ -344,11 +380,35 @@ for (const locale of LOCALES) {
     }
   });
 
-  await check(`${locale.lang}: language switch keeps the place`, async () => {
-    const { context, page } = await open(`${locale.path}#download`);
-    await page.locator('header [data-lang-switch]').click();
-    await page.waitForURL((url) => url.href === `${base}${locale.other}#download`);
-    assert.equal(await page.getAttribute('html', 'lang'), locale.lang === 'en' ? 'zh-CN' : 'en');
+  await check(`${locale.lang}: the language menu reaches every language, page and place`, async () => {
+    for (const route of ROUTES) {
+      const hash = route ? '#verify' : '#download';
+      for (const target of LOCALES.filter((l) => l !== locale)) {
+        const { context, page, errors } = await open(`${locale.path}${route}${hash}`);
+        const menu = page.locator('header [data-lang-menu]');
+        assert.ok((await menu.locator('summary').innerText()).includes(locale.short), 'the bar shows the current language');
+        await menu.locator('summary').click();
+        const items = await menu.locator('a[data-lang-switch]').evaluateAll((els) => els.map((e) => [e.textContent.trim(), e.getAttribute('hreflang'), e.getAttribute('aria-current')]));
+        assert.deepEqual(items, LOCALES.map((l) => [l.name, l.lang, l === locale ? 'page' : null]), 'all three, by their own names, the current one marked');
+        const footer = await page.$$eval('footer [data-lang-switch]', (els) => els.map((e) => [e.textContent.trim(), e.getAttribute('aria-current')]));
+        assert.deepEqual(footer, LOCALES.map((l) => [l.name, l === locale ? 'page' : null]), 'the footer lists all three too');
+        await menu.locator(`a[hreflang="${target.lang}"]`).click();
+        await page.waitForURL((url) => url.href === `${base}${target.path}${route}${hash}`);
+        assert.equal(await page.getAttribute('html', 'lang'), target.lang);
+        assert.deepEqual(errors, []);
+        await context.close();
+      }
+    }
+    // Escape and a click elsewhere close the menu; Escape gives focus back to it.
+    const { context, page } = await open(locale.path);
+    const menu = page.locator('header [data-lang-menu]');
+    await menu.locator('summary').click();
+    await page.keyboard.press('Escape');
+    assert.equal(await menu.evaluate((d) => d.open), false, 'Escape closes');
+    assert.equal(await page.evaluate(() => document.activeElement?.tagName), 'SUMMARY');
+    await menu.locator('summary').click();
+    await page.locator('h1').click();
+    assert.equal(await menu.evaluate((d) => d.open), false, 'a click elsewhere closes');
     await context.close();
   });
 
@@ -357,8 +417,9 @@ for (const locale of LOCALES) {
     const { context, page, errors } = await open(path);
     assert.equal(await page.getAttribute('link[rel=canonical]', 'href'), SITE + path);
     const alternates = await page.$$eval('link[rel=alternate][hreflang]', (els) => els.map((e) => `${e.hreflang} ${e.href}`));
-    assert.deepEqual(alternates.sort(), [`en ${SITE}details/`, `x-default ${SITE}details/`, `zh-CN ${SITE}zh-cn/details/`].sort());
+    assert.deepEqual(alternates.sort(), alternatesFor('details/'));
     assert.ok((await page.locator('h1').innerText()).includes(RELEASE.version));
+    assert.ok((await page.locator('.specs').innerText()).includes(locale.ui), 'says the app interface is Simplified Chinese');
     const downloads = await page.$$eval('a[data-download]', (els) => els.map((e) => e.href));
     assert.deepEqual(downloads, [RELEASE.url, RELEASE.url]);
     assert.equal((await page.locator('#sha256').innerText()).trim(), RELEASE.sha256);
@@ -367,8 +428,6 @@ for (const locale of LOCALES) {
     assert.equal(await page.locator(`a[href="${RELEASE.checksumsUrl}"]`).count(), 1);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     assert.ok(overflow <= 0, `horizontal overflow ${overflow}px`);
-    await page.locator('header [data-lang-switch]').click();
-    await page.waitForURL((url) => url.href === `${base}${locale.other}details/`);
     assert.deepEqual(errors, []);
     await context.close();
 
@@ -423,7 +482,8 @@ for (const locale of LOCALES) {
         const header = document.querySelector('.site-header');
         const visible = (el) => el && el.offsetParent !== null;
         const height = (el) => el.getBoundingClientRect().height;
-        const items = [header.querySelector('.home'), ...header.querySelectorAll('nav a')].filter(visible);
+        // What sits in the bar itself; the language menu's own links stay out until it opens.
+        const items = [header.querySelector('.home'), ...header.querySelectorAll('nav > a, nav > details > summary')].filter(visible);
         return {
           tallest: Math.max(...items.map(height)),
           overflow: Math.max(header.scrollWidth - header.clientWidth, document.documentElement.scrollWidth - document.documentElement.clientWidth),
@@ -431,6 +491,12 @@ for (const locale of LOCALES) {
       });
       assert.ok(m.tallest <= 36, `@${width}: a header item wraps (${Math.round(m.tallest)}px tall)`);
       assert.ok(m.overflow <= 0, `@${width}: ${m.overflow}px overflow`);
+      await page.locator('header [data-lang-menu] summary').click();
+      const menu = await page.locator('header [data-lang-menu] .menu').evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return { left: r.left, right: r.right, room: document.documentElement.clientWidth };
+      });
+      assert.ok(menu.left >= 0 && menu.right <= menu.room, `@${width}: the open menu leaves the screen (${Math.round(menu.left)}–${Math.round(menu.right)})`);
       await context.close();
     }
   });
@@ -442,9 +508,16 @@ await check('404 page, sitemap and robots.txt', async () => {
   assert.match(await page.locator('h1').innerText(), /dark/);
   assert.equal(await page.getAttribute('meta[name=robots]', 'content'), 'noindex, nofollow');
   const sitemap = await (await page.request.get(`${base}sitemap.xml`)).text();
-  for (const loc of [SITE, `${SITE}zh-cn/`, `${SITE}details/`, `${SITE}zh-cn/details/`]) {
+  for (const loc of LOCALES.flatMap((l) => ROUTES.map((r) => `${SITE}${l.path}${r}`))) {
     assert.ok(sitemap.includes(`<loc>${loc}</loc>`), `sitemap ${loc}`);
   }
+  for (const l of LOCALES) assert.ok(sitemap.includes(`hreflang="${l.lang}"`), `sitemap hreflang ${l.lang}`);
+  // An unknown hash is dropped on a language switch rather than carried to the other page.
+  const stray = await open('#no-such-section');
+  await stray.page.locator('header [data-lang-menu] summary').click();
+  await stray.page.locator('header [data-lang-menu] a[hreflang="ja"]').click();
+  await stray.page.waitForURL((url) => url.href === `${base}ja/`);
+  await stray.context.close();
   const robots = await (await page.request.get(`${base}robots.txt`)).text();
   assert.match(robots, /^User-agent: \*/);
   await context.close();

@@ -22,6 +22,10 @@ const dist = join(root, process.env.SITE_OUT_DIR ?? 'dist');
 const problems = [];
 const fail = (where, message) => problems.push(`${where}: ${message}`);
 
+// Each locale's root below the site base (src/lib/site.ts), and its Open Graph card.
+const LOCALES = { en: '', 'zh-cn': 'zh-cn/', ja: 'ja/' };
+const ROUTES = ['', 'details/'];
+
 // Patterns that must never be published: local paths, private hosts, credentials.
 // VERIFY_DENY adds comma-separated regular expressions for a one-off run.
 const PRIVATE = [
@@ -84,10 +88,18 @@ for (const file of pages) {
   }
 }
 
-for (const page of ['index.html', 'zh-cn/index.html']) {
+for (const [locale, prefix] of Object.entries(LOCALES)) {
+  const page = `${prefix}index.html`;
   const html = await readFile(join(dist, page), 'utf8').catch(() => '');
   const downloads = (html.match(/data-download="[a-z]+"/g) ?? []).length;
   if (downloads !== 3) fail(page, `expected download links in header, hero and finale, found ${downloads}`);
+  if (!existsSync(join(dist, 'og', `${locale}.png`))) fail(`og/${locale}.png`, 'missing');
+  for (const route of ROUTES) {
+    const other = await readFile(join(dist, prefix, route, 'index.html'), 'utf8').catch(() => '');
+    for (const [l, p] of Object.entries(LOCALES)) {
+      if (!other.includes(`href="${base}${p}${route}"`)) fail(`${prefix}${route}index.html`, `no link to the ${l} version`);
+    }
+  }
 }
 
 // The film is lazy, but it should still be light: every video under 2.5 MB, posters under 200 kB.
@@ -99,7 +111,7 @@ for (const [file, limit] of Object.entries(MEDIA)) {
 }
 
 const sitemap = await readFile(join(dist, 'sitemap.xml'), 'utf8').catch(() => '');
-for (const loc of [site, `${site}zh-cn/`, `${site}details/`, `${site}zh-cn/details/`]) {
+for (const loc of Object.values(LOCALES).flatMap((p) => ROUTES.map((r) => `${site}${p}${r}`))) {
   if (!sitemap.includes(`<loc>${loc}</loc>`)) fail('sitemap.xml', `missing ${loc}`);
 }
 

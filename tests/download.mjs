@@ -1,11 +1,16 @@
-// Download acceptance test: click the page's primary download button in a real browser and
-// check that the file is the configured app archive, not a source zip or a placeholder.
+// Download acceptance test: click the primary download button on every locale's home page in a
+// real browser and check that the file is the configured app archive, not a source zip or a
+// placeholder.
 //
 //   BASE_URL=https://yomado.app/ npm run test:download
 //   npm run test:download                  (builds nothing; serves dist/ like npm test)
 //
 // Verifies the SHA-256 and size, that the archive contains Yomado.app with the expected bundle
-// identifier and version, and that the app executable is an arm64 Mach-O binary.
+// identifier and version, and that the app executable is an arm64 Mach-O binary. The English page's
+// archive is inspected in full; the Chinese and Japanese pages must deliver the identical file.
+
+// Each locale's home below the site root (src/lib/site.ts).
+const PAGES = ['', 'zh-cn/', 'ja/'];
 import { chromium } from 'playwright';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
@@ -76,16 +81,20 @@ function plistString(xml, key) {
 const browser = await chromium.launch();
 const context = await browser.newContext({ acceptDownloads: true });
 const page = await context.newPage();
-await page.goto(base, { waitUntil: 'domcontentloaded' });
+const fetched = [];
+for (const path of PAGES) {
+  await page.goto(base + path, { waitUntil: 'domcontentloaded' });
+  const button = page.locator('a[data-download="hero"]');
+  assert.equal(await button.getAttribute('href'), RELEASE.url, `/${path}: hero button points at the configured release`);
+  const [download] = await Promise.all([page.waitForEvent('download', { timeout: 120_000 }), button.click()]);
+  const failure = await download.failure();
+  assert.equal(failure, null, `/${path}: download failed: ${failure}`);
+  fetched.push({ path, download, file: await readFile(await download.path()) });
+}
+const digest = (buf) => createHash('sha256').update(buf).digest('hex');
+const [{ download, file }] = fetched;
 
-const button = page.locator('a[data-download="hero"]');
-assert.equal(await button.getAttribute('href'), RELEASE.url, 'hero button points at the configured release');
-const [download] = await Promise.all([page.waitForEvent('download', { timeout: 120_000 }), button.click()]);
-const failure = await download.failure();
-assert.equal(failure, null, `download failed: ${failure}`);
-const file = await readFile(await download.path());
-
-const sha256 = createHash('sha256').update(file).digest('hex');
+const sha256 = digest(file);
 const zip = readZip(file);
 const plistEntry = zip.get('Yomado.app/Contents/Info.plist');
 assert.ok(plistEntry, 'archive contains Yomado.app/Contents/Info.plist');
@@ -107,6 +116,7 @@ const report = {
   minimumSystemVersion: plistString(plist, 'LSMinimumSystemVersion'),
   executable: arm64 ? 'Mach-O 64-bit arm64' : 'unexpected',
   entries: zip.size,
+  pages: fetched.map((f) => ({ page: base + f.path, suggestedFilename: f.download.suggestedFilename(), bytes: f.file.length, sha256: digest(f.file) })),
 };
 
 await browser.close();
@@ -121,4 +131,8 @@ assert.equal(report.version, RELEASE.version, 'version');
 assert.equal(report.build, RELEASE.build, 'build');
 assert.equal(report.minimumSystemVersion, RELEASE.minimumSystemVersion, 'minimum macOS');
 assert.ok(arm64, 'arm64 executable');
-console.log('download: ok — the primary button delivers the configured app archive');
+for (const f of report.pages) {
+  assert.equal(f.suggestedFilename, RELEASE.fileName, `${f.page} file name`);
+  assert.equal(f.sha256, RELEASE.sha256, `${f.page} SHA-256`);
+}
+console.log(`download: ok — the primary button on ${report.pages.length} pages delivers the configured app archive`);
