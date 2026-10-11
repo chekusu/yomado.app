@@ -1,14 +1,29 @@
-// Small progressive enhancements. The page works fully without them.
+// Small progressive enhancements shared by every page. The pages work without them.
 
-// Replay the hero illustration.
-for (const button of document.querySelectorAll<HTMLButtonElement>('[data-replay]')) {
-  button.addEventListener('click', () => {
-    const scene = document.getElementById(button.dataset.replay ?? '');
-    if (!scene) return;
-    scene.classList.remove('play');
-    void scene.getBoundingClientRect();
-    scene.classList.add('play');
-  });
+// The header turns to night over night sections.
+const header = document.querySelector<HTMLElement>('[data-header]');
+const nights = [...document.querySelectorAll<HTMLElement>('[data-tone="night"]')];
+if (header && nights.length) {
+  let queued = false;
+  const update = () => {
+    queued = false;
+    const y = header.offsetHeight / 2;
+    // data-tone-from: how far down a section (0–1) it is dark enough to count as night.
+    const night = nights.some((section) => {
+      const r = section.getBoundingClientRect();
+      const from = r.top + r.height * (parseFloat(section.dataset.toneFrom ?? '0') || 0);
+      return from <= y && r.bottom > y;
+    });
+    header.dataset.tone = night ? 'night' : 'day';
+  };
+  const queue = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(update);
+  };
+  addEventListener('scroll', queue, { passive: true });
+  addEventListener('resize', queue);
+  update();
 }
 
 // Copy the release checksum; if the clipboard is unavailable, select it instead.

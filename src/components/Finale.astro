@@ -1,0 +1,124 @@
+---
+// Act 4: night falls, the two lit screens draw together into the night-window mark, and the
+// download waits underneath. src/scripts/story.ts plays the scene once it is in view.
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import Scene from './Scene.astro';
+import mark from '../assets/night-window.png';
+import { LOCALE_PATH, RELEASE, SITE, withBase, type Locale } from '../lib/site';
+import { phrased } from '../lib/text';
+import type { Copy } from '../i18n';
+
+interface Props {
+  locale: Locale;
+  copy: Copy;
+}
+
+const { locale, copy } = Astro.props;
+---
+
+<div class="dusk" aria-hidden="true" data-tone="night" data-tone-from="0.55"></div>
+<section class="finale night" id="download" aria-labelledby="finale-title" data-tone="night">
+  <div class="stage" data-finale>
+    <Scene id="finale-scene" />
+    <Image class="still" src={mark} alt="" width={160} height={160} densities={[1, 2]} loading="lazy" />
+  </div>
+  <div class="copy wrap">
+    <h2 id="finale-title" class="headline-2" set:html={phrased(copy.finale.title)} />
+    <div class="actions">
+      <a class="btn btn-ivory" href={RELEASE.url} data-download="finale"><Icon name="download" size={18} />{copy.finale.cta}</a>
+    </div>
+    <p class="fine">{copy.finale.meta}</p>
+    <p class="links">
+      <a class="more" href={withBase(`${LOCALE_PATH[locale]}details/`)}>{copy.finale.details}</a>
+      <a class="more" href={SITE.appRepository}>{copy.finale.source}</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  /* The quiet turn from day to night between the panel and the finale. */
+  .dusk {
+    height: clamp(160px, 34vh, 360px);
+    background: linear-gradient(
+      180deg,
+      var(--paper) 0%,
+      #e7e5f1 22%,
+      #a9acd4 46%,
+      #4f5ca3 68%,
+      #16224f 88%,
+      var(--night-950) 100%
+    );
+  }
+
+  .finale {
+    position: relative;
+    padding-bottom: clamp(72px, 12vh, 140px);
+    background:
+      radial-gradient(70% 50% at 50% 30%, rgb(22 38 94 / 0.85), rgb(22 38 94 / 0) 70%),
+      var(--night-950);
+  }
+
+  .stage {
+    position: relative;
+    width: min(100%, 1100px);
+    height: clamp(300px, 56vh, 560px);
+    margin: 0 auto;
+  }
+
+  .stage :global(.scene) {
+    position: absolute;
+    inset: 0;
+  }
+
+  .still {
+    display: none;
+  }
+
+  .copy {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 14px;
+    margin-top: clamp(-40px, -3vh, -12px);
+    text-align: center;
+  }
+
+  .actions {
+    margin-top: 12px;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 28px;
+    margin: 6px 0 0;
+  }
+
+  /* Without JavaScript: the mark itself. */
+  :global(html:not(.js)) .stage {
+    display: grid;
+    place-items: center;
+    height: auto;
+    padding-block: 72px 48px;
+  }
+
+  :global(html:not(.js)) .stage :global(.scene) {
+    display: none;
+  }
+
+  :global(html:not(.js)) .still {
+    display: block;
+    width: 160px;
+    height: 160px;
+    border-radius: 22%;
+    box-shadow: 0 0 80px rgb(252 248 225 / 0.25);
+  }
+
+  @media (max-width: 640px) {
+    .stage {
+      height: min(118vw, 520px);
+    }
+  }
+</style>

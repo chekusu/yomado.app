@@ -8,3 +8,6 @@ test-output/
 !.env.example
 .dev.vars
 .DS_Store
+
+# Film render scratch
+.film-build/

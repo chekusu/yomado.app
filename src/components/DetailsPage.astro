@@ -1,0 +1,255 @@
+---
+// The secondary destination: everything about the download that the home page leaves out.
+import '@fontsource/fragment-mono/400.css';
+import Base from '../layouts/Base.astro';
+import Icon from './Icon.astro';
+import SiteFooter from './SiteFooter.astro';
+import SiteHeader from './SiteHeader.astro';
+import { copyFor } from '../i18n';
+import { LOCALE_PATH, RELEASE, SITE, withBase, type Locale } from '../lib/site';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = copyFor(locale);
+const d = copy.details;
+const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
+const otherPath = `${LOCALE_PATH[other]}details/`;
+---
+
+<Base
+  locale={locale}
+  title={d.meta.title}
+  description={d.meta.description}
+  path={`${LOCALE_PATH[locale]}details/`}
+  route="details/"
+  ogAlt={copy.meta.ogAlt}
+>
+  <a class="skip" href="#main">{copy.skip}</a>
+  <SiteHeader locale={locale} copy={copy} otherPath={otherPath} />
+  <main id="main" class="details">
+    <header class="head wrap">
+      <p class="eyebrow">{d.eyebrow}</p>
+      <h1 class="headline">{d.title}</h1>
+      <p class="sub">{d.lede}</p>
+      <div class="actions">
+        <a class="btn btn-night" href={RELEASE.url} data-download="details"><Icon name="download" size={18} />{d.cta}</a>
+      </div>
+      <p class="fine">{d.ctaMeta}</p>
+    </header>
+
+    <div class="rows wrap">
+      <section class="row" aria-labelledby="specs">
+        <h2 id="specs">{d.specsTitle}</h2>
+        <dl class="specs">
+          {
+            d.specs.map((s) => (
+              <div>
+                <dt>{s.term}</dt>
+                <dd>{s.value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </section>
+
+      <section class="row" aria-labelledby="install">
+        <h2 id="install">{d.installTitle}</h2>
+        <ol class="steps">{d.installHtml.map((step) => <li set:html={step} />)}</ol>
+      </section>
+
+      <section class="row" id="verify" aria-labelledby="verify-title">
+        <h2 id="verify-title">{d.verifyTitle}</h2>
+        <div class="verify">
+          <p>{d.verifyText}</p>
+          <div class="hash">
+            <span class="hash-label">{d.hashLabel}</span>
+            <code id="sha256">{RELEASE.sha256}</code>
+            <button type="button" class="copy" data-copy="#sha256" data-copied={d.copied} data-fallback={d.copyFallback}>{d.copy}</button>
+            <span class="visually-hidden" data-copy-status aria-live="polite"></span>
+          </div>
+          <pre><code>shasum -a 256 {RELEASE.fileName}</code></pre>
+          <p><a class="more" href={RELEASE.checksumsUrl}>{d.links.checksums}</a></p>
+        </div>
+      </section>
+
+      <section class="row" aria-labelledby="know">
+        <h2 id="know">{d.knowTitle}</h2>
+        <ul class="know">{d.know.map((item) => <li>{item}</li>)}</ul>
+      </section>
+
+      <nav class="row links" aria-label={d.eyebrow}>
+        <a class="more" href={RELEASE.notesUrl}>{d.links.notes}</a>
+        <a class="more" href={SITE.appRepository}>{d.links.source}</a>
+        <a class="more" href={SITE.siteRepository}>{d.links.site}</a>
+        <a class="more" href={withBase(LOCALE_PATH[locale])}>{d.back}</a>
+      </nav>
+    </div>
+  </main>
+  <SiteFooter locale={locale} copy={copy} otherPath={otherPath} />
+</Base>
+
+<script>
+  import '../scripts/page';
+</script>
+
+<style>
+  .details {
+    padding-bottom: clamp(64px, 10vh, 120px);
+  }
+
+  .head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 12px;
+    padding-block: clamp(48px, 9vh, 104px) clamp(40px, 7vh, 80px);
+    text-align: center;
+  }
+
+  .head .sub {
+    max-width: 34ch;
+  }
+
+  :lang(zh-CN) .head .sub {
+    max-width: 24em;
+  }
+
+  .actions {
+    margin-top: 10px;
+  }
+
+  .rows {
+    max-width: 980px;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.6fr);
+    gap: 12px 40px;
+    padding-block: 28px;
+    border-top: 1px solid var(--rule);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.3125rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .specs {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+  }
+
+  .specs div {
+    display: grid;
+    grid-template-columns: 7.5em 1fr;
+    gap: 16px;
+  }
+
+  dt {
+    color: var(--ink-2);
+  }
+
+  dd {
+    margin: 0;
+  }
+
+  .steps,
+  .know {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding-left: 1.3em;
+  }
+
+  .steps li::marker {
+    color: var(--ink-2);
+    font-weight: 600;
+  }
+
+  .know li::marker {
+    color: var(--ink-3);
+  }
+
+  .verify {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .verify p {
+    margin: 0;
+  }
+
+  .hash {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--paper);
+  }
+
+  .hash-label {
+    color: var(--ink-2);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  code,
+  pre {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+  }
+
+  .hash code {
+    flex: 1 1 18em;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    letter-spacing: 0.01em;
+  }
+
+  .copy {
+    min-height: 32px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--night-800);
+    color: #fff;
+    font: 600 0.8125rem var(--font-sans);
+    cursor: pointer;
+  }
+
+  pre {
+    margin: 0;
+    padding: 12px 16px;
+    overflow-x: auto;
+    border-radius: 12px;
+    background: #1d1d1f;
+    color: #f5f5f7;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 28px;
+  }
+
+  @media (max-width: 720px) {
+    .row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .specs div {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2px;
+    }
+  }
+</style>

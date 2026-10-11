@@ -1,5 +1,5 @@
 ---
-// The night-window app icon with the lowercase wordmark.
+// The night-window app icon with the lowercase wordmark and 夜窗.
 import { Image } from 'astro:assets';
 import icon from '../assets/night-window.png';
 
@@ -8,7 +8,7 @@ interface Props {
   kanji?: boolean;
 }
 
-const { size = 34, kanji = true } = Astro.props;
+const { size = 28, kanji = true } = Astro.props;
 ---
 
 <span class="brand-lockup" style={`--icon:${size}px`}>
@@ -21,7 +21,8 @@ const { size = 34, kanji = true } = Astro.props;
   .brand-lockup {
     display: inline-flex;
     align-items: center;
-    gap: 11px;
+    gap: calc(var(--icon) * 0.32);
+    color: inherit;
     white-space: nowrap;
   }
 
@@ -32,25 +33,21 @@ const { size = 34, kanji = true } = Astro.props;
   .brand-icon {
     width: var(--icon);
     height: var(--icon);
-    filter: drop-shadow(0 2px 10px rgb(252 248 225 / 0.14));
+    border-radius: 22%;
   }
 
   .wordmark {
-    font: 400 calc(var(--icon) * 0.7) / 1 var(--font-display);
-    letter-spacing: -0.01em;
-    transform: translateY(-0.04em);
+    font-size: calc(var(--icon) * 0.74);
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    line-height: 1;
   }
 
   .kanji {
-    padding-left: 10px;
-    border-left: 1px solid rgb(252 248 225 / 0.22);
-    color: var(--mist-300);
-    font: 400 calc(var(--icon) * 0.42) / 1 var(--font-display);
-    letter-spacing: 0.14em;
-  }
-
-  :global(.lit) .kanji {
-    border-color: rgb(12 25 64 / 0.2);
-    color: var(--ink-faint);
+    color: var(--ink-2);
+    font-size: calc(var(--icon) * 0.44);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    line-height: 1;
   }
 </style>
