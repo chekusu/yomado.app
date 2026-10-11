@@ -218,6 +218,36 @@ for (const locale of LOCALES) {
   });
 }
 
+// Classic scrollbars (desktop Chrome on Linux and Windows) take ~15 px from phone-width layouts.
+const scrollbars = await chromium.launch({ ignoreDefaultArgs: ['--hide-scrollbars'] });
+for (const locale of LOCALES) {
+  await check(`${locale.lang}: header stays on one line with a classic scrollbar at 320–430 px`, async () => {
+    for (const width of [320, 375, 390, 430]) {
+      const context = await scrollbars.newContext({ viewport: { width, height: 844 } });
+      const page = await context.newPage();
+      await page.goto(base + locale.path, { waitUntil: 'networkidle' });
+      await page.evaluate(() => document.fonts.ready);
+      const m = await page.evaluate(() => {
+        const header = document.querySelector('.site-header');
+        const visible = (el) => el && el.offsetParent !== null;
+        const height = (el) => el.getBoundingClientRect().height;
+        const items = [header.querySelector('.home'), ...header.querySelectorAll('nav a')].filter(visible);
+        const kanji = header.querySelector('.kanji');
+        return {
+          tallest: Math.max(...items.map(height)),
+          kanji: visible(kanji) ? height(kanji) : 0,
+          overflow: Math.max(header.scrollWidth - header.clientWidth, document.documentElement.scrollWidth - document.documentElement.clientWidth),
+        };
+      });
+      assert.ok(m.tallest <= 48, `@${width}: a header item wraps (${Math.round(m.tallest)}px tall)`);
+      assert.ok(m.kanji <= 24, `@${width}: 夜窗 wraps (${Math.round(m.kanji)}px tall)`);
+      assert.ok(m.overflow <= 0, `@${width}: ${m.overflow}px overflow`);
+      await context.close();
+    }
+  });
+}
+await scrollbars.close();
+
 await check('404 page, sitemap and robots.txt', async () => {
   const { context, page } = await open('does-not-exist/');
   assert.match(await page.locator('h1').innerText(), /dark/);

@@ -22,6 +22,11 @@ const { size = 34, kanji = true } = Astro.props;
     display: inline-flex;
     align-items: center;
     gap: 11px;
+    white-space: nowrap;
+  }
+
+  .brand-lockup > * {
+    flex-shrink: 0;
   }
 
   .brand-icon {

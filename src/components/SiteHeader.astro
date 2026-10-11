@@ -44,6 +44,7 @@ const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
   }
 
   .home {
+    flex: none;
     color: var(--ivory-100);
     text-decoration: none;
     border-radius: 10px;
@@ -51,8 +52,10 @@ const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
 
   nav {
     display: flex;
+    flex: none;
     align-items: center;
     gap: clamp(6px, 1.6vw, 26px);
+    white-space: nowrap;
   }
 
   .nav-link {
@@ -79,9 +82,32 @@ const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
     }
   }
 
-  @media (max-width: 380px) {
+  /* Phones: one line always. 夜窗 stays in the footer; spacing tightens on the narrowest screens. */
+  @media (max-width: 420px) {
+    .site-header {
+      gap: 12px;
+    }
+
     .site-header :global(.kanji) {
       display: none;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .site-header :global(.brand-lockup) {
+      --icon: 30px !important;
+    }
+
+    nav {
+      gap: 4px;
+    }
+
+    .lang {
+      padding-inline: 2px;
+    }
+
+    nav .btn-small {
+      padding-inline: 12px;
     }
   }
 </style>
