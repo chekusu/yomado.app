@@ -1,11 +1,7 @@
 ---
-import '@fontsource/spectral/300.css';
-import '@fontsource/spectral/300-italic.css';
-import '@fontsource/spectral/400.css';
-import '@fontsource-variable/schibsted-grotesk';
-import '@fontsource/fragment-mono/400.css';
+// Macs render the system font (SF Pro); Inter stands in elsewhere and only downloads there.
+import '@fontsource-variable/inter/opsz.css';
 import '../styles/global.css';
-import displayFont from '@fontsource/spectral/files/spectral-latin-300-normal.woff2?url';
 import { LOCALES, LOCALE_PATH, LOCALE_TAG, RELEASE, SITE, canonical, withBase, type Locale } from '../lib/site';
 
 interface Props {
@@ -17,10 +13,12 @@ interface Props {
   ogAlt: string;
   /** Pages outside the locale set (404) skip hreflang alternates and structured data. */
   localized?: boolean;
+  /** The page's path below each locale's root, e.g. '' for home or 'details/'. */
+  route?: string;
   noindex?: boolean;
 }
 
-const { locale, title, description, path, ogAlt, localized = true } = Astro.props;
+const { locale, title, description, path, ogAlt, localized = true, route = '' } = Astro.props;
 const noindex = Astro.props.noindex || process.env.SITE_NOINDEX === '1';
 const url = canonical(path);
 const ogImage = canonical(`og/${locale}.png`);
@@ -56,16 +54,16 @@ const structuredData = {
     <link rel="canonical" href={url} />
     {
       localized &&
-        LOCALES.map((l) => <link rel="alternate" hreflang={LOCALE_TAG[l]} href={canonical(LOCALE_PATH[l])} />)
+        LOCALES.map((l) => <link rel="alternate" hreflang={LOCALE_TAG[l]} href={canonical(LOCALE_PATH[l] + route)} />)
     }
-    {localized && <link rel="alternate" hreflang="x-default" href={canonical()} />}
+    {localized && <link rel="alternate" hreflang="x-default" href={canonical(route)} />}
 
-    <meta name="theme-color" content="#0a1434" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
     <link rel="icon" href={withBase('favicon.svg')} type="image/svg+xml" />
     <link rel="icon" href={withBase('favicon-32.png')} sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href={withBase('apple-touch-icon.png')} />
-    <link rel="preload" href={displayFont} as="font" type="font/woff2" crossorigin />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="yomado" />
@@ -83,6 +81,7 @@ const structuredData = {
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content={ogAlt} />
     {localized && <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />}
+    <slot name="head" />
   </head>
   <body>
     <slot />

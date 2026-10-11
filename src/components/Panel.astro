@@ -1,0 +1,127 @@
+---
+// The real control panel, as rendered by the app with example display data.
+import { Picture } from 'astro:assets';
+import panel from '../assets/control-panel.png';
+import { phrased } from '../lib/text';
+import type { Copy } from '../i18n';
+
+interface Props {
+  copy: Copy;
+}
+
+const { copy } = Astro.props;
+---
+
+<section class="panel" aria-labelledby="panel-title">
+  <div class="copy wrap">
+    <h2 id="panel-title" class="headline-2" set:html={phrased(copy.panel.title)} />
+    <p class="sub">{copy.panel.text}</p>
+  </div>
+  <figure class="figure">
+    <div class="scroller" tabindex="0" role="region" aria-label={copy.panel.title.replaceAll('|', '')}>
+      <Picture
+        src={panel}
+        formats={['avif', 'webp']}
+        widths={[760, 1120, 1600, 2000]}
+        sizes="(max-width: 640px) 760px, min(1180px, 100vw - 40px)"
+        alt={copy.panel.imageAlt}
+        loading="lazy"
+        decoding="async"
+        class="shot"
+      />
+    </div>
+    <figcaption class="fine">{copy.panel.caption}</figcaption>
+  </figure>
+</section>
+
+<style>
+  .panel {
+    padding-block: clamp(80px, 14vh, 160px) clamp(64px, 10vh, 120px);
+    background: var(--paper);
+  }
+
+  .copy {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    margin-bottom: clamp(32px, 6vh, 64px);
+    text-align: center;
+  }
+
+  .copy .sub {
+    max-width: 30ch;
+  }
+
+  :lang(zh-CN) .copy .sub {
+    max-width: 22em;
+  }
+
+  .figure {
+    width: min(100% - 2 * var(--gutter), 1180px);
+    margin: 0 auto;
+  }
+
+  .scroller {
+    overflow: hidden;
+    border-radius: clamp(14px, 1.8vw, 24px);
+    background: #f7f7f7;
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.06),
+      0 30px 70px -30px rgb(20 30 60 / 0.35);
+  }
+
+  .scroller :global(img) {
+    width: 100%;
+    height: auto;
+  }
+
+  .fine {
+    margin-top: 16px;
+    text-align: center;
+  }
+
+  /* The panel settles into place as it scrolls in, where the browser can tie motion to scroll. */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .scroller {
+        animation: settle linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 45%;
+      }
+    }
+  }
+
+  @keyframes settle {
+    from {
+      opacity: 0.35;
+      transform: translateY(48px) scale(0.94);
+    }
+  }
+
+  /* Phones: keep the panel legible and let it scroll sideways. */
+  @media (max-width: 640px) {
+    .figure {
+      width: 100%;
+    }
+
+    .scroller {
+      overflow-x: auto;
+      margin-inline: var(--gutter);
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+    }
+
+    .scroller::-webkit-scrollbar {
+      display: none;
+    }
+
+    .scroller :global(img) {
+      width: 760px;
+      max-width: none;
+    }
+
+    .fine {
+      padding-inline: var(--gutter);
+    }
+  }
+</style>

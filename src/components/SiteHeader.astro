@@ -1,113 +1,160 @@
 ---
 import Brand from './Brand.astro';
-import { LOCALE_PATH, LOCALE_TAG, RELEASE, SITE, withBase, type Locale } from '../lib/site';
+import { LOCALE_PATH, LOCALE_TAG, RELEASE, withBase, type Locale } from '../lib/site';
 import type { Copy } from '../i18n';
 
 interface Props {
   locale: Locale;
   copy: Copy;
+  /** Site-relative path of the same page in the other language. */
+  otherPath?: string;
 }
 
 const { locale, copy } = Astro.props;
 const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
+const otherPath = Astro.props.otherPath ?? LOCALE_PATH[other];
+const onDetails = Astro.url.pathname.endsWith('/details/');
 ---
 
-<header class="site-header wrap">
-  <a class="home" href={withBase(LOCALE_PATH[locale])} aria-label={copy.nav.home}>
-    <Brand />
-  </a>
-  <nav aria-label={copy.nav.label}>
-    <a class="nav-link wide" href="#how">{copy.nav.how}</a>
-    <a class="nav-link wide" href="#faq">{copy.nav.faq}</a>
-    <a class="nav-link wide" href={SITE.appRepository}>{copy.nav.github}</a>
-    <a
-      class="nav-link lang"
-      href={withBase(LOCALE_PATH[other])}
-      hreflang={LOCALE_TAG[other]}
-      lang={LOCALE_TAG[other]}
-      aria-label={copy.nav.switchLabel}
-      data-lang-switch
-    >
-      {copy.nav.switchText}
+<header class="site-header" data-header>
+  <div class="bar wrap">
+    <a class="home" href={withBase(LOCALE_PATH[locale])} aria-label={copy.nav.home}>
+      <Brand size={26} />
     </a>
-    <a class="btn btn-lit btn-small" href={RELEASE.url} data-download="header">{copy.nav.download}</a>
-  </nav>
+    <nav aria-label={copy.nav.label}>
+      <a class="nav-link details" href={withBase(`${LOCALE_PATH[locale]}details/`)} aria-current={onDetails ? 'page' : undefined}>
+        {copy.nav.details}
+      </a>
+      <a
+        class="nav-link lang"
+        href={withBase(otherPath)}
+        hreflang={LOCALE_TAG[other]}
+        lang={LOCALE_TAG[other]}
+        aria-label={copy.nav.switchLabel}
+        data-lang-switch
+      >
+        {copy.nav.switchText}
+      </a>
+      <a class="get" href={RELEASE.url} data-download="header">{copy.nav.download}</a>
+    </nav>
+  </div>
 </header>
 
 <style>
   .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    height: var(--header);
+    background: rgb(255 255 255 / 0.78);
+    border-bottom: 1px solid rgb(0 0 0 / 0.08);
+    color: var(--ink);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    transition:
+      background-color 400ms var(--ease),
+      border-color 400ms var(--ease),
+      color 400ms var(--ease);
+  }
+
+  .site-header[data-tone='night'] {
+    --ink-2: #9aa3c4;
+    background: rgb(5 10 28 / 0.72);
+    border-color: rgb(255 255 255 / 0.08);
+    color: #f5f5f7;
+  }
+
+  .bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding-block: 22px;
+    height: 100%;
   }
 
   .home {
+    display: flex;
     flex: none;
-    color: var(--ivory-100);
+    color: inherit;
     text-decoration: none;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   nav {
     display: flex;
     flex: none;
     align-items: center;
-    gap: clamp(6px, 1.6vw, 26px);
+    gap: clamp(14px, 2.4vw, 28px);
     white-space: nowrap;
   }
 
   .nav-link {
-    padding: 8px 4px;
-    color: var(--mist-300);
-    font-size: 0.95rem;
+    color: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    opacity: 0.82;
     text-decoration: none;
-    transition: color 200ms var(--ease);
+    transition: opacity 200ms var(--ease);
   }
 
-  .nav-link:hover {
-    color: var(--ivory-50);
+  .nav-link:hover,
+  .nav-link[aria-current='page'] {
+    opacity: 1;
   }
 
-  .lang {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    letter-spacing: 0.04em;
+  .get {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 13px;
+    border-radius: 999px;
+    background: var(--night-800);
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      background-color 300ms var(--ease),
+      color 300ms var(--ease);
   }
 
-  @media (max-width: 760px) {
-    .wide {
+  .get:hover {
+    background: var(--night-700);
+  }
+
+  [data-tone='night'] .get {
+    background: var(--ivory);
+    color: var(--night-900);
+  }
+
+  /* Phones: one line, always. 夜窗 and Details step back first. */
+  @media (max-width: 520px) {
+    .details {
       display: none;
     }
   }
 
-  /* Phones: one line always. 夜窗 stays in the footer; spacing tightens on the narrowest screens. */
-  @media (max-width: 420px) {
-    .site-header {
-      gap: 12px;
-    }
-
+  @media (max-width: 400px) {
     .site-header :global(.kanji) {
       display: none;
+    }
+
+    nav {
+      gap: 14px;
     }
   }
 
   @media (max-width: 360px) {
-    .site-header :global(.brand-lockup) {
-      --icon: 30px !important;
+    .bar {
+      gap: 10px;
     }
 
     nav {
-      gap: 4px;
+      gap: 12px;
     }
 
-    .lang {
-      padding-inline: 2px;
-    }
-
-    nav .btn-small {
-      padding-inline: 12px;
+    .get {
+      padding: 0 11px;
     }
   }
 </style>

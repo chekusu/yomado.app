@@ -1,0 +1,58 @@
+---
+// Render stage for the concept film. Built only when FILM_STAGE=1 (npm run film), never deployed.
+import '@fontsource-variable/inter/opsz.css';
+import '../../styles/global.css';
+import Scene from '../../components/Scene.astro';
+
+export function getStaticPaths() {
+  if (process.env.FILM_STAGE !== '1') return [];
+  return [{ params: { layout: 'wide' } }, { params: { layout: 'tall' } }];
+}
+
+const layout = Astro.params.layout as 'wide' | 'tall';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>yomado film stage ({layout})</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      /* Render with the film's own font, wherever it is rendered. */
+      body {
+        --font-sans: 'Inter Variable', 'Noto Sans SC', 'WenQuanYi Zen Hei', sans-serif;
+        font-family: var(--font-sans);
+      }
+
+      .frame {
+        position: fixed;
+        inset: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame"><Scene id="film" mode="film" layout={layout} /></div>
+    <script>
+      import { SceneView } from '../../scripts/scene-view';
+      import { DURATION } from '../../lib/scene';
+
+      const view = new SceneView(document.getElementById('film')!);
+      view.render(0);
+      Object.assign(window, {
+        __film: {
+          duration: DURATION,
+          render: (t: number) => view.render(t),
+        },
+      });
+    </script>
+  </body>
+</html>

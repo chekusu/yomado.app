@@ -6,26 +6,29 @@ import type { Copy } from '../i18n';
 interface Props {
   locale: Locale;
   copy: Copy;
+  /** Site-relative path of the same page in the other language. */
+  otherPath?: string;
 }
 
 const { locale, copy } = Astro.props;
 const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
+const otherPath = Astro.props.otherPath ?? LOCALE_PATH[other];
 ---
 
-<footer class="site-footer">
+<footer class="site-footer night" data-tone="night">
   <div class="wrap">
     <div class="top">
-      <div>
-        <Brand size={30} />
+      <div class="sign">
+        <Brand size={28} />
         <p class="tagline">{copy.footer.tagline}</p>
       </div>
       <nav aria-label={copy.footer.navLabel}>
-        <a href={SITE.appRepository}>GitHub</a>
+        <a href={withBase(`${LOCALE_PATH[locale]}details/`)}>{copy.footer.details}</a>
         <a href={`${SITE.appRepository}/releases`}>{copy.footer.releases}</a>
+        <a href={SITE.appRepository}>{copy.footer.source}</a>
+        <a href={SITE.siteRepository}>{copy.footer.site}</a>
         <a href={`${SITE.appRepository}/blob/main/LICENSE`}>{copy.footer.license}</a>
-        <a href={withBase(LOCALE_PATH[other])} hreflang={LOCALE_TAG[other]} lang={LOCALE_TAG[other]} data-lang-switch>
-          {copy.nav.switchLabel}
-        </a>
+        <a href={withBase(otherPath)} hreflang={LOCALE_TAG[other]} lang={LOCALE_TAG[other]} data-lang-switch>{copy.nav.switchLabel}</a>
       </nav>
     </div>
     <p class="fine">{copy.footer.fine}</p>
@@ -34,9 +37,8 @@ const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
 
 <style>
   .site-footer {
-    padding-block: 48px 56px;
-    border-top: 1px solid rgb(252 248 225 / 0.1);
-    background: var(--night-950);
+    padding-block: 36px 44px;
+    border-top: 1px solid rgb(255 255 255 / 0.08);
   }
 
   .top {
@@ -44,41 +46,40 @@ const other: Locale = locale === 'en' ? 'zh-cn' : 'en';
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 28px;
+    gap: 24px 40px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .sign {
+    display: grid;
+    gap: 10px;
   }
 
   .tagline {
-    margin-top: 14px;
-    color: var(--mist-300);
-    font: italic 300 1.15rem/1.4 var(--font-display);
-  }
-
-  :lang(zh-CN) .tagline {
-    font-style: normal;
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 0.875rem;
   }
 
   nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px 26px;
+    gap: 10px 22px;
+    max-width: 560px;
   }
 
   nav a {
-    color: var(--mist-300);
-    font-size: 0.9375rem;
-    text-decoration: none;
+    color: var(--ink-2);
+    font-size: 0.8125rem;
   }
 
   nav a:hover {
-    color: var(--ivory-50);
-    text-decoration: underline;
+    color: var(--ink);
   }
 
   .fine {
-    max-width: 52rem;
-    margin-top: 36px;
-    color: var(--mist-400);
-    font-size: 0.8125rem;
-    line-height: 1.6;
+    margin-top: 18px;
+    max-width: 72ch;
   }
 </style>

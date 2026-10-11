@@ -2,7 +2,8 @@ name: Build and deploy
 
 on:
   push:
-    branches: [main]
+    # main is production; preview/* branches deploy to their own Pages preview URL.
+    branches: [main, 'preview/**']
   pull_request:
   workflow_dispatch:
 
@@ -40,18 +41,26 @@ jobs:
       - run: npm test
 
       # Runs only where Cloudflare credentials are configured; elsewhere the job just builds and tests.
+      # A push to main updates the production site; a push to preview/<name> only publishes a
+      # preview deployment at <branch alias>.<project>.pages.dev and leaves production alone.
       - name: Deploy to Cloudflare Pages
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
             echo "No Cloudflare credentials here; skipping deploy."
             exit 0
           fi
+          if [ -z "$DEPLOY_BRANCH" ]; then
+            echo "No branch name for this push; refusing to guess where to deploy."
+            exit 1
+          fi
+          echo "Deploying branch $DEPLOY_BRANCH"
           npx --yes wrangler@4.92.0 pages deploy dist \
             --project-name yomado-dev \
-            --branch main \
+            --branch "$DEPLOY_BRANCH" \
             --commit-hash "$GITHUB_SHA" \
             --commit-dirty=true
