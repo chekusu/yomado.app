@@ -11,8 +11,10 @@ as possible. yomado gives Codex and other visual agents a virtual display of the
 can work in desktop apps through screenshots, mouse and keyboard while your windows stay on your
 screen. It is not an agent, a remote desktop or an MCP replacement — it only supplies the display.
 
-- English at `/`, Simplified Chinese at `/zh-cn/`; install, checksum and requirements at
-  `/details/` and `/zh-cn/details/`
+- English at `/`, Simplified Chinese at `/zh-cn/`, Japanese at `/ja/`; install, checksum and
+  requirements at `/details/`, `/zh-cn/details/` and `/ja/details/`
+- A language menu in the header (and a list in the footer) links every page to the same page in
+  the other languages and keeps the section in view; there is no automatic redirect
 - Every download button points at the configured GitHub Release archive
 - `sitemap.xml`, `robots.txt`, per-locale Open Graph cards, `hreflang` alternates, structured data
 
@@ -44,7 +46,8 @@ cookies, forms or third-party requests at runtime. Macs render the system font; 
 ```
 site.config.json   canonical origin and the release the page offers (single source)
 .impeccable.md     confirmed design context
-src/i18n/          all copy, per locale
+src/i18n/          all copy, per locale (en, zh-cn, ja)
+src/lib/site.ts    locales (paths, tags, Open Graph locales, names, dates) and release facts
 src/lib/scene.ts   the story timeline: poses for every moment, in two layouts (wide, tall)
 src/components/    Scene (the drawn scene), Hero + Film, Story, Panel, Finale, DetailsPage
 src/scripts/       scene-view (poses the DOM), story (scroll and finale), film (playback)
@@ -75,17 +78,18 @@ npm test             # serves dist/ and runs the Playwright smoke test
 npm run test:download
 ```
 
-The smoke test needs Playwright's Chromium (`npx playwright install chromium`). It covers both
-locales at desktop, tablet and phone widths: metadata, console errors, horizontal overflow, the
-download entry points, the film (muted inline autoplay, pause and replay, the portrait version on
-phones, reduced motion, the poster when no source plays), the scroll story and the finale,
-language switching, the details page with checksum copy, the page without JavaScript, the header
-on phones with classic scrollbars, 404, sitemap and robots.txt. `SCREENSHOT_DIR=dir npm test`
-also saves desktop and phone screenshots.
+The smoke test needs Playwright's Chromium (`npx playwright install chromium`). It covers all
+three locales at 1440, 945, 834, 390 and 320 px: metadata (hreflang, Open Graph locales), console
+errors, horizontal overflow, the download entry points, the film (muted inline autoplay, pause and
+replay, the portrait version on phones, reduced motion, the poster when no source plays), the
+scroll story and the finale, the language menu between every pair of locales on the home and
+details pages (with the section kept), the details page with checksum copy, the page without
+JavaScript, the header on phones with classic scrollbars, 404, sitemap and robots.txt.
+`SCREENSHOT_DIR=dir npm test` also saves screenshots.
 
-`npm run test:download` clicks the hero download button in a real browser and checks that the
-file is the configured app archive: SHA-256, size, bundle identifier, version, build, minimum
-macOS and an arm64 executable.
+`npm run test:download` clicks the hero download button on each locale's home page in a real
+browser and checks that the file is the configured app archive: SHA-256, size, bundle identifier,
+version, build, minimum macOS and an arm64 executable.
 
 Both tests run against a deployed copy too:
 
@@ -100,6 +104,7 @@ BASE_URL=https://yomado.app/ npm run test:download
 npm run film                          # renders public/media/ (needs ffmpeg on PATH)
 npm run film -- --stills 0,3.6 --out d    # PNG stills of single moments, for review
 npm run assets                        # Open Graph cards and favicons (use the story still)
+npm run assets -- ja                  # just the named cards (en, zh-cn, ja)
 ```
 
 Safari plays video only from servers that answer byte-range requests, and `*.pages.dev` serves
@@ -146,8 +151,11 @@ forks and pull requests just build and test. `dist/` works on any static host; s
 
 ## Copy and claims
 
-All visible text lives in `src/i18n/{en,zh-cn}.ts`; update both together. In Chinese titles, `|`
-marks where a line may break, so words are never split.
+All visible text lives in `src/i18n/{en,zh-cn,ja}.ts`; update all three together. In Chinese and
+Japanese titles, `|` marks where a line may break, so words are never split. The app's own
+interface is Simplified Chinese only, and every locale says so; the Japanese and English pages
+don't make the app multilingual. Locales are defined once in `src/lib/site.ts`; a new one also
+needs its copy, its two pages under `src/pages/`, an Open Graph card and a line in the tests.
 
 Keep claims inside the app's README and release notes. Verified: the native Apple Silicon build;
 moving Calculator into virtual screens named Codex and GrokBot through the panel's app menu, a
