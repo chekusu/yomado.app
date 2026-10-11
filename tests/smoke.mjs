@@ -94,7 +94,8 @@ async function check(name, fn) {
     await fn();
     results.push(['ok', name]);
   } catch (error) {
-    results.push(['FAIL', name, String(error.message).split('\n')[0]]);
+    const detail = 'actual' in error ? ` (actual ${JSON.stringify(error.actual)}, expected ${JSON.stringify(error.expected)})` : '';
+    results.push(['FAIL', name, String(error.message).split('\n')[0] + detail]);
   }
 }
 
@@ -226,19 +227,22 @@ for (const locale of LOCALES) {
     assert.match(attrs.poster, /film-wide-poster\.webp$/);
     assert.ok(attrs.label.length > 40, 'described for screen readers');
     assert.equal((await page.locator('[data-film] figcaption').innerText()).trim(), locale.caption);
+    // Media events arrive asynchronously, so wait for the button to catch up rather than racing it.
+    const state = (s) => page.waitForFunction((s) => document.querySelector('[data-film-toggle]').dataset.state === s, s, { timeout: 10000 });
     await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 1, null, { timeout: 15000 });
-    assert.equal(await toggle.getAttribute('data-state'), 'playing');
+    await state('playing');
     assert.equal(await toggle.getAttribute('aria-label'), await toggle.getAttribute('data-label-pause'));
     assert.match(await video.evaluate((v) => v.currentSrc), /film-wide\.(mp4|webm)$/);
     await toggle.click();
+    await state('paused');
     assert.equal(await video.evaluate((v) => v.paused), true);
     assert.equal(await toggle.getAttribute('aria-label'), await toggle.getAttribute('data-label-play'));
     await video.evaluate((v) => {
       v.currentTime = v.duration - 0.3;
       return v.play();
     });
-    await page.waitForFunction(() => document.querySelector('[data-film] video').ended, null, { timeout: 10000 });
-    assert.equal(await toggle.getAttribute('data-state'), 'ended');
+    await state('ended');
+    assert.equal(await video.evaluate((v) => v instanceof HTMLMediaElement && v.ended), true);
     assert.equal(await toggle.getAttribute('aria-label'), await toggle.getAttribute('data-label-replay'));
     await toggle.click();
     await page.waitForFunction(() => {

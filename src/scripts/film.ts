@@ -55,6 +55,7 @@ for (const figure of document.querySelectorAll<HTMLElement>('[data-film]')) {
     } else {
       heldByUser = true;
       video.pause();
+      setState('paused');
     }
   });
 
