@@ -51,6 +51,7 @@ src/scripts/       scene-view (poses the DOM), story (scroll and finale), film (
 src/assets/        app icon and control-panel render (from chekusu/yomado)
 public/media/      the concept film (MP4 + WebM, wide and tall), posters, story stills (generated)
 public/            favicons and Open Graph cards (generated, committed)
+functions/         a Pages Function that answers byte ranges for the films on Cloudflare
 scripts/           verify-dist.mjs (static checks), render-film.mjs, render-assets.mjs
 tests/             smoke.mjs (browser), download.mjs (real download acceptance)
 ```
@@ -100,6 +101,10 @@ npm run film                          # renders public/media/ (needs ffmpeg on P
 npm run film -- --stills 0,3.6 --out d    # PNG stills of single moments, for review
 npm run assets                        # Open Graph cards and favicons (use the story still)
 ```
+
+Safari plays video only from servers that answer byte-range requests, and `*.pages.dev` serves
+static files whole, so `functions/media/[[path]].js` (a Pages Function on `/media/*`) returns the
+requested slice as 206. The smoke test checks ranges wherever it runs.
 
 The render builds the site with `FILM_STAGE=1`, which adds two render pages
 (`/film/wide/`, `/film/tall/`) that production builds never contain. Wide is 1920 × 1080, tall is

@@ -245,11 +245,15 @@ for (const locale of LOCALES) {
       const v = document.querySelector('[data-film] video');
       return !v.paused && v.currentTime < 3;
     });
-    // Every media file is served, with a media type.
+    // Every media file is served with a media type, and films answer byte ranges (Safari needs them).
     for (const file of ['film-wide.mp4', 'film-wide.webm', 'film-tall.mp4', 'film-tall.webm', 'film-wide-poster.webp', 'film-tall-poster.webp']) {
       const response = await page.request.get(`${base}media/${file}`);
       assert.equal(response.status(), 200, file);
       assert.match(response.headers()['content-type'], /^(video|image)\//, file);
+      if (!/\.(mp4|webm)$/.test(file)) continue;
+      const head = await page.request.get(`${base}media/${file}`, { headers: { Range: 'bytes=0-1' } });
+      assert.equal(head.status(), 206, `${file} range`);
+      assert.match(head.headers()['content-range'] ?? '', /^bytes 0-1\/\d+$/, `${file} content-range`);
     }
     assert.deepEqual(errors, []);
     await context.close();
