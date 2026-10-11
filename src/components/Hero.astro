@@ -96,13 +96,13 @@ const { copy } = Astro.props;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     margin-top: 34px;
   }
 
   .btn-download {
     min-height: 64px;
-    padding: 10px 28px 10px 22px;
+    padding: 10px 24px 10px 20px;
     border-radius: 20px;
   }
 
@@ -118,6 +118,7 @@ const { copy } = Astro.props;
 
   .actions .btn-ghost {
     min-height: 64px;
+    padding-inline: 22px;
     border-radius: 20px;
   }
 
@@ -130,6 +131,7 @@ const { copy } = Astro.props;
 
   .fine :global(a) {
     color: var(--mist-300);
+    white-space: nowrap;
   }
 
   :lang(zh-CN) h1 {
