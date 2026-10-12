@@ -8,7 +8,9 @@
 // phone widths: metadata, console errors, failed requests, horizontal overflow, the download entry
 // points, the one-minute film (its real length and size, autoplay, play/pause/replay, seeking to
 // the end, the keyboard, poster, fallback, reduced motion, byte ranges and media types of every
-// file), the watch page (the browser's own controls, seeking, the MP4 links), the scroll story and
+// file; its narration: muted by itself, the sound button, the first time from the beginning, a mute
+// that holds, nothing audible starting by itself, refused or interrupted play()), the watch page
+// (the browser's own controls with sound, seeking, the MP4 links), the scroll story and
 // finale, the language menu between every pair of locales on home, details and watch pages, the
 // details page with checksum copy, the agent setup under the panel and on the details page (the
 // skill link, the request to copy by mouse or keyboard, the clipboard fallback, phones, without
@@ -39,6 +41,7 @@ const LOCALES = [
     title: /A screen for your agents/,
     caption: 'Simulated demo, not a recording of an agent at work. Running with physical displays switched off is not yet verified on real hardware.',
     minute: 'one minute',
+    narration: 'English narration',
     ui: 'Simplified Chinese',
     request: 'Use yomado to set up a virtual screen named Codex for this Blender task, move only this task’s windows onto it, and restore them when you’re done.',
   },
@@ -52,6 +55,7 @@ const LOCALES = [
     title: /给 Agent\s*一块屏幕/,
     caption: '模拟演示，并非 Agent 实际工作的录像。实体屏关闭后的运行尚待实机验证。',
     minute: '1 分钟',
+    narration: '中文旁白',
     ui: '简体中文',
     request: '用 yomado 为这次 Blender 任务准备一块叫 Codex 的虚拟屏，只移入本任务的窗口，完成后恢复。',
   },
@@ -63,8 +67,9 @@ const LOCALES = [
     name: '日本語',
     short: '日本語',
     title: /エージェントに、\s*専用の画面を。/,
-    caption: 'シミュレーションによるデモで、エージェントが実際に作業した録画ではありません。実際のディスプレイを消した状態での動作は、実機ではまだ検証していません。',
+    caption: '英語ナレーション付き。シミュレーションによるデモで、エージェントが実際に作業した録画ではありません。実際のディスプレイを消した状態での動作は、実機ではまだ検証していません。',
     minute: '1 分',
+    narration: '英語ナレーション',
     ui: '簡体字中国語',
     request: 'yomado で、今回の Blender の作業用に Codex という仮想画面を用意して、この作業のウィンドウだけを移し、終わったら元に戻してください。',
   },
@@ -75,9 +80,12 @@ const SKILL_URL = 'https://github.com/chekusu/yomado/tree/main/skills/yomado';
 const CLIPBOARD = ['clipboard-read', 'clipboard-write'];
 // The film's files, per locale: wide and tall, MP4 and WebM, and the posters.
 const FILM_SECONDS = [55, 65];
+// The films carry a version in their names (src/lib/film-media.json); posters don't.
+const { version: V } = JSON.parse(await readFile(new URL('../src/lib/film-media.json', import.meta.url), 'utf8'));
 const filmFiles = (key) => [
-  ...['wide', 'tall'].flatMap((layout) => [`film-${key}-${layout}.mp4`, `film-${key}-${layout}.webm`, `film-${key}-${layout}-poster.webp`]),
+  ...['wide', 'tall'].flatMap((layout) => [`film-${key}-${layout}-${V}.mp4`, `film-${key}-${layout}-${V}.webm`, `film-${key}-${layout}-poster.webp`]),
 ];
+const filmSrc = (key, layout) => new RegExp(`/film-${key}-${layout}-${V}\\.(mp4|webm)$`);
 const MEDIA_TYPE = { mp4: 'video/mp4', webm: 'video/webm', webp: 'image/webp' };
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
@@ -169,6 +177,23 @@ const playFrom = (video, at) =>
     if (at !== undefined && at !== null) v.currentTime = at < 0 ? v.duration + at : at;
     await Promise.race([v.play(), new Promise((_, reject) => setTimeout(() => reject(new Error('play() did not start within 15 s')), 15000))]);
   }, at ?? null);
+
+/** Chromium counts the audio it decodes: more than none means the chosen file has sound and it plays. */
+async function audioDecoded(page, selector) {
+  for (let i = 0; i < 80; i++) {
+    if ((await page.locator(selector).evaluate((v) => v.webkitAudioDecodedByteCount ?? 0)) > 0) return true;
+    await page.waitForTimeout(100);
+  }
+  return false;
+}
+
+/** Pretend the tab was hidden or shown again (a headless page is always visible). */
+const setTabHidden = (page, hidden) =>
+  page.evaluate((hidden) => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (hidden ? 'hidden' : 'visible') });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
 
 async function open(path, options = {}) {
   const { route, ...contextOptions } = options;
@@ -303,6 +328,7 @@ for (const locale of LOCALES) {
     assert.equal(attrs.controls, false, 'our button replaces the native controls');
     assert.match(attrs.poster, new RegExp(`/film-${locale.key}-wide-poster\\.webp$`));
     assert.ok(attrs.label.includes(locale.minute) && !/16/.test(attrs.label), 'described as the one-minute film');
+    assert.ok(attrs.label.includes(locale.narration) && !/no sound|无声|音声なし/.test(attrs.label), 'described with its narration');
     const caption = page.locator('[data-film] figcaption');
     assert.ok((await caption.innerText()).startsWith(locale.caption), 'caption');
     assert.equal(await caption.locator('[data-watch-link]').getAttribute('href'), `${new URL(base).pathname}${locale.path}watch/`);
@@ -312,7 +338,7 @@ for (const locale of LOCALES) {
     await state('playing');
     assert.equal(await toggle.getAttribute('aria-label'), await toggle.getAttribute('data-label-pause'));
     const meta = await video.evaluate((v) => ({ src: v.currentSrc, duration: v.duration, w: v.videoWidth, h: v.videoHeight }));
-    assert.match(meta.src, new RegExp(`/film-${locale.key}-wide\\.(mp4|webm)$`));
+    assert.match(meta.src, filmSrc(locale.key, 'wide'));
     assert.ok(meta.duration >= FILM_SECONDS[0] && meta.duration <= FILM_SECONDS[1], `duration ${meta.duration}`);
     assert.deepEqual([meta.w, meta.h], [1920, 1080]);
     await toggle.click();
@@ -357,7 +383,7 @@ for (const locale of LOCALES) {
     assert.match(await video.evaluate((v) => v.poster), new RegExp(`/film-${locale.key}-tall-poster\\.webp$`));
     await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 0.5, null, { timeout: 15000 });
     const meta = await video.evaluate((v) => ({ src: v.currentSrc, duration: v.duration, w: v.videoWidth, h: v.videoHeight }));
-    assert.match(meta.src, new RegExp(`/film-${locale.key}-tall\\.(mp4|webm)$`));
+    assert.match(meta.src, filmSrc(locale.key, 'tall'));
     assert.ok(meta.duration >= FILM_SECONDS[0] && meta.duration <= FILM_SECONDS[1], `duration ${meta.duration}`);
     assert.deepEqual([meta.w, meta.h], [1080, 1350]);
     const frame = await box(page, '[data-film] video');
@@ -391,13 +417,97 @@ for (const locale of LOCALES) {
     const { context, page } = await open(locale.path, {
       reducedMotion: 'reduce',
       route: {
-        match: /\/media\/film-[a-z-]+\.(mp4|webm)$/,
+        match: /\/media\/film-[a-z0-9-]+\.(mp4|webm)$/,
         handler: (r) => r.fulfill({ status: 200, contentType: 'video/mp4', body: 'not a video' }),
       },
     });
     await page.locator('[data-film-toggle]').click();
     await page.waitForFunction(() => document.querySelector('[data-film-toggle]').hidden, null, { timeout: 10000 });
+    assert.equal(await page.locator('[data-film-sound]').evaluate((b) => b.hidden), true, 'the sound button goes too');
+    assert.equal(await page.locator('[data-film] .controls button:visible').count(), 0, 'nothing left in sight');
     assert.match(await page.locator('[data-film] video').evaluate((v) => v.poster), /poster\.webp$/);
+    await context.close();
+  });
+
+  await check(`${locale.lang}: the film starts muted; the sound button plays its narration from the start, and mutes it`, async () => {
+    const { context, page, errors } = await open(locale.path);
+    const video = page.locator('[data-film] video');
+    const sound = page.locator('[data-film-sound]');
+    const toggle = page.locator('[data-film-toggle]');
+    const soundIs = (state) => page.waitForFunction((state) => document.querySelector('[data-film-sound]').dataset.state === state, state, { timeout: 10000 });
+    // Muted while it plays by itself, with a visible, named way to hear it.
+    await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 2.5, null, { timeout: 20000 });
+    assert.equal(await video.evaluate((v) => v.muted), true, 'starts muted');
+    assert.ok(await sound.isVisible(), 'the sound button shows');
+    assert.equal(await sound.getAttribute('aria-label'), await sound.getAttribute('data-label-on'));
+    assert.equal((await sound.innerText()).trim(), await sound.getAttribute('data-text-on'));
+    if (locale.key === 'ja') assert.ok((await sound.innerText()).includes('英語ナレーション'), 'names the English narration');
+    // On: with its sound, from the beginning, and the browser decodes it.
+    await sound.click();
+    await soundIs('on');
+    const on = await video.evaluate((v) => ({ muted: v.muted, volume: v.volume, t: v.currentTime, paused: v.paused, src: v.currentSrc }));
+    assert.ok(!on.muted && on.volume > 0 && !on.paused, 'plays with its sound');
+    assert.ok(on.t < 1.5, `starts again from the beginning (at ${on.t.toFixed(2)} s)`);
+    assert.match(on.src, filmSrc(locale.key, 'wide'));
+    assert.equal(await sound.getAttribute('aria-label'), await sound.getAttribute('data-label-off'));
+    assert.ok(await audioDecoded(page, '[data-film] video'), 'its audio is decoded');
+    // Off from the keyboard; the mute holds when the film leaves and comes back, pauses, plays and replays.
+    await sound.focus();
+    await page.keyboard.press('Enter');
+    await soundIs('muted');
+    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForFunction(() => document.querySelector('[data-film] video').paused, null, { timeout: 5000 });
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.waitForFunction(() => !document.querySelector('[data-film] video').paused, null, { timeout: 10000 });
+    assert.equal(await video.evaluate((v) => v.muted), true, 'back in view, still muted');
+    await toggle.click();
+    await page.waitForFunction(() => document.querySelector('[data-film] video').paused);
+    await toggle.click();
+    await page.waitForFunction(() => !document.querySelector('[data-film] video').paused);
+    assert.equal(await video.evaluate((v) => v.muted), true, 'play keeps the mute');
+    await playFrom(video, -0.3);
+    await page.waitForFunction(() => document.querySelector('[data-film] video').ended, null, { timeout: 10000 });
+    await toggle.click();
+    await page.waitForFunction(() => {
+      const v = document.querySelector('[data-film] video');
+      return !v.paused && v.currentTime < 3;
+    });
+    assert.equal(await video.evaluate((v) => v.muted), true, 'replay keeps the mute');
+    // On again later, after seeking: it carries on from there; only the first time starts over.
+    await playFrom(video, 20);
+    await sound.click();
+    await soundIs('on');
+    assert.ok((await video.evaluate((v) => v.currentTime)) > 19, 'the second time it carries on');
+    assert.deepEqual(errors, []);
+    await context.close();
+  });
+
+  await check(`${locale.lang}: on phones the portrait film plays its narration, and under reduced motion only when asked`, async () => {
+    const { context, page, errors } = await open(locale.path, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+    const video = page.locator('[data-film] video');
+    await page.waitForTimeout(1500);
+    assert.equal(await video.evaluate((v) => v.paused && v.currentTime === 0), true, 'nothing starts by itself');
+    await page.locator('[data-film-sound]').tap();
+    await page.waitForFunction(
+      () => {
+        const v = document.querySelector('[data-film] video');
+        return !v.paused && !v.muted && v.currentTime > 0.3;
+      },
+      null,
+      { timeout: 15000 },
+    );
+    assert.match(await video.evaluate((v) => v.currentSrc), filmSrc(locale.key, 'tall'));
+    assert.ok(await audioDecoded(page, '[data-film] video'), 'its audio is decoded');
+    const inside = await page.evaluate(() => {
+      const f = document.querySelector('[data-film] .frame').getBoundingClientRect();
+      return [...document.querySelectorAll('[data-film] .controls button')].every((b) => {
+        const r = b.getBoundingClientRect();
+        return r.left >= f.left && r.right <= f.right && r.bottom <= f.bottom;
+      });
+    });
+    assert.ok(inside, 'the buttons sit inside the portrait frame');
+    if (SHOTS) await page.locator('[data-film] .frame').screenshot({ path: join(SHOTS, `${locale.key}-mobile-film-sound.png`) });
+    assert.deepEqual(errors, []);
     await context.close();
   });
 
@@ -418,16 +528,19 @@ for (const locale of LOCALES) {
     if (await video.evaluate((v) => v.paused)) await playFrom(video);
     await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 0.5, null, { timeout: 15000 });
     const meta = await video.evaluate((v) => ({ src: v.currentSrc, duration: v.duration, w: v.videoWidth, h: v.videoHeight }));
-    assert.match(meta.src, new RegExp(`/film-${locale.key}-wide\\.(mp4|webm)$`));
+    assert.match(meta.src, filmSrc(locale.key, 'wide'));
     assert.ok(meta.duration >= FILM_SECONDS[0] && meta.duration <= FILM_SECONDS[1], `duration ${meta.duration}`);
     assert.deepEqual([meta.w, meta.h], [1920, 1080]);
+    assert.deepEqual(await video.evaluate((v) => [v.muted, v.volume > 0]), [false, true], 'plays with its sound');
+    assert.ok(await audioDecoded(page, '[data-watch-video]'), 'its audio is decoded');
+    assert.ok((await page.locator('.player figcaption').innerText()).includes(locale.narration), 'says which narration');
     await video.evaluate((v) => (v.currentTime = 44));
     await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 44.5, null, { timeout: 15000 });
     await video.evaluate((v) => (v.currentTime = v.duration - 0.4));
     await page.waitForFunction(() => document.querySelector('[data-watch-video]').ended, null, { timeout: 15000 });
     for (const layout of ['wide', 'tall']) {
       const link = page.locator(`[data-mp4="${layout}"]`);
-      assert.equal(await link.getAttribute('href'), `${new URL(base).pathname}media/film-${locale.key}-${layout}.mp4`);
+      assert.equal(await link.getAttribute('href'), `${new URL(base).pathname}media/film-${locale.key}-${layout}-${V}.mp4`);
       assert.match(await link.innerText(), layout === 'wide' ? /1920 × 1080/ : /1080 × 1350/);
       const response = await page.request.get(new URL(await link.getAttribute('href'), base).href);
       assert.equal(response.status(), 200);
@@ -449,7 +562,9 @@ for (const locale of LOCALES) {
     await page.waitForTimeout(600);
     if (await video.evaluate((v) => v.paused)) await playFrom(video);
     await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 0.5, null, { timeout: 15000 });
-    assert.match(await video.evaluate((v) => v.currentSrc), new RegExp(`/film-${locale.key}-tall\\.(mp4|webm)$`));
+    assert.match(await video.evaluate((v) => v.currentSrc), filmSrc(locale.key, 'tall'));
+    assert.equal(await video.evaluate((v) => v.muted), false, 'with its sound');
+    assert.ok(await audioDecoded(page, '[data-watch-video]'), 'its audio is decoded');
     const frame = await box(page, '[data-watch-video]');
     assert.ok(Math.abs(frame.w / frame.h - 0.8) < 0.02, `portrait frame ${frame.w}×${frame.h}`);
     if (SHOTS) {
@@ -705,12 +820,122 @@ for (const locale of LOCALES) {
     const page = await context.newPage();
     await page.goto(base + locale.path, { waitUntil: 'networkidle' });
     assert.equal(await page.locator('[data-film] video').evaluate((v) => v.hasAttribute('controls')), true, 'native controls');
+    assert.equal(await page.locator('[data-film] video').evaluate((v) => v.muted || v.hasAttribute('muted')), false, 'started by hand, it plays with its sound');
+    assert.equal(await page.locator('[data-film] .controls button:visible').count(), 0, 'no buttons without their script');
+    assert.ok((await page.locator('[data-film] figcaption').innerText()).startsWith(locale.caption), 'the caption, with the narration where it is not the page language');
     for (const act of await page.locator('[data-act]').all()) assert.ok(await act.isVisible(), 'every act is shown');
     assert.ok(await page.locator('.story .still img').isVisible(), 'a still stands in for the scene');
     assert.ok(await page.locator('a[data-download="finale"]').isVisible());
     await context.close();
   });
 }
+
+await check('with the narration on, the film never starts again by itself', async () => {
+  const { context, page, errors } = await open('');
+  const video = page.locator('[data-film] video');
+  await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 0.5, null, { timeout: 20000 });
+  await page.locator('[data-film-sound]').click();
+  await page.waitForFunction(() => {
+    const v = document.querySelector('[data-film] video');
+    return !v.muted && !v.paused;
+  });
+  // Out of view and back: it waits for the play button.
+  await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForFunction(() => document.querySelector('[data-film] video').paused, null, { timeout: 5000 });
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.waitForTimeout(1500);
+  assert.equal(await video.evaluate((v) => v.paused), true, 'no sound by itself on scrolling back');
+  assert.equal(await page.locator('[data-film-toggle]').getAttribute('data-state'), 'paused');
+  await page.locator('[data-film-toggle]').click();
+  await page.waitForFunction(() => {
+    const v = document.querySelector('[data-film] video');
+    return !v.paused && !v.muted;
+  });
+  // Another tab and back: the same.
+  await setTabHidden(page, true);
+  await page.waitForFunction(() => document.querySelector('[data-film] video').paused);
+  await setTabHidden(page, false);
+  await page.waitForTimeout(1000);
+  assert.equal(await video.evaluate((v) => v.paused), true, 'no sound by itself on returning to the tab');
+  // Muted, it resumes by itself as before.
+  await page.locator('[data-film-sound]').click();
+  await setTabHidden(page, true);
+  await setTabHidden(page, false);
+  await page.waitForFunction(
+    () => {
+      const v = document.querySelector('[data-film] video');
+      return !v.paused && v.muted;
+    },
+    null,
+    { timeout: 5000 },
+  );
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await check('a refused or interrupted play() never undoes a pause or a choice', async () => {
+  // Started with its sound and paused at once: that play() ends in an AbortError, which changes nothing.
+  {
+    const { context, page } = await open('', { reducedMotion: 'reduce' });
+    await page.locator('[data-film-sound]').click();
+    await page.locator('[data-film-toggle]').click();
+    await page.waitForTimeout(1500);
+    assert.deepEqual(await page.locator('[data-film] video').evaluate((v) => [v.paused, v.muted]), [true, false], 'stays paused, the sound still chosen');
+    assert.equal(await page.locator('[data-film-toggle]').getAttribute('data-state'), 'paused');
+    await context.close();
+  }
+  // play() replaced to answer as a browser might: count the calls and check what the page does.
+  const stub = (page, answer) =>
+    page.evaluate((answer) => {
+      const v = document.querySelector('[data-film] video');
+      const real = HTMLMediaElement.prototype.play;
+      window.__plays = 0;
+      v.play = function () {
+        window.__plays++;
+        if (answer === 'abort') return Promise.reject(new DOMException('interrupted', 'AbortError'));
+        if (answer === 'refuse-sound') return this.muted ? real.call(this) : Promise.reject(new DOMException('needs a gesture', 'NotAllowedError'));
+        return new Promise((_, reject) => setTimeout(() => reject(new DOMException('too late', 'NotAllowedError')), 500));
+      };
+    }, answer);
+  // Refused with sound: one retry, muted, and the sound button says so.
+  {
+    const { context, page } = await open('', { reducedMotion: 'reduce' });
+    await stub(page, 'refuse-sound');
+    await page.locator('[data-film-sound]').click();
+    await page.waitForFunction(
+      () => {
+        const v = document.querySelector('[data-film] video');
+        return !v.paused && v.muted;
+      },
+      null,
+      { timeout: 10000 },
+    );
+    assert.equal(await page.evaluate(() => window.__plays), 2, 'a single muted retry');
+    assert.equal(await page.locator('[data-film-sound]').getAttribute('data-state'), 'muted');
+    await context.close();
+  }
+  // An AbortError: no retry, nothing muted, nothing played.
+  {
+    const { context, page } = await open('', { reducedMotion: 'reduce' });
+    await stub(page, 'abort');
+    await page.locator('[data-film-sound]').click();
+    await page.waitForTimeout(800);
+    assert.equal(await page.evaluate(() => window.__plays), 1, 'no retry');
+    assert.deepEqual(await page.locator('[data-film] video').evaluate((v) => [v.paused, v.muted]), [true, false]);
+    await context.close();
+  }
+  // Refused only after the tab was left: the late answer changes nothing.
+  {
+    const { context, page } = await open('', { reducedMotion: 'reduce' });
+    await stub(page, 'late');
+    await page.locator('[data-film-sound]').click();
+    await setTabHidden(page, true);
+    await page.waitForTimeout(900);
+    assert.equal(await page.evaluate(() => window.__plays), 1, 'no retry');
+    assert.deepEqual(await page.locator('[data-film] video').evaluate((v) => [v.paused, v.muted]), [true, false]);
+    await context.close();
+  }
+});
 
 // Classic scrollbars (desktop Chrome on Linux and Windows) take ~15 px from phone-width layouts.
 const scrollbars = await chromium.launch({ ignoreDefaultArgs: ['--hide-scrollbars'] });

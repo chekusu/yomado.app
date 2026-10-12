@@ -26,6 +26,13 @@ export interface Copy {
       fallback: string;
       /** Link to the watch page under the hero film. */
       watch: string;
+      /**
+       * The sound button on the hero film, which starts muted: its name and short visible text
+       * while muted, and its name and text once the narration is on.
+       */
+      soundOn: string;
+      soundOnText: string;
+      mute: string;
     };
   };
   /**

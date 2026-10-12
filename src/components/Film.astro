@@ -1,8 +1,11 @@
 ---
 // The one-minute product film in this page's language (src/lib/media.ts), rendered from its own
-// timeline (src/lib/film.ts). Muted and inline; it starts after the page has loaded and while it
-// is in view, never under reduced motion. Without JavaScript the browser's own controls appear
-// instead of the play/pause button. The watch page plays it with full controls.
+// timeline (src/lib/film.ts) and narrated (English or Simplified Chinese; the Japanese film has
+// the English narration and its sound button says so). It starts muted and inline after the page
+// has loaded and while it is in view, never under reduced motion; the sound button turns the
+// narration on (src/scripts/film.ts). Without JavaScript the browser's own controls appear
+// instead of our buttons, and nothing is muted: a film someone starts plays with its sound. The
+// watch page plays it with full controls.
 import Icon from './Icon.astro';
 import { MP4_TYPE, NARROW, WEBM_TYPE, filmUrl, posterUrl } from '../lib/media';
 import { localeHref, type Locale } from '../lib/site';
@@ -21,7 +24,6 @@ const film = copy.hero.film;
   <div class="frame">
     <video
       class="video"
-      muted
       playsinline
       controls
       preload="none"
@@ -36,21 +38,39 @@ const film = copy.hero.film;
       <source src={filmUrl(locale, 'wide', 'webm')} type={WEBM_TYPE} />
       <p>{film.fallback} <a href={filmUrl(locale, 'wide', 'mp4')}>MP4</a></p>
     </video>
-    <button
-      class="toggle"
-      type="button"
-      hidden
-      data-film-toggle
-      data-state="paused"
-      aria-label={film.play}
-      data-label-play={film.play}
-      data-label-pause={film.pause}
-      data-label-replay={film.replay}
-    >
-      <span class="i-play"><Icon name="play" size={18} /></span>
-      <span class="i-pause"><Icon name="pause" size={18} /></span>
-      <span class="i-replay"><Icon name="replay" size={18} /></span>
-    </button>
+    <div class="controls">
+      <button
+        class="sound"
+        type="button"
+        hidden
+        data-film-sound
+        data-state="muted"
+        aria-label={film.soundOn}
+        data-label-on={film.soundOn}
+        data-label-off={film.mute}
+        data-text-on={film.soundOnText}
+        data-text-off={film.mute}
+      >
+        <span class="i-on"><Icon name="sound" size={18} /></span>
+        <span class="i-off"><Icon name="muted" size={18} /></span>
+        <span class="text" data-film-sound-text>{film.soundOnText}</span>
+      </button>
+      <button
+        class="toggle"
+        type="button"
+        hidden
+        data-film-toggle
+        data-state="paused"
+        aria-label={film.play}
+        data-label-play={film.play}
+        data-label-pause={film.pause}
+        data-label-replay={film.replay}
+      >
+        <span class="i-play"><Icon name="play" size={18} /></span>
+        <span class="i-pause"><Icon name="pause" size={18} /></span>
+        <span class="i-replay"><Icon name="replay" size={18} /></span>
+      </button>
+    </div>
   </div>
   <figcaption class="fine caption">
     {film.caption}
@@ -80,10 +100,17 @@ const film = copy.hero.film;
     background: #fff;
   }
 
-  .toggle {
+  /* Sound, then play/pause, in the corner: one row of frosted controls. */
+  .controls {
     position: absolute;
     right: clamp(12px, 2vw, 22px);
     bottom: clamp(12px, 2vw, 22px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toggle {
     display: grid;
     place-items: center;
     width: 40px;
@@ -101,12 +128,54 @@ const film = copy.hero.film;
       transform 200ms var(--ease);
   }
 
-  .toggle:hover {
+  .toggle:hover,
+  .sound:hover {
     background: rgb(255 255 255 / 0.95);
   }
 
   .toggle:active {
     transform: scale(0.94);
+  }
+
+  /* A labelled pill: the action's icon and its name, as short as each language allows. */
+  .sound {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 15px 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(232 232 237 / 0.82);
+    color: #1d1d1f;
+    font: 600 0.875rem/1 var(--font-sans);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    transition:
+      background-color 200ms var(--ease),
+      transform 200ms var(--ease);
+  }
+
+  .sound:active {
+    transform: scale(0.97);
+  }
+
+  .sound > span:not(.text) {
+    display: none;
+  }
+
+  .sound[data-state='muted'] .i-on,
+  .sound[data-state='on'] .i-off {
+    display: grid;
+  }
+
+  /* Until the script takes over (or when nothing can play) the buttons stay out of sight. */
+  .toggle[hidden],
+  .sound[hidden] {
+    display: none;
   }
 
   .toggle > span {

@@ -21,7 +21,8 @@
     "preview:sub": "npm run build:sub && SITE_OUT_DIR=./dist-sub astro preview --host ${HOST:-127.0.0.1} --port ${PORT:-4321} --allowed-hosts ${PREVIEW_ALLOWED_HOSTS:-localhost}",
     "assets": "node scripts/render-assets.mjs",
     "icons": "node scripts/extract-icons.mjs",
-    "film": "node scripts/render-film.mjs"
+    "film": "node scripts/render-film.mjs",
+    "film:narrate": "node scripts/narrate-film.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",

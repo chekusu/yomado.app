@@ -113,42 +113,63 @@ for (const [locale, prefix] of Object.entries(LOCALES)) {
   }
 }
 
-// The film: one per locale, wide and tall, MP4 and WebM. A minute of 1080p is bigger than the old
-// 16-second clip, so the budget grew with it, but stays a budget: each video file at most 9 MB
-// (it streams; the hero loads nothing before it plays), posters and story stills under 200 kB.
-const FILM = { minSeconds: 55, maxSeconds: 65, minFps: 29.9, maxBytes: 9e6 };
+// The film: one per locale, wide and tall, MP4 and WebM, each with its narration (English or
+// Simplified Chinese; Japanese has the English one, src/lib/film-media.json) and the version in its
+// name. A narrated minute of 1080p is bigger than the old 16-second clip, so the budget grew with
+// it, but stays a budget: each video file at most 10 MB (it streams; the hero loads nothing
+// before it plays), posters and story stills under 200 kB.
+const FILM = { minSeconds: 55, maxSeconds: 65, minFps: 29.9, maxBytes: 10e6, audioRate: 48000, audioDrift: 0.25 };
 const SIZE = { wide: [1920, 1080], tall: [1080, 1350] };
-const declared = new Set();
+const filmMedia = JSON.parse(await readFile(join(root, 'src/lib/film-media.json'), 'utf8'));
+const declared = { mp4: new Set(), webm: new Set() };
 // Attribute values come HTML-escaped (codecs=&quot;…&quot;); compare them as the browser reads them.
 const unescape = (v) => v.replaceAll('&quot;', '"').replaceAll('&#34;', '"').replaceAll('&amp;', '&');
-for (const file of pages) for (const t of attr(await readFile(file, 'utf8'), /<source[^>]*type="(video\/mp4[^"]*)"/g)) declared.add(unescape(t));
+for (const file of pages) {
+  for (const t of attr(await readFile(file, 'utf8'), /<source[^>]*type="(video\/(?:mp4|webm)[^"]*)"/g)) declared[t.startsWith('video/mp4') ? 'mp4' : 'webm'].add(unescape(t));
+}
+if (![...declared.webm].every((t) => /codecs="vp9, opus"/.test(t))) fail('pages', `declare WebM as ${[...declared.webm].join(' | ')}, not VP9 with Opus`);
 for (const locale of Object.keys(LOCALES)) {
+  const language = filmMedia.language[filmMedia.narration[locale]];
   for (const [layout, [w, h]] of Object.entries(SIZE)) {
     const name = `film-${locale}-${layout}`;
-    const where = `media/${name}`;
+    const file = `${name}-${filmMedia.version}`;
+    const where = `media/${file}`;
     try {
-      const mp4 = await mp4Info(join(dist, 'media', `${name}.mp4`));
+      const mp4 = await mp4Info(join(dist, 'media', `${file}.mp4`));
       if (mp4.bytes > FILM.maxBytes) fail(`${where}.mp4`, `${mp4.bytes} bytes, over ${FILM.maxBytes}`);
       if (mp4.duration < FILM.minSeconds || mp4.duration > FILM.maxSeconds) fail(`${where}.mp4`, `${mp4.duration.toFixed(2)} s long`);
       if (mp4.width !== w || mp4.height !== h) fail(`${where}.mp4`, `${mp4.width} × ${mp4.height}, not ${w} × ${h}`);
       if (mp4.fps < FILM.minFps) fail(`${where}.mp4`, `${mp4.fps} fps`);
       if (!mp4.faststart) fail(`${where}.mp4`, `moov does not precede mdat (${mp4.order.join(', ')})`);
       if (mp4.codec !== 'avc1' || mp4.pixelFormat !== 'yuv420p') fail(`${where}.mp4`, `${mp4.codec} ${mp4.pixelFormat}, not H.264 yuv420p`);
-      if (![...declared].every((t) => t.includes(`codecs="${mp4.codecs}"`))) fail(`${where}.mp4`, `is ${mp4.codecs}, pages declare ${[...declared].join(' | ')}`);
+      const a = mp4.audio;
+      if (a?.codecs !== 'mp4a.40.2' || a.sampleRate !== FILM.audioRate || a.channels < 1) fail(`${where}.mp4`, `audio is ${a ? `${a.codecs} ${a.sampleRate} Hz ×${a.channels}` : 'missing'}, not AAC-LC at 48 kHz`);
+      else {
+        if (Math.abs(a.duration - mp4.duration) > FILM.audioDrift) fail(`${where}.mp4`, `audio ${a.duration.toFixed(2)} s against video ${mp4.duration.toFixed(2)} s`);
+        if (a.language !== language) fail(`${where}.mp4`, `narration tagged ${a.language}, expected ${language}`);
+        if (![...declared.mp4].every((t) => t.includes(`codecs="${mp4.codecs}, ${a.codecs}"`))) fail(`${where}.mp4`, `is ${mp4.codecs} + ${a.codecs}, pages declare ${[...declared.mp4].join(' | ')}`);
+      }
     } catch (e) {
       fail(`${where}.mp4`, `missing or unreadable (${e.message})`);
     }
     try {
-      const webm = await webmInfo(join(dist, 'media', `${name}.webm`));
+      const webm = await webmInfo(join(dist, 'media', `${file}.webm`));
       if (webm.bytes > FILM.maxBytes) fail(`${where}.webm`, `${webm.bytes} bytes, over ${FILM.maxBytes}`);
       if (webm.duration < FILM.minSeconds || webm.duration > FILM.maxSeconds) fail(`${where}.webm`, `${webm.duration?.toFixed(2)} s long`);
       if (webm.width !== w || webm.height !== h) fail(`${where}.webm`, `${webm.width} × ${webm.height}, not ${w} × ${h}`);
       if (webm.codec !== 'V_VP9') fail(`${where}.webm`, `${webm.codec}, not VP9`);
+      const a = webm.audio;
+      if (a?.codec !== 'A_OPUS' || a.sampleRate !== FILM.audioRate) fail(`${where}.webm`, `audio is ${a ? `${a.codec} ${a.sampleRate} Hz` : 'missing'}, not Opus at 48 kHz`);
+      else if (a.language !== language) fail(`${where}.webm`, `narration tagged ${a.language}, expected ${language}`);
     } catch (e) {
       fail(`${where}.webm`, `missing or unreadable (${e.message})`);
     }
     const poster = await stat(join(dist, 'media', `${name}-poster.webp`)).then((st) => st.size).catch(() => 0);
-    if (!poster || poster > 2e5) fail(`${where}-poster.webp`, poster ? `${poster} bytes, over 200000` : 'missing');
+    if (!poster || poster > 2e5) fail(`media/${name}-poster.webp`, poster ? `${poster} bytes, over 200000` : 'missing');
+    // Earlier versions of the film (the silent one had no version in its name) stay out.
+    for (const old of (await readdir(join(dist, 'media'))).filter((f) => f.startsWith(`${name}`) && /\.(mp4|webm)$/.test(f) && !f.startsWith(file + '.'))) {
+      fail(`media/${old}`, `an earlier version of the film; this build serves ${file}`);
+    }
   }
 }
 for (const file of ['story-wide.webp', 'story-tall.webp']) {

@@ -24,13 +24,16 @@ export default (r: ReleaseFacts): Copy => ({
     meta: `Experimental build · v${r.version} · Apple silicon`,
     film: {
       label:
-        'Product film, one minute, no sound; a simulated demo. Codex works in Blender on your display by screenshot and click. yomado’s menu bar icon opens the control panel, which adds a virtual screen to the right of your two displays; it is renamed Codex. Blender and Marvelous Designer are dragged onto it, and their windows move while yours stay. On Codex, Codex takes a screenshot, adds a Subdivision Surface modifier, types 3, turns the view and switches to rendered shading. A second screen, GrokBot, gets Google Chrome; Marvelous Designer is dragged back; closing GrokBot from the menu bar returns Chrome to its display first. Night falls and Codex becomes the yomado mark.',
+        'Product film, one minute, with English narration; a simulated demo. Codex works in Blender on your display by screenshot and click. yomado’s menu bar icon opens the control panel, which adds a virtual screen to the right of your two displays; it is renamed Codex. Blender and Marvelous Designer are dragged onto it, and their windows move while yours stay. On Codex, Codex takes a screenshot, adds a Subdivision Surface modifier, types 3, turns the view and switches to rendered shading. A second screen, GrokBot, gets Google Chrome; Marvelous Designer is dragged back; closing GrokBot from the menu bar returns Chrome to its display first. Night falls and Codex becomes the yomado mark.',
       caption: 'Simulated demo, not a recording of an agent at work. Running with physical displays switched off is not yet verified on real hardware.',
       play: 'Play film',
       pause: 'Pause film',
       replay: 'Replay film',
       fallback: 'Your browser can’t play this video.',
       watch: 'Watch the full film',
+      soundOn: 'Turn sound on',
+      soundOnText: 'Sound on',
+      mute: 'Mute',
     },
   },
   filmScript: {
@@ -53,7 +56,7 @@ export default (r: ReleaseFacts): Copy => ({
     },
     title: 'yomado in one minute.',
     lede: 'Open a screen, move an agent’s apps onto it, let it work, then bring the windows back.',
-    note: 'A simulated demo, not a recording of real agent work. The app windows are simplified recreations; the icons are the apps’ own. Running with physical displays switched off is not yet verified.',
+    note: 'With English narration. A simulated demo, not a recording of real agent work. The app windows are simplified recreations; the icons are the apps’ own. Running with physical displays switched off is not yet verified.',
     mp4: 'MP4 · 1920 × 1080 · 1:00 · {size}',
     mp4Tall: 'Portrait MP4 · 1080 × 1350 · 1:00 · {size}',
     back: 'Back to yomado',

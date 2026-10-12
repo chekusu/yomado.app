@@ -7,13 +7,16 @@
 //   npm run film -- --encode-only                  re-encode the frames of the last render
 //   npm run film -- --workers 3                    browsers per variant (default 3)
 //   npm run film -- --fresh                        discard frames kept from an interrupted render
+//   npm run film:narrate                           narrate the last render again (scripts/narrate-film.mjs)
 //
 // Builds the site with FILM_STAGE=1, which adds the /film/<locale>/<layout>/ and
 // /film/story/<layout>/ render pages (never part of a normal build). Each variant plays in its own
 // headless Chromium (split into contiguous chunks, one browser each: every frame is a pure
 // function of time), frame by frame at FPS, into PNG frames under .film-build/; ffmpeg (on PATH)
-// encodes H.264 (MP4, yuv420p, faststart) and VP9 (WebM). The poster of each film is its first
-// frame, so playback starts without a jump. The outputs are committed; CI and deploys never run this.
+// encodes H.264 (MP4, yuv420p, faststart) and VP9 (WebM) into .film-build/silent/, and
+// scripts/narrate-film.mjs adds the narration on the way to public/media/. The poster of each film
+// is its first frame, so playback starts without a jump. The outputs are committed; CI and deploys
+// never run this.
 import { chromium } from 'playwright';
 import { execFile as execFileCb, execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -23,6 +26,7 @@ import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import sharp from 'sharp';
+import { FILM_VERSION, narrate, silentDir } from './narrate-film.mjs';
 
 const execFile = promisify(execFileCb);
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -177,13 +181,14 @@ async function encode(v) {
   const dir = frameDir(v);
   const frames = (await readdir(dir)).filter((f) => f.endsWith('.png')).length;
   const input = ['-y', '-loglevel', 'error', '-framerate', String(FPS), '-i', join(dir, '%05d.png')];
-  const mp4 = join(media, `${v.name}.mp4`);
-  const webm = join(media, `${v.name}.webm`);
+  await mkdir(silentDir, { recursive: true });
+  const mp4 = join(silentDir, `${v.name}.mp4`);
+  const webm = join(silentDir, `${v.name}.webm`);
   await Promise.all([execFile('ffmpeg', [...input, ...X264, mp4]), execFile('ffmpeg', [...input, ...VP9, webm])]);
   const poster = join(media, `${v.name}-poster.webp`);
   await sharp(frameFile(dir, 0)).webp({ quality: 82, effort: 6 }).toFile(poster);
-  const out = { variant: v.name, frames, fps: FPS, seconds: (frames - 1) / FPS, files: {} };
-  for (const file of [mp4, webm, poster]) out.files[file.slice(media.length + 1)] = { bytes: (await stat(file)).size, sha256: await sha256(file) };
+  const out = { variant: v.name, frames, fps: FPS, seconds: (frames - 1) / FPS, files: await narrate(v) };
+  out.files[`${v.name}-poster.webp`] = { bytes: (await stat(poster)).size, sha256: await sha256(poster) };
   console.log(v.name, JSON.stringify(out.files));
   return out;
 }
@@ -206,10 +211,12 @@ if (stills) {
   await writeFile(
     join(media, 'README.txt'),
     [
-      'film-<locale>-<layout>.{mp4,webm} and their posters are rendered by scripts/render-film.mjs from the',
-      'timeline in src/lib/film.ts (npm run film); story-<layout>.webp from the home page story scene',
-      '(src/lib/scene.ts, end of act 3). The film is a simulated demo. App icons are the apps’ own',
-      '(public/apps/sources.json) and belong to their owners. Do not edit by hand.',
+      `film-<locale>-<layout>-${FILM_VERSION}.{mp4,webm} and the posters film-<locale>-<layout>-poster.webp are rendered by`,
+      'scripts/render-film.mjs from the timeline in src/lib/film.ts (npm run film) and narrated by',
+      'scripts/narrate-film.mjs from narration/ (English and Simplified Chinese; the Japanese film has the',
+      'English narration); story-<layout>.webp from the home page story scene (src/lib/scene.ts, end of',
+      'act 3). The film is a simulated demo. App icons are the apps’ own (public/apps/sources.json) and',
+      'belong to their owners. Do not edit by hand.',
       '',
     ].join('\n'),
   );

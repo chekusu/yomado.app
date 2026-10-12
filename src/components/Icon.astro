@@ -1,6 +1,6 @@
 ---
 interface Props {
-  name: 'download' | 'replay' | 'play' | 'pause';
+  name: 'download' | 'replay' | 'play' | 'pause' | 'sound' | 'muted';
   size?: number;
 }
 
@@ -33,6 +33,22 @@ const { name, size = 20 } = Astro.props;
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">
       <rect x="5" y="4" width="3.6" height="12" rx="1.1" />
       <rect x="11.4" y="4" width="3.6" height="12" rx="1.1" />
+    </svg>
+  )
+}
+{
+  name === 'sound' && (
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3.75 7.6h2.5L9.9 4.7v10.6l-3.65-2.9h-2.5a.9.9 0 0 1-.9-.9V8.5c0-.5.4-.9.9-.9Z" fill="currentColor" />
+      <path d="M12.9 7.4a3.6 3.6 0 0 1 0 5.2M15.3 5.2a6.8 6.8 0 0 1 0 9.6" />
+    </svg>
+  )
+}
+{
+  name === 'muted' && (
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3.75 7.6h2.5L9.9 4.7v10.6l-3.65-2.9h-2.5a.9.9 0 0 1-.9-.9V8.5c0-.5.4-.9.9-.9Z" fill="currentColor" />
+      <path d="m13 7.9 4.1 4.2M17.1 7.9 13 12.1" />
     </svg>
   )
 }

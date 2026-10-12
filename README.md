@@ -45,14 +45,17 @@ copied byte for byte out of the apps' `.icns` resources; see Assets.
 The story and the finale are one timeline, `src/lib/scene.ts`, drawn by
 `src/components/Scene.astro`. The film has its own, longer timeline, `src/lib/film.ts`, drawn by
 `src/components/FilmStage.astro` with the same apps, screens and panel; `npm run film` plays it
-frame by frame in Chromium and encodes it with ffmpeg. Under reduced motion the film doesn't start
-by itself (the play button and the watch page still play all of it) and each act shows its
-finished state; without JavaScript the film gets native controls and the story becomes stills.
+frame by frame in Chromium and encodes it with ffmpeg, and `npm run film:narrate` adds the
+narration. Under reduced motion the film doesn't start by itself (the play and sound buttons and
+the watch page still play all of it) and each act shows its finished state; without JavaScript the
+film gets native controls, with its sound, and the story becomes stills.
 
 ### The film
 
-Sixty seconds, six shots, no sound, in each locale's language, labelled as a simulated demo
-throughout:
+Sixty seconds, six shots, in each locale's language, labelled as a simulated demo throughout, and
+narrated: the approved River voice-over in English and Simplified Chinese. The Japanese film keeps
+its Japanese supers and has the English narration, and its caption and sound button say so
+(英語ナレーション); there is no Japanese narration.
 
 1. **The need** — your display, its Dock and windows; Codex works in Blender there, by screenshot
    and click.
@@ -68,6 +71,12 @@ throughout:
 
 There is one pointer throughout, yours or Codex's: the screens share one keyboard, pointer and
 focus. The panel, menus and dialog use the app's own interface text (Simplified Chinese).
+
+In the hero the film plays by itself only muted. Its sound button (named, keyboard-operable)
+turns the narration on, the first time from the beginning so it is heard whole; the play and
+replay buttons play it with sound too, unless it was muted by hand, and a mute holds. Leaving the
+view or the tab pauses it; only a muted film resumes by itself. The watch page waits for a click
+and plays with sound, with the browser's controls, and links the narrated MP4s.
 
 ## Stack
 
@@ -90,11 +99,13 @@ src/scripts/       scene-view, story, film (playback), film-view (poses the film
                    (the film's 3D views, three.js)
 src/assets/        the night-window app icon (from chekusu/yomado)
 public/apps/       the apps' icons, extracted from their .icns, and sources.json (provenance)
-public/media/      the film per locale (MP4 + WebM, wide and tall), posters, story stills
+public/media/      the film per locale (MP4 + WebM with narration, wide and tall, the version in
+                   each name), posters, story stills
+narration/         the narration, English and Simplified Chinese (AAC), as approved
 public/            favicons and Open Graph cards (generated, committed)
 functions/         a Pages Function that answers byte ranges for the films on Cloudflare
-scripts/           verify-dist.mjs, media-info.mjs, render-film.mjs, render-assets.mjs,
-                   extract-icons.mjs
+scripts/           verify-dist.mjs, media-info.mjs, render-film.mjs, narrate-film.mjs,
+                   render-assets.mjs, extract-icons.mjs
 tests/             smoke.mjs (browser), language.mjs, download.mjs (real download acceptance)
 ```
 
@@ -122,8 +133,12 @@ three locales at 1440, 945, 834, 390 and 320 px: metadata (hreflang, Open Graph 
 errors, horizontal overflow, the download entry points, the film (its real length and size, muted
 inline autoplay, seeking into the middle and to the end, pause and replay, Tab, Enter and Space
 with a visible focus ring, the portrait version on phones, reduced motion, the poster when no
-source plays, and the media type and byte ranges of every film file), the watch page (the
-browser's controls, seeking, the end, the MP4 links, phones), the scroll story with the apps' own
+source plays, and the media type and byte ranges of every film file), its narration (muted while
+it plays by itself; the sound button by mouse and keyboard, from the beginning the first time, its
+audio decoded; a mute that holds through scrolling, pausing and replay; nothing audible starting
+by itself after scrolling back or a hidden tab; a refused or interrupted `play()` never undoing a
+pause; phones and reduced motion), the watch page (the browser's controls with sound, seeking,
+the end, the MP4 links, phones), the scroll story with the apps' own
 icons and the finale, the language menu between every pair of locales on the home, details and
 watch pages (with the section kept), the details page with checksum copy, the page without
 JavaScript, the header on phones with classic scrollbars, 404, sitemap and robots.txt.
@@ -131,9 +146,11 @@ JavaScript, the header on phones with classic scrollbars, 404, sitemap and robot
 
 `npm run verify` reads the film files themselves (`scripts/media-info.mjs`, no ffprobe needed):
 55–65 s, 1920 × 1080 or 1080 × 1350, at least 30 fps, H.264 High 4.0 in yuv420p with `moov`
-before `mdat`, the codec string the pages declare, VP9 for the WebM; each video file under 9 MB,
-posters and stills under 200 kB. It fails if an internal render page or a file of the old
-16-second film is published, or if an app icon differs from `public/apps/sources.json`.
+before `mdat` and AAC-LC at 48 kHz in the MP4, VP9 and Opus in the WebM, the audio as long as the
+video and tagged with the locale's narration language, the codec strings the pages declare; each
+video file under 10 MB, posters and stills under 200 kB. It fails if an internal render page, a
+file of the old 16-second film or an earlier version of the film (such as the silent one) is
+published, or if an app icon differs from `public/apps/sources.json`.
 
 `npm test` then runs `tests/language.mjs` (also `npm run test:language`): first visits with
 Chinese, Japanese, English, mixed (`fr, ja, en`; `en, ja`) and unsupported browser languages,
@@ -160,6 +177,7 @@ npm run film                               # all six films → public/media/ (ne
 npm run film -- --stills 0,36.9 --out d    # PNG stills of single moments, for review
 npm run film -- --locale ja --layout tall  # one variant
 npm run film -- --encode-only              # re-encode the last render's frames
+npm run film:narrate                       # add the narration to the last render again
 npm run assets                             # Open Graph cards and favicons (use the story still)
 npm run assets -- ja                       # just the named cards (en, zh-cn, ja)
 npm run icons -- <folder>                  # the apps' icons from their .icns (see Assets)
@@ -174,7 +192,12 @@ and `/film/story/<layout>/`) that production builds never contain. Each of the s
 locales, wide 1920 × 1080 and tall 1080 × 1350 for phones) plays in headless Chromium at 30 fps,
 split into three chunks per film that render side by side (every frame is a pure function of
 time); the frames are encoded as H.264 (High, level 4.0, yuv420p, faststart, a keyframe every two
-seconds) and VP9. Each film's poster is its first frame, so playback starts without a jump; the
+seconds) and VP9 into `.film-build/silent/`. `scripts/narrate-film.mjs` then adds the narration
+from `narration/` (the Japanese film takes the English one) without touching the video: the MP4
+gets the narration's AAC as it is, the WebM the same narration as Opus 96 kbps, with the inputs'
+metadata dropped and the audio tagged with its language. The files are named with the version in
+`src/lib/film-media.json`; raise it whenever the films change, so no browser or CDN keeps serving
+an older file. Each film's poster is its first frame, so playback starts without a jump; the
 home page's no-JavaScript stills come from the story scene at the end of act 3. Rendering uses
 three.js and the Noto Sans SC and JP fonts, development dependencies that the site never loads.
 `.film-build/render-manifest.json` records the settings, sizes and SHA-256 of each file.
@@ -252,6 +275,12 @@ Codex and GrokBot are screen names, written out as text.
 **yomado's own marks.** The night-window app icon (in the Dock and the panel) and the menu bar
 icon (only the inner window, as a single-colour template, traced from `app/MenuBarIcon.m`) come
 from [chekusu/yomado](https://github.com/chekusu/yomado) under its MIT license.
+
+**Narration.** The English and Simplified Chinese narration in `narration/` is the approved River
+voice-over of the app's own narrated demos (`docs/media/yomado-en-river.mp4` and
+`yomado-zh-cn-river.mp4` in chekusu/yomado): the wide MP4s here carry exactly those audio streams
+over exactly the same video. It is the app owner's published product material, used here as part
+of the film.
 
 **Everything else** is original to this repository under MIT: the scene, the film and its 3D dress,
 and the control panel rebuilt in HTML from the app's 0.3.3 layout with example displays. The
