@@ -24,13 +24,39 @@ export default (r: ReleaseFacts): Copy => ({
     meta: `Experimental build · v${r.version} · Apple silicon`,
     film: {
       label:
-        'Concept film, 16 seconds, no sound. A virtual screen named Codex opens beside a Mac display. A 3D app moves into it while the other windows stay. A second screen, GrokBot, opens with its own apps. Night falls and the screens become the yomado mark.',
-      caption: 'Concept demo. Running with physical displays switched off is not yet verified on real hardware.',
+        'Product film, one minute, no sound; a simulated demo. Codex works in Blender on your display by screenshot and click. yomado’s menu bar icon opens the control panel, which adds a virtual screen to the right of your two displays; it is renamed Codex. Blender and Marvelous Designer are dragged onto it, and their windows move while yours stay. On Codex, Codex takes a screenshot, adds a Subdivision Surface modifier, types 3, turns the view and switches to rendered shading. A second screen, GrokBot, gets Google Chrome; Marvelous Designer is dragged back; closing GrokBot from the menu bar returns Chrome to its display first. Night falls and Codex becomes the yomado mark.',
+      caption: 'Simulated demo, not a recording of an agent at work. Running with physical displays switched off is not yet verified on real hardware.',
       play: 'Play film',
       pause: 'Pause film',
       replay: 'Replay film',
       fallback: 'Your browser can’t play this video.',
+      watch: 'Watch the full film',
     },
+  },
+  filmScript: {
+    label: 'Simulated demo',
+    supers: [
+      'Visual agents need a screen they can see and work on.',
+      'Open a screen. Name it.',
+      'Their apps move. Yours stay.',
+      'Codex looks, then clicks and types.',
+      'Close a screen, and its windows go back first.',
+    ],
+    tagline: 'A screen for your agents.',
+    cta: 'Download for Mac',
+  },
+  watch: {
+    meta: {
+      title: 'yomado in one minute — the product film',
+      description:
+        'A one-minute simulated demo of yomado: a named virtual screen for Codex, apps dragged onto it from the control panel, and Codex working in Blender through screenshots, clicks and keystrokes.',
+    },
+    title: 'yomado in one minute.',
+    lede: 'Open a screen, move an agent’s apps onto it, let it work, then bring the windows back.',
+    note: 'A simulated demo, not a recording of real agent work. The app windows are simplified recreations; the icons are the apps’ own. Running with physical displays switched off is not yet verified.',
+    mp4: 'MP4 · 1920 × 1080 · 1:00 · {size}',
+    mp4Tall: 'Portrait MP4 · 1080 × 1350 · 1:00 · {size}',
+    back: 'Back to yomado',
   },
   story: {
     label: 'How it works',
@@ -44,8 +70,8 @@ export default (r: ReleaseFacts): Copy => ({
     title: 'Every screen. One panel.',
     text: 'Your displays to scale, each app shown on the screen it lives on.',
     imageAlt:
-      'The yomado control panel: two physical Studio Display cards and a virtual screen card named Codex at 1920 × 1080, each showing the icons of the apps on it.',
-    caption: 'The control panel with example display data. Its interface is in Simplified Chinese.',
+      'The yomado control panel: Studio Display 1 with WeChat, Studio Display 2 with Google Chrome, and a virtual screen named Codex at 1920 × 1080 with Blender and Marvelous Designer. Each card shows the icons of the apps on that screen.',
+    caption: 'The control panel, rebuilt from the app’s layout with example displays and the apps’ own icons. Its interface is in Simplified Chinese.',
   },
   finale: {
     title: 'A window, lit for your agents.',
@@ -58,11 +84,12 @@ export default (r: ReleaseFacts): Copy => ({
     navLabel: 'Footer',
     tagline: 'A work screen for visual agents.',
     details: 'Details',
+    film: 'Film',
     releases: 'Releases',
     source: 'App source',
     site: 'Website source',
     license: 'MIT license',
-    fine: 'Experimental software that uses private macOS APIs. Codex, GrokBot and macOS belong to their respective owners; naming them doesn’t imply endorsement.',
+    fine: 'Experimental software that uses private macOS APIs. Blender, Marvelous Designer, Google Chrome, WeChat, Codex, GrokBot and macOS belong to their respective owners; their names and icons only identify the apps and don’t imply endorsement.',
   },
   details: {
     meta: {

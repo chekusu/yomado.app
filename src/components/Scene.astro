@@ -1,10 +1,13 @@
 ---
 /**
  * The yomado story scene: your display, two named virtual screens, the apps that move between
- * them and the night-window mark. Everything is drawn here; src/scripts/scene-view.ts poses it
- * from the timeline in src/lib/scene.ts. Decorative: the surrounding copy carries the meaning.
+ * them and the night-window mark. Apps appear with their own icons (src/lib/apps.ts); the windows
+ * are simplified sketches of them. src/scripts/scene-view.ts poses everything from the timeline in
+ * src/lib/scene.ts. Decorative: the surrounding copy carries the meaning.
  */
-import { GLYPHS, WINDOW_GLYPH, type GlyphId } from '../lib/glyphs';
+import AppIcon from './AppIcon.astro';
+import type { AppId } from '../lib/apps';
+import { MENUBAR_ICON } from '../lib/menubar';
 import { ICON } from '../lib/scene';
 
 interface Props {
@@ -18,8 +21,8 @@ interface Props {
 
 const { id, class: className, mode = 'page', layout } = Astro.props;
 
-const dock: GlyphId[] = ['folder', 'notes', 'mail', 'cube', 'gamepad', 'globe', 'brush'];
-const running = new Set<GlyphId>(['folder', 'notes', 'mail', 'cube']);
+// Your Dock: the apps in the story, and yomado itself with its full night-window icon.
+const dock: AppId[] = ['wechat', 'chrome', 'blender', 'md', 'yomado'];
 
 // The ivory window of the mark, without its crescent: a large top-left radius, small elsewhere.
 const { x, y, w, h, tl, br } = ICON;
@@ -41,7 +44,10 @@ const uid = id ?? 'scene';
         <div class="wallpaper"></div>
         <div class="menubar">
           <i class="mb-dot"></i><i class="mb-item w1"></i><i class="mb-item w2"></i><i class="mb-item w3"></i><i class="mb-item w4"></i>
-          <span class="mb-right"><i></i><i></i><i class="mb-clock"></i></span>
+          <span class="mb-right">
+            <svg class="mb-yomado" viewBox={MENUBAR_ICON.viewBox}><path d={MENUBAR_ICON.path} /></svg>
+            <i></i><i></i><i class="mb-clock"></i>
+          </span>
         </div>
         <div class="win notes">
           <div class="tb"><i></i><i></i><i></i></div>
@@ -62,9 +68,9 @@ const uid = id ?? 'scene';
         </div>
         <div class="dock">
           {
-            dock.map((g) => (
-              <span class:list={['tile', { running: running.has(g) }]} style={`--from:${GLYPHS[g].from};--to:${GLYPHS[g].to};--ink:${GLYPHS[g].ink ?? '#fff'}`}>
-                <svg viewBox="0 0 24 24"><path d={GLYPHS[g].path} /></svg>
+            dock.map((app) => (
+              <span class="tile running">
+                <AppIcon app={app} size={44} />
               </span>
             ))
           }
@@ -87,34 +93,35 @@ const uid = id ?? 'scene';
     {
       (
         [
-          ['codex', 'Codex', ['model', 'game']],
-          ['grok', 'GrokBot', ['browser', 'canvas']],
+          ['codex', 'Codex', ['blender', 'md']],
+          ['grok', 'GrokBot', ['chrome']],
         ] as const
       ).map(([s, name, apps]) => (
         <div class="part vlabel" data-part={`${s}-label`}>
           <span class="vl-name">{name}</span>
           <span class="vl-meta">1920 × 1080</span>
           <span class="vl-chips">
-            {apps.map((app) => {
-              const g = GLYPHS[WINDOW_GLYPH[app]];
-              return (
-                <span class="tile chip" data-chip={app} style={`--from:${g.from};--to:${g.to};--ink:${g.ink ?? '#fff'}`}>
-                  <svg viewBox="0 0 24 24"><path d={g.path} /></svg>
-                </span>
-              );
-            })}
+            {apps.map((app) => (
+              <span class="chip" data-chip={app}>
+                <AppIcon app={app} size={40} />
+              </span>
+            ))}
           </span>
         </div>
       ))
     }
 
-    <!-- Agent apps -->
-    <div class="part win model dark" data-part="model">
+    <!-- Agent apps: Blender, Marvelous Designer and Chrome, sketched -->
+    <div class="part win model dark" data-part="blender">
       <div class="tb"><i></i><i></i><i></i></div>
       <div class="model-body">
         <div class="model-tools"><i></i><i class="on"></i><i></i><i></i><i></i></div>
         <div class="model-view">
           <div class="floor"></div>
+          <svg class="gizmo" viewBox="0 0 40 40">
+            <path class="gx" d="M20 20L33 24" /><path class="gy" d="M20 20L12 29" /><path class="gz" d="M20 20V6" />
+            <circle class="gx" cx="33" cy="24" r="4" /><circle class="gy" cx="12" cy="29" r="4" /><circle class="gz" cx="20" cy="6" r="4" />
+          </svg>
           <svg class="obj" viewBox="0 0 220 170">
             <ellipse class="obj-shadow" cx="96" cy="140" rx="62" ry="12"></ellipse>
             <g class="cube">
@@ -134,32 +141,39 @@ const uid = id ?? 'scene';
       <div class="model-time"><i></i></div>
     </div>
 
-    <div class="part win game" data-part="game">
+    <div class="part win md dark" data-part="md">
       <div class="tb"><i></i><i></i><i></i></div>
-      <div class="game-body">
-        <i class="sun"></i><i class="hill h1"></i><i class="hill h2"></i>
-        <i class="plat p1"></i><i class="plat p2"></i><i class="plat p3"></i>
-        <i class="coin c1"></i><i class="coin c2"></i><i class="coin c3"></i>
-        <i class="runner"></i>
-        <i class="ground"></i>
-        <span class="hud"><b></b><b></b><b></b></span>
+      <div class="md-body">
+        <div class="md-3d">
+          <svg viewBox="0 0 140 240">
+            <ellipse class="md-floor" cx="70" cy="226" rx="44" ry="7"></ellipse>
+            <path class="md-avatar" d="M70 14a12 12 0 1 1 0 24a12 12 0 1 1 0-24zM62 40h16l3 10c12 3 20 8 21 16l-4 58-7 2-2-48-4 50-1 92h-10l-4-86-4 86h-10l-1-92-4-50-2 48-7-2-4-58c1-8 9-13 21-16z"></path>
+            <path class="md-dress" d="M57 52c4 6 22 6 26 0l9 20-5 44c10 30 22 62 26 92-26 9-60 9-86 0 4-30 16-62 26-92l-5-44z"></path>
+            <path class="md-fold" d="M58 128c-6 24-12 52-14 76M70 126v84M82 128c6 24 12 52 14 76"></path>
+          </svg>
+        </div>
+        <div class="md-2d">
+          <svg viewBox="0 0 200 240">
+            <path class="md-piece p1" d="M18 26h46l6 44-10 6h-38l-10-6z"></path>
+            <path class="md-piece p2" d="M90 26h46l6 44-10 6h-38l-10-6z"></path>
+            <path class="md-piece p3" d="M28 96h48l18 120h-84z"></path>
+            <path class="md-piece p4" d="M112 96h48l18 120h-84z"></path>
+            <path class="md-seam" d="M64 30l6 40M136 30l6 40M76 100l18 112M160 100l18 112"></path>
+          </svg>
+        </div>
       </div>
     </div>
 
-    <div class="part win browser" data-part="browser">
-      <div class="tb"><i></i><i></i><i></i><span class="url"></span></div>
+    <div class="part win chrome" data-part="chrome">
+      <div class="tb">
+        <i></i><i></i><i></i>
+        <span class="tab"><u></u><b></b></span>
+      </div>
+      <div class="bar"><span class="url"></span></div>
       <i class="load"></i>
       <div class="page">
         <i class="page-hero"></i><i class="page-line"></i><i class="page-line short"></i>
         <span class="cards"><i></i><i></i><i></i></span>
-      </div>
-    </div>
-
-    <div class="part win canvas" data-part="canvas">
-      <div class="tb"><i></i><i></i><i></i></div>
-      <div class="canvas-body">
-        <div class="layers"><i class="on"></i><i></i><i></i><i></i></div>
-        <div class="board"><i class="shape s1"></i><i class="shape s2"></i><i class="shape s3"></i><i class="sel"></i></div>
       </div>
     </div>
 
@@ -368,11 +382,22 @@ const uid = id ?? 'scene';
     margin-left: auto;
   }
 
+  .mb-right {
+    align-items: center;
+  }
+
   .mb-right i {
     width: 14px;
     height: 8px;
     border-radius: 3px;
     background: rgb(29 29 31 / 0.5);
+  }
+
+  /* yomado's single-colour menu bar icon, drawn the way macOS tints a template image. */
+  .mb-yomado {
+    width: 15px;
+    height: 15px;
+    fill: rgb(29 29 31 / 0.82);
   }
 
   .mb-right .mb-clock {
@@ -580,27 +605,17 @@ const uid = id ?? 'scene';
     transform: translateX(-50%);
   }
 
+  /* Dock items are the apps' own icons, at their own proportions. */
   .tile {
     position: relative;
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: linear-gradient(160deg, var(--from), var(--to));
-    box-shadow:
-      inset 0 0 0 1px rgb(255 255 255 / 0.22),
-      0 2px 4px rgb(0 0 0 / 0.12);
+    width: 44px;
+    height: 44px;
   }
 
-  .tile svg {
-    width: 62%;
-    height: 62%;
-    fill: none;
-    stroke: var(--ink);
-    stroke-width: 1.9;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+  .tile :global(img),
+  .chip :global(img) {
+    width: 100%;
+    height: 100%;
   }
 
   .tile.running::after {
@@ -692,9 +707,8 @@ const uid = id ?? 'scene';
 
   .chip {
     --pop: 0;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    width: 34px;
+    height: 34px;
     opacity: var(--pop);
     transform: scale(calc(0.5 + 0.5 * var(--pop)));
   }
@@ -705,9 +719,8 @@ const uid = id ?? 'scene';
   }
 
   .scene[data-layout='tall'] .chip {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
   }
 
   /* ---------- Agent apps ---------- */
@@ -741,6 +754,34 @@ const uid = id ?? 'scene';
     position: relative;
     overflow: hidden;
     background: radial-gradient(80% 70% at 50% 30%, #3a3c44, #232429);
+  }
+
+  /* Blender's navigation gizmo: X red, Y green, Z blue. */
+  .gizmo {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .gizmo path {
+    stroke-width: 1.6;
+  }
+
+  .gizmo .gx {
+    stroke: #ff3352;
+    fill: #ff3352;
+  }
+
+  .gizmo .gy {
+    stroke: #8bdc00;
+    fill: #8bdc00;
+  }
+
+  .gizmo .gz {
+    stroke: #2890ff;
+    fill: #2890ff;
   }
 
   .floor {
@@ -785,9 +826,10 @@ const uid = id ?? 'scene';
     fill: #c9601f;
   }
 
+  /* The selected object's outline, in Blender's orange. */
   .cube .edges {
     fill: none;
-    stroke: #ffb26b;
+    stroke: #ffaa40;
     stroke-width: 1.6;
     stroke-linejoin: round;
     opacity: clamp(0.25, calc(1.3 - var(--work) * 1.6), 1);
@@ -870,161 +912,154 @@ const uid = id ?? 'scene';
     background: #ee6f28;
   }
 
-  /* A small platformer */
-  .game-body {
-    position: relative;
+  /* Marvelous Designer: the avatar in the 3D window, the pattern in the 2D window. */
+  .md-body {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
     height: calc(100% - 28px);
+  }
+
+  .md-3d,
+  .md-2d {
+    position: relative;
     overflow: hidden;
-    background: linear-gradient(180deg, #7cc8ff 0%, #c6ecff 70%, #e9f8ff 100%);
   }
 
-  .game-body > i,
-  .hud {
-    position: absolute;
+  .md-3d {
+    background: radial-gradient(90% 70% at 50% 35%, #4a4b52, #2c2d32);
+    border-right: 1px solid rgb(255 255 255 / 0.06);
   }
 
-  .sun {
-    right: 34px;
-    top: 22px;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: #fff4b8;
-    box-shadow: 0 0 24px #fff4b8;
-  }
-
-  .hill {
-    bottom: 34px;
-    border-radius: 50% 50% 0 0;
-    background: #9fdc8a;
-  }
-
-  .h1 {
-    left: -30px;
-    width: 220px;
-    height: 90px;
-  }
-
-  .h2 {
-    left: 160px;
-    width: 300px;
-    height: 70px;
-    background: #8bd17a;
-  }
-
-  .ground {
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 36px;
+  .md-2d {
     background:
-      repeating-linear-gradient(90deg, rgb(0 0 0 / 0.08) 0 2px, transparent 2px 36px),
-      linear-gradient(#5bb04a 0 8px, #a26a3c 8px);
+      radial-gradient(rgb(255 255 255 / 0.08) 1px, transparent 1.5px) 0 0 / 14px 14px,
+      #26272b;
   }
 
-  .plat {
-    height: 14px;
-    border-radius: 4px;
-    background: linear-gradient(#5bb04a 0 5px, #a26a3c 5px);
+  .md-3d svg,
+  .md-2d svg {
+    position: absolute;
+    inset: 8px 6px 4px;
+    width: calc(100% - 12px);
+    height: calc(100% - 12px);
   }
 
-  .p1 {
-    left: 96px;
-    bottom: 96px;
-    width: 70px;
+  .md-floor {
+    fill: rgb(0 0 0 / 0.3);
   }
 
-  .p2 {
-    left: 214px;
-    bottom: 136px;
-    width: 70px;
+  .md-avatar {
+    fill: #9a9ca4;
   }
 
-  .p3 {
-    left: 330px;
-    bottom: 96px;
-    width: 70px;
+  .md-dress {
+    fill: #e9dcc6;
+    opacity: clamp(0, calc((var(--work) - 0.15) * 3), 1);
   }
 
-  .coin {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #fff6b0, #f7c331 60%, #d99a12);
+  .md-fold {
+    fill: none;
+    stroke: rgb(120 96 64 / 0.35);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    opacity: clamp(0, calc((var(--work) - 0.3) * 3), 1);
   }
 
-  .c1 {
-    left: 124px;
-    bottom: 124px;
-    opacity: clamp(0, calc((0.3 - var(--work)) * 40), 1);
+  /* Pattern pieces gather toward their seams as the garment is sewn. */
+  .md-piece {
+    fill: rgb(233 220 198 / 0.9);
+    stroke: #f3c06b;
+    stroke-width: 1.2;
   }
 
-  .c2 {
-    left: 242px;
-    bottom: 164px;
-    opacity: clamp(0, calc((0.58 - var(--work)) * 40), 1);
+  .md-piece.p1,
+  .md-piece.p3 {
+    transform: translateX(calc(-6px * (1 - var(--work))));
   }
 
-  .c3 {
-    left: 358px;
-    bottom: 124px;
-    opacity: clamp(0, calc((0.86 - var(--work)) * 40), 1);
+  .md-piece.p2,
+  .md-piece.p4 {
+    transform: translateX(calc(6px * (1 - var(--work))));
   }
 
-  .runner {
-    --hop: 0px;
-    left: calc(26px + 350px * var(--work));
-    bottom: calc(36px + var(--hop));
-    width: 22px;
-    height: 26px;
-    border-radius: 6px 6px 4px 4px;
-    background: linear-gradient(#0f1c44 0 55%, #ee6f28 55%);
-    box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.25);
+  .md-seam {
+    fill: none;
+    stroke: #ff6a3d;
+    stroke-width: 1.3;
+    stroke-dasharray: 3 3;
+    opacity: clamp(0.2, var(--work), 1);
   }
 
-  .hud {
-    left: 12px;
-    top: 10px;
+  /* Google Chrome: tab strip, toolbar, page. */
+  .chrome .tb {
+    gap: 7px;
+    height: 32px;
+    background: #dfe3e8;
+    border-bottom: 0;
+  }
+
+  .tab {
     display: flex;
-    gap: 5px;
+    align-items: center;
+    gap: 6px;
+    align-self: end;
+    width: 132px;
+    height: 24px;
+    margin-left: 14px;
+    padding: 0 10px;
+    border-radius: 8px 8px 0 0;
+    background: #fff;
   }
 
-  .hud b {
-    width: 14px;
-    height: 12px;
+  .tab u {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #1aa7a0;
+  }
+
+  .tab b {
+    width: 60px;
+    height: 6px;
     border-radius: 3px;
-    background: #ff5f7a;
+    background: rgb(29 29 31 / 0.35);
   }
 
-  /* A browser */
+  .bar {
+    display: flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 12px;
+    background: #fff;
+    border-bottom: 1px solid rgb(0 0 0 / 0.07);
+  }
+
   .url {
     flex: 1;
-    height: 16px;
-    margin-left: 18px;
-    border-radius: 8px;
-    background: #fff;
-    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+    height: 18px;
+    border-radius: 9px;
+    background: #eef1f4;
   }
 
   .load {
     position: absolute;
     left: 0;
-    top: 28px;
+    top: 62px;
     width: calc(100% * var(--work));
-    height: 3px;
-    background: #119e98;
+    height: 2px;
+    background: #2468ec;
     opacity: calc(1 - var(--work) * var(--work) * var(--work));
   }
 
   .page {
     display: grid;
     gap: 10px;
-    padding: 16px 18px;
+    padding: 14px 18px;
     opacity: clamp(0.15, calc(var(--work) * 1.4), 1);
   }
 
   .page-hero {
-    height: 92px;
+    height: 84px;
     border-radius: 10px;
     background:
       radial-gradient(60% 80% at 80% 20%, #9ff3e7, transparent),
@@ -1051,86 +1086,10 @@ const uid = id ?? 'scene';
   }
 
   .cards i {
-    height: 64px;
+    height: 56px;
     border-radius: 8px;
     background: #f0f2f6;
     box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.05);
-  }
-
-  /* A design canvas */
-  .canvas-body {
-    display: grid;
-    grid-template-columns: 88px 1fr;
-    height: calc(100% - 28px);
-  }
-
-  .layers {
-    display: grid;
-    align-content: start;
-    gap: 8px;
-    padding: 12px 10px;
-    background: #f7f7f9;
-    border-right: 1px solid rgb(0 0 0 / 0.06);
-  }
-
-  .layers i {
-    height: 18px;
-    border-radius: 5px;
-    background: linear-gradient(rgb(29 29 31 / 0.16), rgb(29 29 31 / 0.16)) 8px 6px / 40px 6px no-repeat;
-  }
-
-  .layers i.on {
-    background-color: rgb(236 79 140 / 0.14);
-  }
-
-  .board {
-    position: relative;
-    overflow: hidden;
-    background:
-      radial-gradient(rgb(29 29 31 / 0.12) 1px, transparent 1.5px) 0 0 / 16px 16px,
-      #fdfdfd;
-  }
-
-  .shape {
-    position: absolute;
-  }
-
-  .s1 {
-    left: calc(40px + 120px * var(--work));
-    top: calc(40px + 30px * var(--work));
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: #ff7a9c;
-  }
-
-  .s2 {
-    left: calc(170px - 70px * var(--work));
-    top: 120px;
-    width: 90px;
-    height: 90px;
-    border-radius: 18px;
-    background: #0f1c44;
-    transform: rotate(calc(-8deg + 8deg * var(--work)));
-  }
-
-  .s3 {
-    left: 250px;
-    top: calc(36px + 50px * var(--work));
-    width: 76px;
-    height: 66px;
-    background: #f7c331;
-    clip-path: polygon(50% 0, 100% 100%, 0 100%);
-  }
-
-  .sel {
-    position: absolute;
-    left: calc(34px + 120px * var(--work));
-    top: calc(34px + 30px * var(--work));
-    width: 82px;
-    height: 82px;
-    border: 2px solid #ec4f8c;
-    border-radius: 4px;
   }
 
   /* ---------- The mark ---------- */

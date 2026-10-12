@@ -1,0 +1,174 @@
+{
+  "about": "Application icons copied byte for byte from PNG representations inside each app’s own .icns resource (scripts/extract-icons.mjs). They identify the apps shown in the scene and the film, remain the trademarks and copyright of their owners, are not covered by this repository’s MIT license and do not imply endorsement.",
+  "icons": [
+    {
+      "id": "blender",
+      "app": "Blender",
+      "bundleIdentifier": "org.blenderfoundation.blender",
+      "bundleResource": "Blender.app/Contents/Resources/blender_icon_legacy.icns",
+      "icns": {
+        "file": "blender.icns",
+        "bytes": 229520,
+        "sha256": "33e48793f1c77d972688b420db258c22373f2bc392b2a5f022440fd86ee630db"
+      },
+      "files": [
+        {
+          "file": "blender-128.png",
+          "icnsType": "ic07",
+          "width": 128,
+          "height": 128,
+          "bytes": 12728,
+          "sha256": "0d6152acdb70c57e9f871b573f81b706971f413d7345b5a5ec1b1c2499d116ce"
+        },
+        {
+          "file": "blender-256.png",
+          "icnsType": "ic08",
+          "width": 256,
+          "height": 256,
+          "bytes": 37326,
+          "sha256": "64b7d547f9070b2983e6eb3b7aac064c4f707f40e337df8037600eb53a0a3bbb"
+        },
+        {
+          "file": "blender-512.png",
+          "icnsType": "ic14",
+          "width": 512,
+          "height": 512,
+          "bytes": 133410,
+          "sha256": "39ba76c0c13b92349e15e8085d71a4ae79b6941b255bdb8698c59e5571f299d5"
+        }
+      ]
+    },
+    {
+      "id": "md",
+      "app": "Marvelous Designer",
+      "bundleIdentifier": "com.clovirtualfashion.MarvelousDesigner_PER",
+      "bundleResource": "MarvelousDesigner.app/Contents/Resources/md.icns",
+      "icns": {
+        "file": "marvelous-designer.icns",
+        "bytes": 925480,
+        "sha256": "966278a950adfbc7aad9149ed9026ca7211b007c4659c4a99ead6bd09868e658"
+      },
+      "files": [
+        {
+          "file": "md-128.png",
+          "icnsType": "ic07",
+          "width": 128,
+          "height": 128,
+          "bytes": 18385,
+          "sha256": "c6a09ef221f220c413f2a5ffc5340e35ead4104e7532477a199dbafe2a341db6"
+        },
+        {
+          "file": "md-256.png",
+          "icnsType": "ic08",
+          "width": 256,
+          "height": 256,
+          "bytes": 54968,
+          "sha256": "b7ef3533b56ae3611a0760ab507bd53ba78e63a3fe0f618417aa5768b2b3da99"
+        },
+        {
+          "file": "md-512.png",
+          "icnsType": "ic09",
+          "width": 512,
+          "height": 512,
+          "bytes": 187721,
+          "sha256": "e6f2af78de6a6cc3a890903f0fbea8657881a16366d30d84840c0d86d026188f"
+        }
+      ]
+    },
+    {
+      "id": "chrome",
+      "app": "Google Chrome",
+      "bundleIdentifier": "com.google.Chrome",
+      "bundleResource": "Google Chrome.app/Contents/Resources/app.icns",
+      "icns": {
+        "file": "google-chrome.icns",
+        "bytes": 86270,
+        "sha256": "770c76bce29805a54ffd4fa28929f7f03a86d42d8cf281cadcff694e17483b95"
+      },
+      "files": [
+        {
+          "file": "chrome-128.png",
+          "icnsType": "ic07",
+          "width": 128,
+          "height": 128,
+          "bytes": 19382,
+          "sha256": "1e42d4a6915bce56a8390fec3439405a52eb485b2a12d51b9e0cefedd76aef85"
+        },
+        {
+          "file": "chrome-256.png",
+          "icnsType": "ic13",
+          "width": 256,
+          "height": 256,
+          "bytes": 63757,
+          "sha256": "8c5cb09fff855b6a17a68e82347a121c88f635c3b2a859713ed8955920d43f5f"
+        }
+      ]
+    },
+    {
+      "id": "wechat",
+      "app": "WeChat",
+      "bundleIdentifier": "com.tencent.xinWeChat",
+      "bundleResource": "WeChat.app/Contents/Resources/AppIcon.icns",
+      "icns": {
+        "file": "wechat.icns",
+        "bytes": 365731,
+        "sha256": "d059ead79d7c4fa72040dbf9a02def02114501588872e423b131d320b55d598d"
+      },
+      "files": [
+        {
+          "file": "wechat-128.png",
+          "icnsType": "ic07",
+          "width": 128,
+          "height": 128,
+          "bytes": 9680,
+          "sha256": "5d1ba9b2050383b0398150a67ce274c09ad53dceb174a87a11084148c33c6519"
+        },
+        {
+          "file": "wechat-256.png",
+          "icnsType": "ic08",
+          "width": 256,
+          "height": 256,
+          "bytes": 24696,
+          "sha256": "e61876c7d377052cf7dfa52361a06876805668fec7599bc36d964239796dd83b"
+        }
+      ]
+    },
+    {
+      "id": "yomado",
+      "app": "yomado",
+      "bundleIdentifier": "dev.chekusu.yomado",
+      "bundleResource": "Yomado.app/Contents/Resources/Yomado.icns",
+      "icns": {
+        "file": "yomado.icns",
+        "bytes": 1850414,
+        "sha256": "678aa45dafb3b8abe7c5088f6dc086275583f0905fd0965a218b2373439f99e3"
+      },
+      "files": [
+        {
+          "file": "yomado-128.png",
+          "icnsType": "ic07",
+          "width": 128,
+          "height": 128,
+          "bytes": 19730,
+          "sha256": "e05054be8a2cfaaca75a6ccfe9b0b2926959bdbbadbc33b81234204d20d99f02"
+        },
+        {
+          "file": "yomado-256.png",
+          "icnsType": "ic08",
+          "width": 256,
+          "height": 256,
+          "bytes": 69365,
+          "sha256": "a03bbb14e4d537d64a10254d19f185e29cd296986e78183b1583bdf719d306c5"
+        },
+        {
+          "file": "yomado-512.png",
+          "icnsType": "ic09",
+          "width": 512,
+          "height": 512,
+          "bytes": 280604,
+          "sha256": "3b28c313462099397a0e021ad1ceeaeeae4a66ef745e5c3e9b47f5dc1cd0839a"
+        }
+      ]
+    }
+  ]
+}

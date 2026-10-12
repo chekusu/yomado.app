@@ -1,20 +1,22 @@
 /**
- * The yomado story on one timeline, in seconds.
+ * The home page's short story on one timeline, in seconds.
  *
  *   0.0  your display, with your windows
  *   1.0  act 1: a virtual screen opens beside it and is named Codex
- *   3.9  act 2: one app moves into Codex; your other windows stay
- *   6.9  act 3: the view widens, GrokBot gets a screen of its own, each screen holds its apps
+ *   3.9  act 2: Blender moves into Codex; your other windows stay
+ *   6.9  act 3: the view widens, Marvelous Designer joins Blender on Codex and GrokBot gets a
+ *        screen of its own with Chrome
  *   9.9  act 4: night falls, the screens draw together into the night-window mark
  *
- * The concept film plays it at 1× (scripts/render-film.mjs), the home page scrubs the first three
- * acts with scroll and plays the last one in the finale. Poses are pure functions of time and
- * layout, so the film, the page and the server-rendered fallback always agree.
+ * The home page scrubs the first three acts with scroll and plays the last one in the finale; the
+ * no-JavaScript still is rendered from the end of act 3 (scripts/render-film.mjs). The full film
+ * has its own, longer timeline (src/lib/film.ts) with the same apps and screens. Poses are pure
+ * functions of time and layout, so the page and its still always agree.
  */
 
 export type Layout = 'wide' | 'tall';
 export type ScreenId = 'codex' | 'grok';
-export type WindowId = 'model' | 'game' | 'browser' | 'canvas';
+export type WindowId = 'blender' | 'md' | 'chrome';
 
 export interface Box {
   x: number;
@@ -54,9 +56,8 @@ const BEAT = {
   pair: [6.9, 8.5],
   grokReveal: [7.5, 8.7],
   grokName: [8.1, 8.9],
-  game: [8.0, 8.7],
-  browser: [8.5, 9.1],
-  canvas: [8.8, 9.4],
+  md: [8.0, 8.7],
+  chrome: [8.6, 9.3],
   night: [9.9, 11.9],
   codexNight: [9.9, 11.4],
   grokNight: [10.4, 11.9],
@@ -71,13 +72,10 @@ const BEAT = {
 
 const CHIPS: Record<ScreenId, { id: WindowId; at: Span }[]> = {
   codex: [
-    { id: 'model', at: [5.6, 6.0] },
-    { id: 'game', at: [8.4, 8.8] },
+    { id: 'blender', at: [5.6, 6.0] },
+    { id: 'md', at: [8.4, 8.8] },
   ],
-  grok: [
-    { id: 'browser', at: [8.9, 9.3] },
-    { id: 'canvas', at: [9.1, 9.5] },
-  ],
+  grok: [{ id: 'chrome', at: [9.0, 9.4] }],
 };
 
 export const ease = {
@@ -272,23 +270,23 @@ export function pose(t: number, layout: Layout): Pose {
     chips: CHIPS[id].map(({ id: chip, at }) => ({ id: chip, pop: prog(t, at, ease.out) })),
   });
 
-  // The model window rides in the physical display, flies across, then lives in Codex.
+  // Blender rides in the physical display, flies across, then lives in Codex.
   const fly = prog(t, BEAT.fly);
-  let model: Box;
+  let blender: Box;
   if (t < BEAT.fly[0]) {
-    model = slotIn(phys, SLOT.phys);
+    blender = slotIn(phys, SLOT.phys);
   } else if (t < BEAT.fly[1]) {
     const a = slotIn(phys, SLOT.phys);
     const b = slotIn(codex, SLOT.single);
-    model = mixBox(a, b, fly);
+    blender = mixBox(a, b, fly);
     const dx = b.x + b.w / 2 - (a.x + a.w / 2);
     const dy = b.y + b.h / 2 - (a.y + a.h / 2);
     const len = Math.hypot(dx, dy) || 1;
     const bend = L.arc * Math.sin(Math.PI * fly);
-    model.x += (dy / len) * bend;
-    model.y += (-dx / len) * bend;
+    blender.x += (dy / len) * bend;
+    blender.y += (-dx / len) * bend;
   } else {
-    model = slotIn(codex, mixSlot(SLOT.single, SLOT.first, prog(t, BEAT.pair)));
+    blender = slotIn(codex, mixSlot(SLOT.single, SLOT.first, prog(t, BEAT.pair)));
   }
   const lift = prog(t, BEAT.lift, ease.out) * (1 - prog(t, BEAT.settle, ease.inOut));
 
@@ -298,10 +296,9 @@ export function pose(t: number, layout: Layout): Pose {
   };
 
   const windows: Record<WindowId, WindowPose> = {
-    model: { box: model, opacity: 1 - dim, lift, work: prog(t, [5.8, 9.8], ease.linear) },
-    game: { ...appear(BEAT.game, slotIn(codex, SLOT.second)), lift: 0, work: prog(t, [8.6, 12.4], ease.linear) },
-    browser: { ...appear(BEAT.browser, slotIn(grok, SLOT.first)), lift: 0, work: prog(t, [8.7, 9.9], ease.out) },
-    canvas: { ...appear(BEAT.canvas, slotIn(grok, SLOT.second)), lift: 0, work: prog(t, [9.2, 12.4], ease.linear) },
+    blender: { box: blender, opacity: 1 - dim, lift, work: prog(t, [5.8, 9.8], ease.linear) },
+    md: { ...appear(BEAT.md, slotIn(codex, SLOT.second)), lift: 0, work: prog(t, [8.6, 12.4], ease.linear) },
+    chrome: { ...appear(BEAT.chrome, slotIn(grok, SLOT.single)), lift: 0, work: prog(t, [8.8, 10.2], ease.out) },
   };
 
   const tileBox: Box = { x: L.mark.cx - L.mark.size / 2, y: L.mark.cy - L.mark.size / 2, w: L.mark.size, h: L.mark.size };

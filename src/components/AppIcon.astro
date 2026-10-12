@@ -1,0 +1,40 @@
+---
+// An application's own icon (src/lib/apps.ts). `size` is the displayed size in CSS pixels; the
+// browser picks the extracted PNG that covers it. `largest` serves the biggest one regardless, for
+// scenes that are scaled up after layout, where the browser's choice would come out soft.
+import { APPS, iconLargest, iconSrcset, iconUrl, type AppId } from '../lib/apps';
+
+interface Props {
+  app: AppId;
+  size: number;
+  class?: string;
+  /** Text alternative; decorative (empty) unless the icon is the only label for the app. */
+  alt?: string;
+  largest?: boolean;
+  loading?: 'lazy' | 'eager';
+  [key: `data-${string}`]: string | undefined;
+}
+
+const { app, size, class: className, alt = '', largest = false, loading = 'lazy', ...rest } = Astro.props;
+const smallest = APPS[app].sizes[0];
+---
+
+{
+  largest ? (
+    <img class:list={['app-icon', className]} src={iconLargest(app)} alt={alt} width={size} height={size} loading={loading} decoding="async" draggable="false" {...rest} />
+  ) : (
+    <img
+      class:list={['app-icon', className]}
+      src={iconUrl(app, smallest)}
+      srcset={iconSrcset(app)}
+      sizes={`${size}px`}
+      alt={alt}
+      width={size}
+      height={size}
+      loading={loading}
+      decoding="async"
+      draggable="false"
+      {...rest}
+    />
+  )
+}

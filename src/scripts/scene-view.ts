@@ -2,7 +2,7 @@
 import { ICON, PHYS, STAGE, WINDOW, pose, type Box, type Layout, type ScreenId, type WindowId } from '../lib/scene';
 
 const SCREENS: ScreenId[] = ['codex', 'grok'];
-const WINDOWS: WindowId[] = ['model', 'game', 'browser', 'canvas'];
+const WINDOWS: WindowId[] = ['blender', 'md', 'chrome'];
 
 const n = (v: number) => +v.toFixed(2);
 const at = (x: number, y: number, s = 1) => `translate(${n(x)}px, ${n(y)}px)${s === 1 ? '' : ` scale(${+s.toFixed(4)})`}`;
@@ -93,11 +93,6 @@ export class SceneView {
       el.style.visibility = w.opacity > 0 ? '' : 'hidden';
       el.style.setProperty('--lift', `${n(w.lift)}`);
       el.style.setProperty('--work', `${+w.work.toFixed(4)}`);
-      if (id === 'game') {
-        // The runner hops onto each platform it passes.
-        const hop = Math.abs(Math.sin(w.work * Math.PI * 3)) * 70;
-        el.style.setProperty('--hop', `${n(hop)}px`);
-      }
     }
 
     const m = p.mark;

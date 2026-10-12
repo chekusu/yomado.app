@@ -1,7 +1,8 @@
 ---
-// The real control panel, as rendered by the app with example display data.
-import { Picture } from 'astro:assets';
-import panel from '../assets/control-panel.png';
+// The control panel, rebuilt from the app's own layout with example displays and the real icons of
+// the apps on each screen (src/components/ControlPanel.astro).
+import ControlPanel from './ControlPanel.astro';
+import { exampleCards } from '../lib/panel';
 import { phrased } from '../lib/text';
 import type { Copy } from '../i18n';
 
@@ -10,6 +11,8 @@ interface Props {
 }
 
 const { copy } = Astro.props;
+// Codex holds the two apps the agent works in; your own apps stay on your displays.
+const cards = exampleCards({ one: ['wechat'], two: ['chrome'], codex: ['blender', 'md'] });
 ---
 
 <section class="panel" aria-labelledby="panel-title">
@@ -19,16 +22,7 @@ const { copy } = Astro.props;
   </div>
   <figure class="figure">
     <div class="scroller" tabindex="0" role="region" aria-label={copy.panel.title.replaceAll('|', '')}>
-      <Picture
-        src={panel}
-        formats={['avif', 'webp']}
-        widths={[760, 1120, 1600, 2000]}
-        sizes="(max-width: 640px) 760px, min(1180px, 100vw - 40px)"
-        alt={copy.panel.imageAlt}
-        loading="lazy"
-        decoding="async"
-        class="shot"
-      />
+      <ControlPanel cards={cards} label={copy.panel.imageAlt} />
     </div>
     <figcaption class="fine">{copy.panel.caption}</figcaption>
   </figure>
@@ -71,9 +65,8 @@ const { copy } = Astro.props;
       0 30px 70px -30px rgb(20 30 60 / 0.35);
   }
 
-  .scroller :global(img) {
+  .scroller :global(.cp-frame) {
     width: 100%;
-    height: auto;
   }
 
   .fine {
@@ -116,9 +109,8 @@ const { copy } = Astro.props;
       display: none;
     }
 
-    .scroller :global(img) {
+    .scroller :global(.cp-frame) {
       width: 760px;
-      max-width: none;
     }
 
     .fine {

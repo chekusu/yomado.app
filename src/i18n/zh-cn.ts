@@ -23,13 +23,32 @@ export default (r: ReleaseFacts): Copy => ({
     meta: `实验版本 · v${r.version} · Apple Silicon`,
     film: {
       label:
-        '概念短片，16 秒，无声。Mac 显示器旁打开一块名为 Codex 的虚拟屏；一个三维应用移入其中，其他窗口原地不动；第二块名为 GrokBot 的屏幕带着自己的应用打开；夜幕降临，两块屏化作 yomado 的标志。',
-      caption: '概念演示；实体屏关闭后的运行尚待实机验证。',
+        '产品短片，1 分钟，无声，模拟演示。Codex 在你的显示器上用截图和点击操作 Blender；从菜单栏图标打开 yomado 控制面板，在两块显示器右侧新增一块虚拟屏，并重命名为 Codex；把 Blender 和 Marvelous Designer 拖进去，它们的窗口移过去，你的窗口原地不动；在 Codex 上，Codex 截图、添加表面细分修改器、输入 3、转动视图并切换到渲染着色；第二块屏 GrokBot 放入 Google Chrome，Marvelous Designer 被拖回原屏；从菜单栏关闭 GrokBot 时，Chrome 先回到原来的显示器；夜幕降临，Codex 化作 yomado 的标志。',
+      caption: '模拟演示，并非 Agent 实际工作的录像。实体屏关闭后的运行尚待实机验证。',
       play: '播放短片',
       pause: '暂停短片',
       replay: '重播短片',
       fallback: '你的浏览器无法播放此视频。',
+      watch: '观看完整短片',
     },
+  },
+  filmScript: {
+    label: '模拟演示',
+    supers: ['视觉 Agent 需要|一块能截图、能操作的|工作屏。', '开一块屏，|起个名字。', '应用搬过去，|桌面留给你。', 'Codex 看截图，|再点击、输入。', '关掉屏幕前，|窗口先回到原处。'],
+    tagline: '给 Agent |一块屏幕。',
+    cta: '下载 Mac 版',
+  },
+  watch: {
+    meta: {
+      title: '一分钟看懂 yomado 夜窗 — 产品短片',
+      description: '一分钟模拟演示：为 Codex 开一块命名虚拟屏，从控制面板把应用拖过去，Codex 再用截图、点击与键盘操作 Blender。',
+    },
+    title: '一分钟看懂 yomado。',
+    lede: '开一块屏，把 Agent 要用的应用搬过去，让它工作，再把窗口拿回来。',
+    note: '模拟演示，并非 Agent 实际工作的录像。应用窗口为简化重现，图标为各应用自己的图标。实体屏关闭后的运行尚待验证。',
+    mp4: 'MP4 · 1920 × 1080 · 1:00 · {size}',
+    mp4Tall: '竖版 MP4 · 1080 × 1350 · 1:00 · {size}',
+    back: '返回 yomado',
   },
   story: {
     label: '用法',
@@ -42,8 +61,8 @@ export default (r: ReleaseFacts): Copy => ({
   panel: {
     title: '所有屏幕，|一个面板。',
     text: '按比例排开每块屏，应用就显示在它所在的屏上。',
-    imageAlt: 'yomado 控制面板：两块 Studio Display 实体屏卡片和一块名为 Codex、分辨率 1920 × 1080 的虚拟屏卡片，各自显示其上应用的图标。',
-    caption: '控制面板，示例显示器数据。界面语言为简体中文。',
+    imageAlt: 'yomado 控制面板：Studio Display 1 上有微信，Studio Display 2 上有 Google Chrome，名为 Codex、分辨率 1920 × 1080 的虚拟屏上有 Blender 和 Marvelous Designer；每张卡片显示该屏上应用的图标。',
+    caption: '按应用布局重建的控制面板，示例显示器数据，应用为其自己的图标。界面语言为简体中文。',
   },
   finale: {
     title: '给 Agent|一扇|亮着的窗。',
@@ -56,11 +75,12 @@ export default (r: ReleaseFacts): Copy => ({
     navLabel: '页脚',
     tagline: '为视觉 Agent 留一块工作屏。',
     details: '详情',
+    film: '短片',
     releases: '发布版本',
     source: '应用源码',
     site: '网站源码',
     license: 'MIT 许可证',
-    fine: '使用 macOS 私有 API 的实验软件。Codex、GrokBot 与 macOS 均属于各自的所有者，提及不代表背书。',
+    fine: '使用 macOS 私有 API 的实验软件。Blender、Marvelous Designer、Google Chrome、微信、Codex、GrokBot 与 macOS 均属于各自的所有者；名称与图标仅用于指明应用，不代表背书。',
   },
   details: {
     meta: {

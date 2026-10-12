@@ -24,7 +24,31 @@ export interface Copy {
       pause: string;
       replay: string;
       fallback: string;
+      /** Link to the watch page under the hero film. */
+      watch: string;
     };
+  };
+  /**
+   * Text rendered into the film itself (src/lib/film.ts): a label that stays on screen, one super
+   * per shot for shots 1–5, and the end card. Supers and the tagline may mark phrase breaks with `|`.
+   */
+  filmScript: {
+    label: string;
+    supers: [string, string, string, string, string];
+    tagline: string;
+    cta: string;
+  };
+  /** The watch page: the whole film with the browser's own controls, and the MP4 itself. */
+  watch: {
+    meta: { title: string; description: string };
+    title: string;
+    lede: string;
+    /** Under the player: what the film is and isn't. */
+    note: string;
+    /** "MP4 · 1920 × 1080 · 1:00 · {size}", and the same for the portrait composition. */
+    mp4: string;
+    mp4Tall: string;
+    back: string;
   };
   story: { label: string; acts: { title: string; text: string }[] };
   panel: { title: string; text: string; imageAlt: string; caption: string };
@@ -33,6 +57,8 @@ export interface Copy {
     navLabel: string;
     tagline: string;
     details: string;
+    /** The watch page. */
+    film: string;
     releases: string;
     source: string;
     site: string;

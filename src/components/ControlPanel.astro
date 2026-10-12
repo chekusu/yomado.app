@@ -1,0 +1,369 @@
+---
+/**
+ * The yomado control panel, rebuilt in HTML from the app's own layout (src/lib/panel.ts) with
+ * the real icons of the apps on each screen. Its interface text is the app's own, in Simplified
+ * Chinese, as the app ships.
+ *
+ * 'page' shows the header and the screen cards, scaled to the width it is given, like a
+ * screenshot. 'film' is the whole window (title bar and footer included) at one pixel per point,
+ * with every card and app icon present and placed by src/scripts/film-view.ts; the film adds its
+ * menus and dialogs through the `overlay` slot, in window coordinates.
+ */
+import AppIcon from './AppIcon.astro';
+import { APPS, type AppId } from '../lib/apps';
+import { ADD_BUTTON, HEADER, INSET, WINDOW, cardActions, cardBoxes, iconSlot, type Box, type PanelCard } from '../lib/panel';
+
+interface Props {
+  cards: PanelCard[];
+  mode?: 'page' | 'film';
+  /** Film only: apps whose icons can travel between cards, drawn in a layer above them. */
+  apps?: AppId[];
+  /** Film only: the release shown in the footer, e.g. "0.3.3". */
+  version?: string;
+  label?: string;
+}
+
+const { cards, mode = 'page', apps = [], version = '', label } = Astro.props;
+const film = mode === 'film';
+const boxes = cardBoxes(cards);
+const at = (b: Box) => `left:calc(${+b.x.toFixed(2)} * var(--pt));top:calc(${+b.y.toFixed(2)} * var(--pt));width:calc(${+b.w.toFixed(2)} * var(--pt));height:calc(${+b.h.toFixed(2)} * var(--pt))`;
+// The page shows the panel down to just below the cards, as the app's window looks when cropped.
+const cropHeight = Math.max(...boxes.map((b) => b.y + b.h)) + 22;
+---
+
+<div class:list={['cp-frame', { film }]} role={film ? undefined : 'img'} aria-label={film ? undefined : label} aria-hidden={film ? 'true' : undefined}>
+  <div class="cp" lang="zh-CN" data-panel style={film ? undefined : `height:calc(${cropHeight} * var(--pt))`}>
+    {
+      film && (
+        <div class="cp-titlebar">
+          <i />
+          <i />
+          <i />
+        </div>
+      )
+    }
+    <div class="cp-body" data-panel-body>
+      <div class="cp-head" style={at({ x: INSET.x, y: INSET.top, w: WINDOW.w - 2 * INSET.x, h: HEADER })}>
+        <AppIcon app="yomado" size={40} class="cp-mark" largest={film} loading={film ? 'eager' : 'lazy'} />
+        <b class="cp-word">yomado</b>
+        <span class="cp-intro">
+          <span class="cp-zh">夜窗</span>
+          <span class="cp-tag">为视觉 Agent 留一块工作屏，让实体屏可以休息。</span>
+        </span>
+      </div>
+      <span class="cp-add" data-panel-add style={at(ADD_BUTTON)}>
+        <svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12" /></svg>
+      </span>
+
+      {
+        cards.map((card, i) => {
+          const box = boxes[i];
+          const actions = cardActions(box);
+          return (
+            <div class:list={['cp-card', { virtual: card.virtual }]} data-card={card.id} style={at(box)}>
+              <span class="cp-name" data-card-name>
+                {card.name}
+              </span>
+              <span class="cp-detail">{card.detail}</span>
+              {!film &&
+                card.apps.map((app, n) => (
+                  <span class="cp-app" style={at(iconSlot(box.w, n))} title={APPS[app].name}>
+                    <AppIcon app={app} size={40} />
+                  </span>
+                ))}
+              {card.virtual && (
+                <span class="cp-actions">
+                  <span class="cp-act" data-card-add style={at(actions.add)}>
+                    <svg viewBox="0 0 24 24">
+                      <path d="M12 7v10M7 12h10" />
+                    </svg>
+                  </span>
+                  <span class="cp-act" data-card-manage style={at(actions.manage)}>
+                    <svg viewBox="0 0 24 24">
+                      <path class="dots" d="M6.5 12h.01M12 12h.01M17.5 12h.01" />
+                    </svg>
+                  </span>
+                </span>
+              )}
+              {film && (
+                <span class="cp-drop" data-card-drop>
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 6v12M6 12h12" />
+                  </svg>
+                </span>
+              )}
+            </div>
+          );
+        })
+      }
+
+      {
+        film &&
+          apps.map((app) => (
+            <span class="cp-app free" data-panel-app={app}>
+              <AppIcon app={app} size={40} largest loading="eager" />
+            </span>
+          ))
+      }
+
+      {
+        film && (
+          <div class="cp-foot" style={at({ x: INSET.x, y: WINDOW.h - 18 - 24, w: WINDOW.w - 2 * INSET.x, h: 24 })}>
+            <span class="cp-link">yomado.app</span>
+            <span class="cp-version">v{version}</span>
+            <svg class="cp-refresh" viewBox="0 0 24 24">
+              <path d="M18.5 12a6.5 6.5 0 1 1-1.9-4.6M18.5 5v4h-4" />
+            </svg>
+            <span class="cp-spacer" />
+            <span class="cp-link">GitHub</span>
+            <span class="cp-link">MIT</span>
+          </div>
+        )
+      }
+      <slot name="overlay" />
+    </div>
+  </div>
+</div>
+
+<style>
+  .cp-frame {
+    container-type: inline-size;
+  }
+
+  /* One point of the app's window is --pt: a share of the width on the page, a pixel in the film. */
+  .cp {
+    --pt: calc(100cqw / 1000);
+    --accent: #0a7aff;
+    --label: rgb(0 0 0 / 0.85);
+    --secondary: rgb(0 0 0 / 0.5);
+    position: relative;
+    width: calc(1000 * var(--pt));
+    overflow: hidden;
+    background: #f7f7f7;
+    color: var(--label);
+    font-family: var(--font-sans-sc);
+    letter-spacing: 0;
+    line-height: 1.2;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .film .cp {
+    --pt: 1px;
+    height: calc(410px + 28px);
+    border-radius: 12px;
+    box-shadow:
+      0 0 0 0.5px rgb(0 0 0 / 0.22),
+      0 22px 60px -10px rgb(0 0 0 / 0.36),
+      0 6px 18px -6px rgb(0 0 0 / 0.2);
+  }
+
+  .cp-titlebar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    height: 28px;
+    padding: 0 13px;
+  }
+
+  .cp-titlebar i {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff5f57;
+    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.12);
+  }
+
+  .cp-titlebar i:nth-child(2) {
+    background: #febc2e;
+  }
+
+  .cp-titlebar i:nth-child(3) {
+    background: #28c840;
+  }
+
+  .cp-body {
+    position: relative;
+    height: calc(410 * var(--pt));
+  }
+
+  .cp-head,
+  .cp-add,
+  .cp-card,
+  .cp-app,
+  .cp-act,
+  .cp-foot {
+    position: absolute;
+  }
+
+  .cp-head {
+    display: flex;
+    align-items: center;
+    gap: calc(10 * var(--pt));
+  }
+
+  .cp-head :global(.cp-mark) {
+    width: calc(40 * var(--pt));
+    height: calc(40 * var(--pt));
+    max-width: none;
+  }
+
+  .cp-word {
+    font-size: calc(23 * var(--pt));
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .cp-intro {
+    display: grid;
+    gap: calc(3 * var(--pt));
+  }
+
+  .cp-zh {
+    font-size: calc(14 * var(--pt));
+    font-weight: 500;
+  }
+
+  .cp-tag {
+    color: var(--secondary);
+    font-size: calc(11 * var(--pt));
+  }
+
+  /* The accessory-bar "+" that adds or starts a virtual screen. */
+  .cp-add {
+    display: grid;
+    place-items: center;
+    border-radius: calc(6 * var(--pt));
+    background: rgb(0 0 0 / 0.055);
+  }
+
+  .cp-add svg,
+  .cp-act svg,
+  .cp-drop svg,
+  .cp-refresh {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cp-add svg {
+    width: calc(15 * var(--pt));
+    height: calc(15 * var(--pt));
+    stroke-width: 1.7;
+    color: rgb(0 0 0 / 0.62);
+  }
+
+  /* A screen card: one display, to scale. Highlighted while an app is dragged over it. */
+  .cp-card {
+    --hi: 0;
+    border-radius: calc(7 * var(--pt));
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, #fff calc(100% - 4.5% - 8.5% * var(--hi)), var(--accent)),
+      color-mix(in srgb, #fff calc(100% - 10% - 10% * var(--hi)), var(--accent))
+    );
+    box-shadow: inset 0 0 0 calc((1 + 0.5 * var(--hi)) * var(--pt)) color-mix(in srgb, rgb(0 0 0 / 0.19) calc(100% - 100% * var(--hi)), rgb(10 122 255 / 0.9));
+  }
+
+  .cp-name,
+  .cp-detail {
+    position: absolute;
+    left: calc(9 * var(--pt));
+    right: calc(9 * var(--pt));
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cp-name {
+    top: calc(7 * var(--pt));
+    font-size: calc(10 * var(--pt));
+    font-weight: 500;
+  }
+
+  .cp-detail {
+    top: calc(22 * var(--pt));
+    color: var(--secondary);
+    font-size: calc(8.5 * var(--pt));
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cp-app :global(img) {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+  }
+
+  .cp-act {
+    display: grid;
+    place-items: center;
+    color: rgb(0 0 0 / 0.62);
+  }
+
+  .cp-act svg {
+    width: calc(14 * var(--pt));
+    height: calc(14 * var(--pt));
+    stroke-width: 1.6;
+  }
+
+  .cp-act .dots {
+    stroke-width: 2.6;
+  }
+
+  /* While an app is dragged over an empty screen, an accent "+" marks where it will land. */
+  .cp-drop {
+    position: absolute;
+    left: 50%;
+    top: calc(50% + 6px);
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    margin: -12px 0 0 -12px;
+    color: var(--accent);
+    opacity: 0;
+  }
+
+  .cp-drop svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
+  }
+
+  .cp-app.free {
+    width: 40px;
+    height: 40px;
+    left: 0;
+    top: 0;
+    transform-origin: 50% 50%;
+    filter: drop-shadow(0 calc(10px * var(--lift, 0)) calc(12px * var(--lift, 0)) rgb(0 0 0 / calc(0.3 * var(--lift, 0))));
+  }
+
+  .cp-foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+  }
+
+  .cp-link {
+    color: var(--accent);
+  }
+
+  .cp-version {
+    color: var(--secondary);
+  }
+
+  .cp-refresh {
+    width: 15px;
+    height: 15px;
+    margin-left: 2px;
+    color: var(--secondary);
+    stroke-width: 1.6;
+  }
+
+  .cp-spacer {
+    flex: 1;
+  }
+</style>
