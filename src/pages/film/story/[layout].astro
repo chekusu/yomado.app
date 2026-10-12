@@ -1,0 +1,63 @@
+---
+// Render stage for the home page story's no-JavaScript still (npm run film): the short story scene
+// at the end of its third act, wide and tall. Built only when FILM_STAGE=1, never deployed.
+import '@fontsource-variable/inter/opsz.css';
+import '../../../styles/global.css';
+import Scene from '../../../components/Scene.astro';
+
+export function getStaticPaths() {
+  if (process.env.FILM_STAGE !== '1') return [];
+  return [{ params: { layout: 'wide' } }, { params: { layout: 'tall' } }];
+}
+
+const layout = Astro.params.layout as 'wide' | 'tall';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>yomado story still ({layout})</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      body {
+        --font-sans: 'Inter Variable', 'Noto Sans SC', 'WenQuanYi Zen Hei', sans-serif;
+        font-family: var(--font-sans);
+      }
+
+      .frame {
+        position: fixed;
+        inset: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame"><Scene id="still" layout={layout} /></div>
+    <script>
+      import { SceneView } from '../../../scripts/scene-view';
+      import { ACT_END } from '../../../lib/scene';
+
+      const root = document.getElementById('still')!;
+      const view = new SceneView(root);
+      Object.assign(window, {
+        __story: {
+          /** The end of act 3: Codex with Blender and Marvelous Designer, GrokBot with Chrome. */
+          at: ACT_END[2],
+          render: (t: number) => view.render(t),
+          ready: async () => {
+            await document.fonts.ready;
+            await Promise.all([...root.querySelectorAll('img')].map((img) => img.decode().catch(() => undefined)));
+          },
+        },
+      });
+    </script>
+  </body>
+</html>

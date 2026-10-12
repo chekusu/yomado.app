@@ -1,0 +1,69 @@
+---
+// Render stage for the one-minute film, one per locale and layout. Built only when FILM_STAGE=1
+// (npm run film), never deployed: the site's build has no /film/ pages.
+import '@fontsource-variable/inter/opsz.css';
+import '@fontsource-variable/noto-sans-sc/wght.css';
+import '@fontsource-variable/noto-sans-jp/wght.css';
+import '../../../styles/global.css';
+import FilmStage from '../../../components/FilmStage.astro';
+import { copyFor } from '../../../i18n';
+import { LOCALES, LOCALE_TAG, type Locale } from '../../../lib/site';
+import type { FilmLayout } from '../../../lib/film';
+
+export function getStaticPaths() {
+  if (process.env.FILM_STAGE !== '1') return [];
+  return LOCALES.flatMap((locale) => (['wide', 'tall'] as const).map((layout) => ({ params: { locale, layout } })));
+}
+
+const locale = Astro.params.locale as Locale;
+const layout = Astro.params.layout as FilmLayout;
+const lang = LOCALE_TAG[locale];
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>yomado film stage ({locale}, {layout})</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <FilmStage layout={layout} copy={copyFor(locale)} lang={lang} />
+    <script>
+      import { FilmView } from '../../../scripts/film-view';
+      import { FILM_DURATION } from '../../../lib/film';
+
+      const root = document.querySelector<HTMLElement>('[data-film-stage]')!;
+      const view = new FilmView(root);
+      view.render(0);
+      Object.assign(window, {
+        __film: {
+          duration: FILM_DURATION,
+          render: (t: number) => {
+            view.render(t);
+          },
+          /** Fonts for every character on the stage, and every image decoded. */
+          ready: async () => {
+            const text = root.textContent ?? '';
+            await Promise.all(
+              ['Inter Variable', 'Noto Sans SC Variable', 'Noto Sans JP Variable'].flatMap((family) =>
+                [400, 500, 600, 650].map((weight) => document.fonts.load(`${weight} 20px "${family}"`, text)),
+              ),
+            );
+            await document.fonts.ready;
+            await Promise.all([...root.querySelectorAll('img')].map((img) => img.decode().catch(() => undefined)));
+            return [...root.querySelectorAll('img')].every((img) => img.complete && img.naturalWidth > 0);
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
