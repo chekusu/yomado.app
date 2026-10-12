@@ -4,7 +4,7 @@
 // Chinese page a browser that prefers Traditional Chinese gets zh-TW; on the English page the
 // browser's first language picks when it is one of the 16 (a Chinese or Japanese browser on the
 // English page chose English). A language that follows the other narration brings its own film:
-// switching keeps the time, whether it was playing, and the sound as it was (filmSwitcher).
+// switching keeps the time, the speed, whether it was playing, and the sound as it was (filmSwitcher).
 import type { FilmConfig } from '../lib/captions';
 
 export type { FilmConfig };
@@ -75,18 +75,20 @@ type FilmFiles = { tall: { mp4: string; webm: string }; wide: { mp4: string; web
 
 /**
  * Switching a video to other files as one transaction: the latest switch wins, and a switch keeps
- * the film where it was. Where it was, whether it was playing and whether it had ended are taken
- * once, before the first of overlapping switches (a reloading video reads 0 s and paused, which is
- * not anyone's intent). While a switch waits for its new file, what the page does in the meantime
- * counts more: a pause, leaving the view or the tab (`revoke`) drop the resume; a time the page
- * sets (`seek`) replaces the kept one, and so does a seek made on the video while it loads. When
- * the new file's metadata arrives, the switch checks that it is still the latest one and seeks (a
- * film that had ended is put at its end, ended); it plays again only if it was playing, nothing
- * revoked that, and the page says it may resume now. A replaced or failed switch ends quietly.
+ * the film where it was, at the speed it had. Whether it was playing and whether it had ended are
+ * taken once, before the first of overlapping switches (a reloading video reads paused, which is
+ * not anyone's intent). The time is left to the browser: set while the new file has no metadata
+ * yet, it is the position the browser goes to when the metadata arrives, and any seek made in the
+ * meantime (by the page, the video's own controls or a script, to 0 as well) replaces it; until
+ * then the video reads that position. So a switch never restores a time over a newer seek. While
+ * a switch waits for its new file, a pause, leaving the view or the tab (`revoke`) drop the resume.
+ * When the metadata arrives, the switch checks that it is still the latest one; it plays again
+ * only if it was playing, nothing revoked that, and the page says it may resume now. A replaced
+ * or failed switch ends quietly.
  */
 export function filmSwitcher(video: HTMLVideoElement, options: { mayResume: () => boolean; play: () => void }) {
   let generation = 0;
-  let intent: { time: number; playing: boolean; ended: boolean } | null = null;
+  let intent: { playing: boolean; ended: boolean } | null = null;
   let stopWaiting: (() => void) | null = null;
 
   const switcher = {
@@ -94,17 +96,15 @@ export function filmSwitcher(video: HTMLVideoElement, options: { mayResume: () =
     get busy() {
       return intent !== null;
     },
-    /** Where the film is, counting a switch in progress. */
-    time: () => (intent ? intent.time : video.currentTime),
+    /** Where the film is, or where a switch in progress puts it. */
+    time: () => video.currentTime,
     /** Playing, or about to play again when the switch lands. */
     playing: () => (intent ? intent.playing : !video.paused && !video.ended),
     /** At its end (or paused within a tenth of a second of it), or put there when the switch lands. */
     ended: () => (intent ? intent.ended : video.ended || (video.paused && Number.isFinite(video.duration) && video.duration - video.currentTime < 0.1)),
     seek(time: number) {
-      if (intent) {
-        intent.time = time;
-        intent.ended = false;
-      } else video.currentTime = time;
+      if (intent) intent.ended = false;
+      video.currentTime = time;
     },
     /** Pause, hidden, out of view: whatever a switch was going to resume stays paused. */
     revoke() {
@@ -120,14 +120,23 @@ export function filmSwitcher(video: HTMLVideoElement, options: { mayResume: () =
       const id = ++generation;
       stopWaiting?.();
       const started = intent !== null || video.readyState > 0 || video.currentTime > 0;
-      if (!intent && started) intent = { time: video.currentTime, playing: !video.paused && !video.ended, ended: video.ended };
+      // Where the film is (while an earlier switch loads, where that one puts it) and its speed.
+      const time = video.currentTime;
+      const rate = video.playbackRate;
+      if (!intent && started) intent = { playing: !video.paused && !video.ended, ended: video.ended };
       const [tallMp4, tallWebm, wideMp4, wideWebm] = video.querySelectorAll('source');
       tallMp4.src = files.tall.mp4;
       tallWebm.src = files.tall.webm;
       wideMp4.src = files.wide.mp4;
       wideWebm.src = files.wide.webm;
+      // Loading puts the speed back to the default one: the speed it had (a speed set while the new
+      // file loads is newer, and stays).
+      video.defaultPlaybackRate = rate;
       video.load();
       if (!started) return true;
+      // With no metadata yet, the time set is where the browser puts the new file when it arrives,
+      // unless a seek replaces it before then (a film that had ended goes back to its end).
+      video.currentTime = time;
       const loaded = await new Promise<boolean>((resolve) => {
         const last = video.querySelector('source:last-of-type');
         const done = (ok: boolean) => {
@@ -146,13 +155,6 @@ export function filmSwitcher(video: HTMLVideoElement, options: { mayResume: () =
       const kept = intent;
       intent = null;
       if (!loaded || !kept) return false;
-      const duration = Number.isFinite(video.duration) ? video.duration : 0;
-      if (kept.ended && duration) {
-        video.currentTime = duration;
-        return true;
-      }
-      // A seek made on the video while it loaded is newer than the kept time.
-      if (video.currentTime < 0.01 && duration) video.currentTime = Math.min(Math.max(0, kept.time), Math.max(0, duration - 0.05));
       if (kept.playing && options.mayResume()) options.play();
       return true;
     },

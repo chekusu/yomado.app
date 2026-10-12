@@ -231,9 +231,10 @@ async function open(path, options = {}) {
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('requestfailed', (r) => {
-    // A video element cancels its own range requests while it buffers or switches source.
+    // A video element cancels its own range requests while it buffers or switches source, and the
+    // poster of a film it switched away from while that was still loading.
     const reason = r.failure()?.errorText ?? '';
-    if (r.resourceType() === 'media' && /ABORTED/.test(reason)) return;
+    if ((r.resourceType() === 'media' || /\/media\/film-[^/]*-poster[^/]*\.webp$/.test(r.url())) && /ABORTED/.test(reason)) return;
     errors.push(`failed ${r.url()} ${reason}`);
   });
   page.on('response', (r) => r.status() >= 400 && !r.url().endsWith('/does-not-exist/') && errors.push(`${r.status()} ${r.url()}`));
@@ -1060,6 +1061,133 @@ await check('on the watch page a seek made while a film loads wins, and a hidden
   }
 });
 
+/** The watch page's film once the switch to a film (by its source) has its metadata. */
+const watchLanded = (page, re) =>
+  page.waitForFunction(
+    (re) => {
+      const v = document.querySelector('[data-watch-video]');
+      return new RegExp(re).test(v.currentSrc) && v.readyState >= 1;
+    },
+    re.source,
+    { timeout: 20000 },
+  );
+const watchState = (page) =>
+  page.locator('[data-watch-video]').evaluate((v) => ({ t: v.currentTime, paused: v.paused, muted: v.muted, rate: v.playbackRate, ready: v.readyState }));
+/** The watch page with its film's metadata, paused at a moment. */
+async function watchAt(path, at) {
+  const opened = await open(path);
+  const { page } = opened;
+  await page.waitForFunction(() => document.querySelector('[data-watch-video]').readyState >= 1, null, { timeout: 15000 });
+  await page.locator('[data-watch-video]').evaluate((v, at) => (v.currentTime = at), at);
+  await page.waitForFunction((at) => {
+    const v = document.querySelector('[data-watch-video]');
+    return !v.seeking && Math.abs(v.currentTime - at) < 0.1;
+  }, at, { timeout: 15000 });
+  return opened;
+}
+const slowBands = (page) => slowFilm(page, new RegExp(`/media/film-[a-z-]+-(wide|tall)-band-${CV}\\.(mp4|webm)$`), 1100);
+
+await check('on the watch page a seek made while a film loads stands, to the start too, through another switch and a pause', async () => {
+  // Paused at 22 s, Chinese chosen, and a seek while its film loads: the seek stands, still paused.
+  for (const to of [0, 37, 50]) {
+    const { context, page, errors } = await watchAt('watch/?cc=en', 22);
+    const video = page.locator('[data-watch-video]');
+    await slowBands(page);
+    await page.locator('[data-watch-cc] select').selectOption('zh-CN');
+    await page.waitForTimeout(120);
+    assert.equal(await video.evaluate((v) => v.readyState), 0, `${to}: the Chinese film is still loading`);
+    await video.evaluate((v, to) => (v.currentTime = to), to);
+    await watchLanded(page, bandSrc('zh-cn', 'wide'));
+    await page.waitForTimeout(600);
+    const after = await watchState(page);
+    assert.ok(Math.abs(after.t - to) < 0.3, `the seek to ${to} s stands (${after.t.toFixed(2)} s)`);
+    assert.equal(after.paused, true, `${to}: still paused`);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // Playing at 22 s: Chinese, a seek to the start while it loads, then French before it lands: the
+  // English film from the start, playing.
+  {
+    const { context, page, errors } = await watchAt('watch/?cc=en', 22);
+    const video = page.locator('[data-watch-video]');
+    await video.click();
+    await page.waitForTimeout(500);
+    if (await video.evaluate((v) => v.paused)) await playFrom(video);
+    await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 22.3, null, { timeout: 15000 });
+    await slowBands(page);
+    const select = page.locator('[data-watch-cc] select');
+    await select.selectOption('zh-CN');
+    await page.waitForTimeout(120);
+    await video.evaluate((v) => (v.currentTime = 0));
+    await select.selectOption('fr');
+    await watchLanded(page, bandSrc('en', 'wide'));
+    await page.waitForFunction(() => !document.querySelector('[data-watch-video]').paused, null, { timeout: 10000 });
+    const after = await watchState(page);
+    assert.ok(after.t < 2, `from the start (${after.t.toFixed(2)} s)`);
+    assert.deepEqual(await video.evaluate((v) => [...v.textTracks].filter((t) => t.mode === 'showing').map((t) => t.language)), ['fr']);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // Playing at 22 s: Chinese, then a seek to 37 s and a pause on the video while it loads: paused at 37 s.
+  {
+    const { context, page, errors } = await watchAt('watch/?cc=en', 22);
+    const video = page.locator('[data-watch-video]');
+    await video.click();
+    await page.waitForTimeout(500);
+    if (await video.evaluate((v) => v.paused)) await playFrom(video);
+    await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 22.3, null, { timeout: 15000 });
+    await slowBands(page);
+    await page.locator('[data-watch-cc] select').selectOption('zh-CN');
+    await page.waitForTimeout(120);
+    await video.evaluate((el) => {
+      const v = /** @type {HTMLVideoElement} */ (el);
+      v.currentTime = 37;
+      v.play().catch(() => {});
+      v.pause();
+    });
+    await watchLanded(page, bandSrc('zh-cn', 'wide'));
+    await page.waitForTimeout(1200);
+    const after = await watchState(page);
+    assert.ok(Math.abs(after.t - 37) < 0.3, `at the seek (${after.t.toFixed(2)} s)`);
+    assert.equal(after.paused, true, 'the pause stands');
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
+await check('on the watch page the speed stays when another film loads, and a speed chosen meanwhile wins', async () => {
+  const { context, page, errors } = await watchAt('watch/?cc=en', 18);
+  const video = page.locator('[data-watch-video]');
+  await video.evaluate((v) => {
+    v.muted = true;
+    v.playbackRate = 1.5;
+  });
+  await page.locator('[data-watch-cc] select').selectOption('zh-CN');
+  await page.waitForFunction(() => {
+    const v = document.querySelector('[data-watch-video]');
+    return /film-zh-cn-wide-band/.test(v.currentSrc) && v.readyState >= 2;
+  }, null, { timeout: 20000 });
+  const zh = await watchState(page);
+  assert.ok(Math.abs(zh.t - 18) < 0.3, `kept its place (${zh.t.toFixed(2)} s)`);
+  assert.deepEqual([zh.paused, zh.muted, zh.rate], [true, true, 1.5], 'paused, muted, at 1.5×');
+  // A speed chosen while the next film loads is the newer choice.
+  await slowBands(page);
+  await page.locator('[data-watch-cc] select').selectOption('fr');
+  await page.waitForTimeout(120);
+  await video.evaluate((v) => (v.playbackRate = 2));
+  await watchLanded(page, bandSrc('en', 'wide'));
+  await page.waitForTimeout(600);
+  const fr = await watchState(page);
+  assert.ok(Math.abs(fr.t - 18) < 0.3, `kept its place (${fr.t.toFixed(2)} s)`);
+  assert.deepEqual([fr.paused, fr.muted, fr.rate], [true, true, 2], 'paused, muted, at 2×');
+  // And plays at that speed.
+  await playFrom(video);
+  await page.waitForTimeout(500);
+  assert.equal(await video.evaluate((v) => v.playbackRate), 2);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 await check('switches overlapping other choices while loading: a paused start, the same film or off, a new mute, the native menu', async () => {
   const waitLanded = (page, sel, re) =>
     page.waitForFunction(
@@ -1372,7 +1500,8 @@ await check("the watch page: subtitles in the band, its menu and the browser's o
   if (SHOTS) await page.locator('.player').screenshot({ path: join(SHOTS, 'zh-cn-watch-band.png') });
   // French: the English band master and its tracks, at the same moment, French downloads.
   await page.locator('[data-watch-cc] select').selectOption('fr');
-  await page.waitForFunction(() => /film-en-wide-band/.test(document.querySelector('[data-watch-video]').currentSrc), null, { timeout: 15000 });
+  // Landed: over a real network the new film's metadata takes a moment.
+  await watchLanded(page, bandSrc('en', 'wide'));
   await page.waitForFunction(() => [...document.querySelector('[data-watch-video]').textTracks].some((t) => t.language === 'fr' && t.mode === 'showing'), null, { timeout: 5000 });
   assert.equal((await tracks()).length, 13, 'the English film carries its 13 languages');
   assert.ok(Math.abs((await video.evaluate((v) => v.currentTime)) - 33.4) < 0.5, 'kept its place');
