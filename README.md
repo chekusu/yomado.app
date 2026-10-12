@@ -177,9 +177,11 @@ fresh screenshot, keyboard input, returning it to its original place, and closin
 after its windows return. Not verified: agent work with monitors physically switched off, power
 savings, long unattended runs, drag-and-drop moves, WeChat visual automation. Virtual displays
 share the login session, keyboard, pointer and focus — the film never shows two pointers at once.
-The film is a concept demo and its caption says so. The build is ad hoc signed, not notarized,
-arm64 only; macOS 14 is the deployment target, not a compatibility guarantee. Don't add reviews,
-user counts, sponsors or benchmarks.
+The film is a concept demo and its caption says so. The build is Developer ID signed by CHEKUSU
+and notarized by Apple, with the notarization ticket stapled to the app. This is website
+distribution, not a Mac App Store release; macOS may still request confirmation on first launch.
+It remains experimental software using private macOS APIs, arm64 only; macOS 14 is the deployment
+target, not a compatibility guarantee. Don't add reviews, user counts, sponsors or benchmarks.
 
 ## Assets
 
