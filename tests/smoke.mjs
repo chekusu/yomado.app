@@ -6,8 +6,10 @@
 //
 // Covers all three locales (English, Simplified Chinese, Japanese) at desktop, laptop, tablet and
 // phone widths: metadata, console errors, failed requests, horizontal overflow, the download entry
-// points, the concept film (autoplay, controls, poster, fallback, reduced motion), the scroll story
-// and finale, the language menu between every pair of locales on home and details pages, the
+// points, the one-minute film (its real length and size, autoplay, play/pause/replay, seeking to
+// the end, the keyboard, poster, fallback, reduced motion, byte ranges and media types of every
+// file), the watch page (the browser's own controls, seeking, the MP4 links), the scroll story and
+// finale, the language menu between every pair of locales on home, details and watch pages, the
 // details page with checksum copy, the page without JavaScript, the header on phones with classic
 // scrollbars, 404, sitemap and robots.
 import { chromium } from 'playwright';
@@ -33,7 +35,8 @@ const LOCALES = [
     name: 'English',
     short: 'EN',
     title: /A screen for your agents/,
-    caption: 'Concept demo. Running with physical displays switched off is not yet verified on real hardware.',
+    caption: 'Simulated demo, not a recording of an agent at work. Running with physical displays switched off is not yet verified on real hardware.',
+    minute: 'one minute',
     ui: 'Simplified Chinese',
   },
   {
@@ -44,7 +47,8 @@ const LOCALES = [
     name: '简体中文',
     short: '中文',
     title: /给 Agent\s*一块屏幕/,
-    caption: '概念演示；实体屏关闭后的运行尚待实机验证。',
+    caption: '模拟演示，并非 Agent 实际工作的录像。实体屏关闭后的运行尚待实机验证。',
+    minute: '1 分钟',
     ui: '简体中文',
   },
   {
@@ -55,11 +59,18 @@ const LOCALES = [
     name: '日本語',
     short: '日本語',
     title: /エージェントに、\s*専用の画面を。/,
-    caption: 'コンセプト映像です。実際のディスプレイを消した状態での動作は、実機ではまだ検証していません。',
+    caption: 'シミュレーションによるデモで、エージェントが実際に作業した録画ではありません。実際のディスプレイを消した状態での動作は、実機ではまだ検証していません。',
+    minute: '1 分',
     ui: '簡体字中国語',
   },
 ];
-const ROUTES = ['', 'details/'];
+const ROUTES = ['', 'details/', 'watch/'];
+// The film's files, per locale: wide and tall, MP4 and WebM, and the posters.
+const FILM_SECONDS = [55, 65];
+const filmFiles = (key) => [
+  ...['wide', 'tall'].flatMap((layout) => [`film-${key}-${layout}.mp4`, `film-${key}-${layout}.webm`, `film-${key}-${layout}-poster.webp`]),
+];
+const MEDIA_TYPE = { mp4: 'video/mp4', webm: 'video/webm', webp: 'image/webp' };
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
   { name: 'laptop', width: 945, height: 800 },
@@ -120,17 +131,36 @@ if (!base) {
 if (!base.endsWith('/')) base += '/';
 
 const results = [];
+// SMOKE_PROGRESS=1 logs each check as it starts and ends; SMOKE_ONLY=<regex> runs only matching checks
+// (for diagnosing one check; a full run uses neither).
+const progress = process.env.SMOKE_PROGRESS === '1';
+const only = process.env.SMOKE_ONLY ? new RegExp(process.env.SMOKE_ONLY) : null;
 async function check(name, fn) {
+  if (only && !only.test(name)) return;
+  const started = Date.now();
+  if (progress) console.error(`▶ ${name}`);
   try {
     await fn();
     results.push(['ok', name]);
+    if (progress) console.error(`  ok (${((Date.now() - started) / 1000).toFixed(1)} s)`);
   } catch (error) {
+    if (progress) console.error(`  FAIL (${((Date.now() - started) / 1000).toFixed(1)} s): ${String(error.message).split('\n')[0]}`);
     const detail = 'actual' in error ? ` (actual ${JSON.stringify(error.actual)}, expected ${JSON.stringify(error.expected)})` : '';
     results.push(['FAIL', name, String(error.message).split('\n')[0] + detail]);
   }
 }
 
 const browser = await chromium.launch();
+
+/**
+ * Play a video from a moment (seconds, or seconds before the end when negative) and wait at most
+ * 15 s for playback to begin: a play() that never settles fails the check instead of hanging the run.
+ */
+const playFrom = (video, at) =>
+  video.evaluate(async (v, at) => {
+    if (at !== undefined && at !== null) v.currentTime = at < 0 ? v.duration + at : at;
+    await Promise.race([v.play(), new Promise((_, reject) => setTimeout(() => reject(new Error('play() did not start within 15 s')), 15000))]);
+  }, at ?? null);
 
 async function open(path, options = {}) {
   const { route, ...contextOptions } = options;
@@ -148,7 +178,9 @@ async function open(path, options = {}) {
   });
   page.on('response', (r) => r.status() >= 400 && !r.url().endsWith('/does-not-exist/') && errors.push(`${r.status()} ${r.url()}`));
   if (route) await page.route(route.match, route.handler);
-  await page.goto(base + path, { waitUntil: 'networkidle' });
+  // 'load', not 'networkidle': the film autoplays and streams for a minute, so the network never
+  // goes quiet. Fonts are awaited below; checks that need every image call loadAllImages().
+  await page.goto(base + path, { waitUntil: 'load' });
   await page.evaluate(() => document.fonts.ready);
   return { context, page, errors };
 }
@@ -254,30 +286,35 @@ for (const locale of LOCALES) {
     });
   }
 
-  await check(`${locale.lang}: the concept film plays muted inline, pauses and replays`, async () => {
+  await check(`${locale.lang}: the one-minute film plays muted inline, seeks, pauses, ends and replays`, async () => {
     const { context, page, errors } = await open(locale.path);
     const video = page.locator('[data-film] video');
     const toggle = page.locator('[data-film-toggle]');
     const attrs = await video.evaluate((v) => ({ muted: v.muted, inline: v.playsInline, controls: v.controls, poster: v.poster, label: v.getAttribute('aria-label') }));
     assert.ok(attrs.muted && attrs.inline, 'muted and playsinline');
     assert.equal(attrs.controls, false, 'our button replaces the native controls');
-    assert.match(attrs.poster, /film-wide-poster\.webp$/);
-    assert.ok(attrs.label.length > 40, 'described for screen readers');
-    assert.equal((await page.locator('[data-film] figcaption').innerText()).trim(), locale.caption);
+    assert.match(attrs.poster, new RegExp(`/film-${locale.key}-wide-poster\\.webp$`));
+    assert.ok(attrs.label.includes(locale.minute) && !/16/.test(attrs.label), 'described as the one-minute film');
+    const caption = page.locator('[data-film] figcaption');
+    assert.ok((await caption.innerText()).startsWith(locale.caption), 'caption');
+    assert.equal(await caption.locator('[data-watch-link]').getAttribute('href'), `${new URL(base).pathname}${locale.path}watch/`);
     // Media events arrive asynchronously, so wait for the button to catch up rather than racing it.
     const state = (s) => page.waitForFunction((s) => document.querySelector('[data-film-toggle]').dataset.state === s, s, { timeout: 10000 });
     await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 1, null, { timeout: 15000 });
     await state('playing');
     assert.equal(await toggle.getAttribute('aria-label'), await toggle.getAttribute('data-label-pause'));
-    assert.match(await video.evaluate((v) => v.currentSrc), /film-wide\.(mp4|webm)$/);
+    const meta = await video.evaluate((v) => ({ src: v.currentSrc, duration: v.duration, w: v.videoWidth, h: v.videoHeight }));
+    assert.match(meta.src, new RegExp(`/film-${locale.key}-wide\\.(mp4|webm)$`));
+    assert.ok(meta.duration >= FILM_SECONDS[0] && meta.duration <= FILM_SECONDS[1], `duration ${meta.duration}`);
+    assert.deepEqual([meta.w, meta.h], [1920, 1080]);
     await toggle.click();
     await state('paused');
     assert.equal(await video.evaluate((v) => v.paused), true);
     assert.equal(await toggle.getAttribute('aria-label'), await toggle.getAttribute('data-label-play'));
-    await video.evaluate((v) => {
-      v.currentTime = v.duration - 0.3;
-      return v.play();
-    });
+    // Into the middle: it plays on from there.
+    await playFrom(video, 30);
+    await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 30.6, null, { timeout: 15000 });
+    await playFrom(video, -0.3);
     await state('ended');
     assert.equal(await video.evaluate((v) => v instanceof HTMLMediaElement && v.ended), true);
     assert.equal(await toggle.getAttribute('aria-label'), await toggle.getAttribute('data-label-replay'));
@@ -286,15 +323,21 @@ for (const locale of LOCALES) {
       const v = document.querySelector('[data-film] video');
       return !v.paused && v.currentTime < 3;
     });
-    // Every media file is served with a media type, and films answer byte ranges (Safari needs them).
-    for (const file of ['film-wide.mp4', 'film-wide.webm', 'film-tall.mp4', 'film-tall.webm', 'film-wide-poster.webp', 'film-tall-poster.webp']) {
+    // Every file of this locale's film is served with its own media type and answers byte ranges,
+    // from the start and from the middle (Safari needs them; every browser needs them to seek).
+    for (const file of filmFiles(locale.key)) {
       const response = await page.request.get(`${base}media/${file}`);
       assert.equal(response.status(), 200, file);
-      assert.match(response.headers()['content-type'], /^(video|image)\//, file);
+      assert.equal(response.headers()['content-type'], MEDIA_TYPE[file.split('.').pop()], file);
       if (!/\.(mp4|webm)$/.test(file)) continue;
+      const size = (await response.body()).length;
       const head = await page.request.get(`${base}media/${file}`, { headers: { Range: 'bytes=0-1' } });
       assert.equal(head.status(), 206, `${file} range`);
-      assert.match(head.headers()['content-range'] ?? '', /^bytes 0-1\/\d+$/, `${file} content-range`);
+      assert.equal(head.headers()['content-range'], `bytes 0-1/${size}`, `${file} content-range`);
+      const mid = Math.floor(size / 2);
+      const middle = await page.request.get(`${base}media/${file}`, { headers: { Range: `bytes=${mid}-${mid + 99}` } });
+      assert.equal(middle.status(), 206, `${file} middle range`);
+      assert.equal((await middle.body()).length, 100, `${file} middle range length`);
     }
     assert.deepEqual(errors, []);
     await context.close();
@@ -303,23 +346,36 @@ for (const locale of LOCALES) {
   await check(`${locale.lang}: phones get the portrait film and poster`, async () => {
     const { context, page } = await open(locale.path, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const video = page.locator('[data-film] video');
-    assert.match(await video.evaluate((v) => v.poster), /film-tall-poster\.webp$/);
+    assert.match(await video.evaluate((v) => v.poster), new RegExp(`/film-${locale.key}-tall-poster\\.webp$`));
     await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 0.5, null, { timeout: 15000 });
-    assert.match(await video.evaluate((v) => v.currentSrc), /film-tall\.(mp4|webm)$/);
+    const meta = await video.evaluate((v) => ({ src: v.currentSrc, duration: v.duration, w: v.videoWidth, h: v.videoHeight }));
+    assert.match(meta.src, new RegExp(`/film-${locale.key}-tall\\.(mp4|webm)$`));
+    assert.ok(meta.duration >= FILM_SECONDS[0] && meta.duration <= FILM_SECONDS[1], `duration ${meta.duration}`);
+    assert.deepEqual([meta.w, meta.h], [1080, 1350]);
     const frame = await box(page, '[data-film] video');
     assert.ok(Math.abs(frame.w / frame.h - 0.8) < 0.02, `portrait frame ${frame.w}×${frame.h}`);
     await context.close();
   });
 
-  await check(`${locale.lang}: reduced motion keeps the film still until asked`, async () => {
+  await check(`${locale.lang}: reduced motion keeps the film still until asked, from the keyboard too`, async () => {
     const { context, page } = await open(locale.path, { reducedMotion: 'reduce' });
     await page.waitForTimeout(2500);
     const video = page.locator('[data-film] video');
     assert.equal(await video.evaluate((v) => v.paused && v.currentTime === 0), true, 'no autoplay');
     const toggle = page.locator('[data-film-toggle]');
     assert.equal(await toggle.getAttribute('aria-label'), await toggle.getAttribute('data-label-play'));
-    await toggle.click();
+    // Tab to the button, then Enter plays and Space pauses; the focus ring shows.
+    let focused = false;
+    for (let i = 0; i < 30 && !focused; i++) {
+      await page.keyboard.press('Tab');
+      focused = await toggle.evaluate((el) => document.activeElement === el);
+    }
+    assert.ok(focused, 'the play button is reachable with Tab');
+    assert.notEqual(await toggle.evaluate((el) => getComputedStyle(el).outlineStyle), 'none', 'focus ring');
+    await page.keyboard.press('Enter');
     await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 0.3, null, { timeout: 15000 });
+    await page.keyboard.press('Space');
+    await page.waitForFunction(() => document.querySelector('[data-film] video').paused, null, { timeout: 5000 });
     await context.close();
   });
 
@@ -327,13 +383,72 @@ for (const locale of LOCALES) {
     const { context, page } = await open(locale.path, {
       reducedMotion: 'reduce',
       route: {
-        match: /\/media\/film-[a-z]+\.(mp4|webm)$/,
+        match: /\/media\/film-[a-z-]+\.(mp4|webm)$/,
         handler: (r) => r.fulfill({ status: 200, contentType: 'video/mp4', body: 'not a video' }),
       },
     });
     await page.locator('[data-film-toggle]').click();
     await page.waitForFunction(() => document.querySelector('[data-film-toggle]').hidden, null, { timeout: 10000 });
     assert.match(await page.locator('[data-film] video').evaluate((v) => v.poster), /poster\.webp$/);
+    await context.close();
+  });
+
+  await check(`${locale.lang}: the watch page plays the whole film with the browser's controls`, async () => {
+    const { context, page, errors } = await open(`${locale.path}watch/`);
+    assert.equal(await page.getAttribute('html', 'lang'), locale.lang);
+    assert.equal(await page.locator('h1').count(), 1);
+    assert.equal(await page.getAttribute('link[rel=canonical]', 'href'), `${SITE}${locale.path}watch/`);
+    const alternates = await page.$$eval('link[rel=alternate][hreflang]', (els) => els.map((e) => `${e.hreflang} ${e.href}`));
+    assert.deepEqual(alternates.sort(), alternatesFor('watch/'));
+    const video = page.locator('[data-watch-video]');
+    const before = await video.evaluate((v) => ({ controls: v.controls, paused: v.paused, poster: v.poster, preload: v.preload }));
+    assert.ok(before.controls && before.paused, 'the browser’s own controls; nothing plays by itself');
+    assert.match(before.poster, new RegExp(`/film-${locale.key}-wide-poster\\.webp$`));
+    // Click the film, as a person would; the click is the user gesture that lets it play with sound.
+    await video.click();
+    await page.waitForTimeout(600);
+    if (await video.evaluate((v) => v.paused)) await playFrom(video);
+    await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 0.5, null, { timeout: 15000 });
+    const meta = await video.evaluate((v) => ({ src: v.currentSrc, duration: v.duration, w: v.videoWidth, h: v.videoHeight }));
+    assert.match(meta.src, new RegExp(`/film-${locale.key}-wide\\.(mp4|webm)$`));
+    assert.ok(meta.duration >= FILM_SECONDS[0] && meta.duration <= FILM_SECONDS[1], `duration ${meta.duration}`);
+    assert.deepEqual([meta.w, meta.h], [1920, 1080]);
+    await video.evaluate((v) => (v.currentTime = 44));
+    await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 44.5, null, { timeout: 15000 });
+    await video.evaluate((v) => (v.currentTime = v.duration - 0.4));
+    await page.waitForFunction(() => document.querySelector('[data-watch-video]').ended, null, { timeout: 15000 });
+    for (const layout of ['wide', 'tall']) {
+      const link = page.locator(`[data-mp4="${layout}"]`);
+      assert.equal(await link.getAttribute('href'), `${new URL(base).pathname}media/film-${locale.key}-${layout}.mp4`);
+      assert.match(await link.innerText(), layout === 'wide' ? /1920 × 1080/ : /1080 × 1350/);
+      const response = await page.request.get(new URL(await link.getAttribute('href'), base).href);
+      assert.equal(response.status(), 200);
+      assert.equal(response.headers()['content-type'], 'video/mp4');
+    }
+    assert.equal(await page.getAttribute('a[data-download="watch"]', 'href'), RELEASE.url);
+    assert.deepEqual(errors, []);
+    await context.close();
+  });
+
+  await check(`${locale.lang}: on phones the watch page plays the portrait film`, async () => {
+    const { context, page, errors } = await open(`${locale.path}watch/`, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    assert.ok(overflow <= 0, `horizontal overflow ${overflow}px`);
+    const video = page.locator('[data-watch-video]');
+    assert.match(await video.evaluate((v) => v.poster), new RegExp(`/film-${locale.key}-tall-poster\\.webp$`));
+    // A tap may only reveal the controls; it still counts as the gesture that allows play.
+    await video.tap();
+    await page.waitForTimeout(600);
+    if (await video.evaluate((v) => v.paused)) await playFrom(video);
+    await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 0.5, null, { timeout: 15000 });
+    assert.match(await video.evaluate((v) => v.currentSrc), new RegExp(`/film-${locale.key}-tall\\.(mp4|webm)$`));
+    const frame = await box(page, '[data-watch-video]');
+    assert.ok(Math.abs(frame.w / frame.h - 0.8) < 0.02, `portrait frame ${frame.w}×${frame.h}`);
+    if (SHOTS) {
+      await mkdir(SHOTS, { recursive: true });
+      await page.screenshot({ path: join(SHOTS, `${locale.key}-mobile-watch.png`) });
+    }
+    assert.deepEqual(errors, []);
     await context.close();
   });
 
@@ -345,13 +460,13 @@ for (const locale of LOCALES) {
       await page.waitForTimeout(800);
       assert.equal(await active(), 0);
       if (reducedMotion === 'no-preference') {
-        const start = await box(page, '#story-scene [data-part="model"]');
+        const start = await box(page, '#story-scene [data-part="blender"]');
         assert.ok(inside(start, await box(page, '#story-scene .screen')), 'the app starts on your display');
       }
       await scrollStory(page, 0.5);
       await page.waitForTimeout(1200);
       assert.equal(await active(), 1);
-      const moved = await box(page, '#story-scene [data-part="model"]');
+      const moved = await box(page, '#story-scene [data-part="blender"]');
       assert.ok(inside(moved, await box(page, '#story-scene [data-part="codex"]')), 'the app ends up on the Codex screen');
       assert.ok(inside(await box(page, '#story-scene .notes'), await box(page, '#story-scene .screen')), 'your windows stay');
       await scrollStory(page, 0.99);
@@ -359,7 +474,9 @@ for (const locale of LOCALES) {
       assert.equal(await active(), 2);
       const grok = await box(page, '#story-scene [data-part="grok"]');
       assert.ok(grok.o > 0.95, 'GrokBot is open');
-      assert.ok(inside(await box(page, '#story-scene [data-part="browser"]'), grok), 'GrokBot has its own apps');
+      assert.ok(inside(await box(page, '#story-scene [data-part="chrome"]'), grok), 'GrokBot has its own app');
+      const chips = await page.$$eval('#story-scene [data-chip] img', (imgs) => imgs.map((i) => new URL(i.currentSrc || i.src).pathname.split('/').pop()));
+      assert.ok(chips.length === 3 && chips.every((f) => /^(blender|md|chrome)-\d+\.png$/.test(f)), `the apps' own icons: ${chips}`);
       assert.deepEqual(errors, []);
       await context.close();
     }
@@ -383,7 +500,8 @@ for (const locale of LOCALES) {
 
   await check(`${locale.lang}: the language menu reaches every language, page and place`, async () => {
     for (const route of ROUTES) {
-      const hash = route ? '#verify' : '#download';
+      // A place on each page: the download on home, the checksum on details, the film's page itself.
+      const hash = { '': '#download', 'details/': '#verify', 'watch/': '#main' }[route];
       for (const target of LOCALES.filter((l) => l !== locale)) {
         const { context, page, errors } = await open(`${locale.path}${route}${hash}`);
         const menu = page.locator('header [data-lang-menu]');
@@ -478,7 +596,7 @@ for (const locale of LOCALES) {
     for (const width of [320, 375, 390, 430]) {
       const context = await scrollbars.newContext({ viewport: { width, height: 844 }, locale: 'en-US' });
       const page = await context.newPage();
-      await page.goto(base + locale.path, { waitUntil: 'networkidle' });
+      await page.goto(base + locale.path, { waitUntil: 'load' });
       await page.evaluate(() => document.fonts.ready);
       const m = await page.evaluate(() => {
         const header = document.querySelector('.site-header');

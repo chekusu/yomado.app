@@ -5,13 +5,19 @@
 // - every page has lang, title, description, a canonical URL on the configured origin and an OG image
 // - every internal link and asset resolves to a file in the build
 // - the only archive linked anywhere is the configured release download
-// - the concept film and its posters are in the build and stay small
+// - each locale's one-minute film, in both compositions and both formats, is what the pages say:
+//   55–65 s, 1920 × 1080 or 1080 × 1350, at least 30 fps, H.264 High 4.0 yuv420p with moov before
+//   mdat (the codec string the pages declare) or VP9; within a size budget, with its poster
+// - no internal film render page and no file of the old 16-second film is published
+// - the app icons are byte for byte the PNGs recorded in apps/sources.json
 // - neither the build nor the tracked sources contain machine paths, private hosts or credentials
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { mp4Info, webmInfo } from './media-info.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const config = JSON.parse(await readFile(join(root, 'site.config.json'), 'utf8'));
@@ -24,7 +30,7 @@ const fail = (where, message) => problems.push(`${where}: ${message}`);
 
 // Each locale's root below the site base (src/lib/site.ts), and its Open Graph card.
 const LOCALES = { en: '', 'zh-cn': 'zh-cn/', ja: 'ja/' };
-const ROUTES = ['', 'details/'];
+const ROUTES = ['', 'details/', 'watch/'];
 // Links to the English home say ?lang=en, because the bare home page follows the browser.
 const localeHref = (prefix, route) => `${base}${prefix}${route}${prefix === '' && route === '' ? '?lang=en' : ''}`;
 
@@ -107,12 +113,66 @@ for (const [locale, prefix] of Object.entries(LOCALES)) {
   }
 }
 
-// The film is lazy, but it should still be light: every video under 2.5 MB, posters under 200 kB.
-const MEDIA = { 'film-wide.mp4': 2.5e6, 'film-wide.webm': 2.5e6, 'film-tall.mp4': 2.5e6, 'film-tall.webm': 2.5e6, 'film-wide-poster.webp': 2e5, 'film-tall-poster.webp': 2e5, 'story-wide.webp': 2e5, 'story-tall.webp': 2e5 };
-for (const [file, limit] of Object.entries(MEDIA)) {
-  const size = await stat(join(dist, 'media', file)).then((s) => s.size).catch(() => 0);
-  if (!size) fail(`media/${file}`, 'missing');
-  else if (size > limit) fail(`media/${file}`, `${size} bytes, over ${limit}`);
+// The film: one per locale, wide and tall, MP4 and WebM. A minute of 1080p is bigger than the old
+// 16-second clip, so the budget grew with it, but stays a budget: each video file at most 9 MB
+// (it streams; the hero loads nothing before it plays), posters and story stills under 200 kB.
+const FILM = { minSeconds: 55, maxSeconds: 65, minFps: 29.9, maxBytes: 9e6 };
+const SIZE = { wide: [1920, 1080], tall: [1080, 1350] };
+const declared = new Set();
+// Attribute values come HTML-escaped (codecs=&quot;…&quot;); compare them as the browser reads them.
+const unescape = (v) => v.replaceAll('&quot;', '"').replaceAll('&#34;', '"').replaceAll('&amp;', '&');
+for (const file of pages) for (const t of attr(await readFile(file, 'utf8'), /<source[^>]*type="(video\/mp4[^"]*)"/g)) declared.add(unescape(t));
+for (const locale of Object.keys(LOCALES)) {
+  for (const [layout, [w, h]] of Object.entries(SIZE)) {
+    const name = `film-${locale}-${layout}`;
+    const where = `media/${name}`;
+    try {
+      const mp4 = await mp4Info(join(dist, 'media', `${name}.mp4`));
+      if (mp4.bytes > FILM.maxBytes) fail(`${where}.mp4`, `${mp4.bytes} bytes, over ${FILM.maxBytes}`);
+      if (mp4.duration < FILM.minSeconds || mp4.duration > FILM.maxSeconds) fail(`${where}.mp4`, `${mp4.duration.toFixed(2)} s long`);
+      if (mp4.width !== w || mp4.height !== h) fail(`${where}.mp4`, `${mp4.width} × ${mp4.height}, not ${w} × ${h}`);
+      if (mp4.fps < FILM.minFps) fail(`${where}.mp4`, `${mp4.fps} fps`);
+      if (!mp4.faststart) fail(`${where}.mp4`, `moov does not precede mdat (${mp4.order.join(', ')})`);
+      if (mp4.codec !== 'avc1' || mp4.pixelFormat !== 'yuv420p') fail(`${where}.mp4`, `${mp4.codec} ${mp4.pixelFormat}, not H.264 yuv420p`);
+      if (![...declared].every((t) => t.includes(`codecs="${mp4.codecs}"`))) fail(`${where}.mp4`, `is ${mp4.codecs}, pages declare ${[...declared].join(' | ')}`);
+    } catch (e) {
+      fail(`${where}.mp4`, `missing or unreadable (${e.message})`);
+    }
+    try {
+      const webm = await webmInfo(join(dist, 'media', `${name}.webm`));
+      if (webm.bytes > FILM.maxBytes) fail(`${where}.webm`, `${webm.bytes} bytes, over ${FILM.maxBytes}`);
+      if (webm.duration < FILM.minSeconds || webm.duration > FILM.maxSeconds) fail(`${where}.webm`, `${webm.duration?.toFixed(2)} s long`);
+      if (webm.width !== w || webm.height !== h) fail(`${where}.webm`, `${webm.width} × ${webm.height}, not ${w} × ${h}`);
+      if (webm.codec !== 'V_VP9') fail(`${where}.webm`, `${webm.codec}, not VP9`);
+    } catch (e) {
+      fail(`${where}.webm`, `missing or unreadable (${e.message})`);
+    }
+    const poster = await stat(join(dist, 'media', `${name}-poster.webp`)).then((st) => st.size).catch(() => 0);
+    if (!poster || poster > 2e5) fail(`${where}-poster.webp`, poster ? `${poster} bytes, over 200000` : 'missing');
+  }
+}
+for (const file of ['story-wide.webp', 'story-tall.webp']) {
+  const size = await stat(join(dist, 'media', file)).then((st) => st.size).catch(() => 0);
+  if (!size || size > 2e5) fail(`media/${file}`, size ? `${size} bytes, over 200000` : 'missing');
+}
+// The internal render pages and the old 16-second film stay out of the build.
+if (existsSync(join(dist, 'film'))) fail('film/', 'internal film render pages are in the build');
+for (const old of ['film-wide.mp4', 'film-wide.webm', 'film-tall.mp4', 'film-tall.webm', 'film-wide-poster.webp', 'film-tall-poster.webp']) {
+  if (existsSync(join(dist, 'media', old))) fail(`media/${old}`, 'a file of the old 16-second film');
+}
+
+// The app icons are exactly the PNGs copied out of the apps' .icns (scripts/extract-icons.mjs).
+try {
+  const sources = JSON.parse(await readFile(join(dist, 'apps', 'sources.json'), 'utf8'));
+  for (const icon of sources.icons) {
+    for (const f of icon.files) {
+      const buf = await readFile(join(dist, 'apps', f.file)).catch(() => null);
+      if (!buf) fail(`apps/${f.file}`, 'missing');
+      else if (createHash('sha256').update(buf).digest('hex') !== f.sha256) fail(`apps/${f.file}`, 'differs from apps/sources.json');
+    }
+  }
+} catch (e) {
+  fail('apps/sources.json', `missing or unreadable (${e.message})`);
 }
 
 const sitemap = await readFile(join(dist, 'sitemap.xml'), 'utf8').catch(() => '');
@@ -130,7 +190,9 @@ try {
 for (const file of tracked) {
   if (!TEXT.has(extname(file)) && !/\.(ts|mjs|astro|md|ya?ml)$/.test(file)) continue;
   if (file === 'package-lock.json' || file === 'scripts/verify-dist.mjs') continue;
-  const text = await readFile(join(root, file), 'utf8');
+  // A tracked file may be deleted in the working tree before the deletion is committed.
+  const text = await readFile(join(root, file), 'utf8').catch(() => null);
+  if (text === null) continue;
   for (const [pattern, label] of PRIVATE_SOURCES) if (pattern.test(text)) fail(file, `contains ${label}`);
 }
 

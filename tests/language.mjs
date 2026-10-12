@@ -159,6 +159,24 @@ await check('a language picked from the menu or footer is remembered for the hom
   await en.close();
 });
 
+// 3b. The watch page's menu remembers a choice the same way, and closes with Escape.
+await check('a language picked on the watch page is remembered for the home page', async () => {
+  const zh = await browserWith(['zh-CN']);
+  const watch = await visit(zh, 'zh-cn/watch/');
+  const menu = watch.page.locator('header [data-lang-menu]');
+  await menu.locator('summary').click();
+  await watch.page.keyboard.press('Escape');
+  assert.equal(await menu.evaluate((d) => d.open), false, 'Escape closes the menu');
+  await menu.locator('summary').click();
+  await menu.locator('a[hreflang="ja"]').click();
+  await watch.page.waitForURL(`${base}ja/watch/`);
+  assert.equal(await watch.page.getAttribute('html', 'lang'), 'ja');
+  assert.equal(await watch.page.evaluate((k) => localStorage.getItem(k), 'yomado.lang'), 'ja', 'stored');
+  assert.equal((await visit(zh, '')).url, `${base}ja/`, 'Japanese is remembered over the Chinese browser');
+  assert.deepEqual(watch.errors, []);
+  await zh.close();
+});
+
 // 4. The other languages' pages and every details page keep their language.
 await check('explicit pages and deep links never change language', async () => {
   for (const [languages, path] of [
@@ -168,6 +186,9 @@ await check('explicit pages and deep links never change language', async () => {
     [['ja-JP'], 'details/#verify'],
     [['zh-CN'], 'ja/details/'],
     [['en-US'], 'zh-cn/details/'],
+    [['ja-JP'], 'watch/'],
+    [['en-US'], 'ja/watch/'],
+    [['ja-JP'], 'zh-cn/watch/'],
   ]) {
     const v = await expectVisit(languages, path, path);
     assert.equal(v.navigations, 1, `${path} navigated ${v.navigations} times`);

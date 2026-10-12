@@ -24,8 +24,9 @@ Benchmark Apple product marketing pages, especially https://www.apple.com/macboo
 
 ## How the page applies it
 
-- The story runs on one timeline (`src/lib/scene.ts`): a named screen opens, an app moves into it while the user's other windows stay, Codex and GrokBot each get a screen with their own apps, and night quiets the scene into the night-window mark.
-- The concept film in the hero is rendered from that same timeline (`npm run film`), so the film, the scroll story and the finale always agree.
+- The story runs on one timeline (`src/lib/scene.ts`): a named screen opens, Blender moves into it while the user's other windows stay, Codex and GrokBot each get a screen with their own apps, and night quiets the scene into the night-window mark.
+- The one-minute film in the hero and on `/watch/` has its own timeline (`src/lib/film.ts`, `npm run film`) with the same apps, screens and panel: six shots, one action each, one short super each, a camera that moves deliberately, and a label that says it is a simulated demo.
+- Apps are always shown with their real icons, never drawn stand-ins; the panel is rebuilt from the app's own layout. Blender and Marvelous Designer lead, Chrome supports, WeChat is only one of the user's own apps.
 - Day to night is the only colour story: white and light grey for the product, night blue and ivory window light for the brand moment and the download.
 - Technical detail (install, checksum, compatibility, permissions, what has not been verified) lives on `/details/`, not on the home page.
-- Claim boundaries: yomado supplies displays; agents see and act with their own tools. Running with physical displays switched off and power saving are not verified, and the film says so in its one caption.
+- Claim boundaries: yomado supplies displays; agents see and act with their own tools. Running with physical displays switched off and power saving are not verified, and the film's caption says so; neither, nor a locked Mac, appears in the film.
