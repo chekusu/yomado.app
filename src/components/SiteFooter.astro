@@ -6,7 +6,7 @@ import type { Copy } from '../i18n';
 interface Props {
   locale: Locale;
   copy: Copy;
-  /** This page's path below each locale's root: '' for home, 'details/' for the details page. */
+  /** This page's path below each locale's root: '' for home, 'details/' or 'watch/'. */
   route?: string;
 }
 
@@ -22,6 +22,7 @@ const { locale, copy, route = '' } = Astro.props;
       </div>
       <nav aria-label={copy.footer.navLabel}>
         <a href={withBase(`${LOCALE_PATH[locale]}details/`)}>{copy.footer.details}</a>
+        <a href={withBase(`${LOCALE_PATH[locale]}watch/`)}>{copy.footer.film}</a>
         <a href={`${SITE.appRepository}/releases`}>{copy.footer.releases}</a>
         <a href={SITE.appRepository}>{copy.footer.source}</a>
         <a href={SITE.siteRepository}>{copy.footer.site}</a>

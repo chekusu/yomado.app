@@ -7,7 +7,8 @@ import Panel from './Panel.astro';
 import Finale from './Finale.astro';
 import SiteFooter from './SiteFooter.astro';
 import { copyFor } from '../i18n';
-import { LOCALE_PATH, withBase, type Locale } from '../lib/site';
+import { posterUrl } from '../lib/media';
+import { LOCALE_PATH, type Locale } from '../lib/site';
 
 interface Props {
   locale: Locale;
@@ -26,13 +27,13 @@ const copy = copyFor(locale);
   autoLanguage={locale === 'en'}
 >
   <Fragment slot="head">
-    <link rel="preload" as="image" href={withBase('media/film-wide-poster.webp')} media="(min-width: 641px)" fetchpriority="high" />
-    <link rel="preload" as="image" href={withBase('media/film-tall-poster.webp')} media="(max-width: 640px)" fetchpriority="high" />
+    <link rel="preload" as="image" href={posterUrl(locale, 'wide')} media="(min-width: 641px)" fetchpriority="high" />
+    <link rel="preload" as="image" href={posterUrl(locale, 'tall')} media="(max-width: 640px)" fetchpriority="high" />
   </Fragment>
   <a class="skip" href="#main">{copy.skip}</a>
   <SiteHeader locale={locale} copy={copy} />
   <main id="main">
-    <Hero copy={copy} />
+    <Hero locale={locale} copy={copy} />
     <Story copy={copy} />
     <Panel copy={copy} />
     <Finale locale={locale} copy={copy} />

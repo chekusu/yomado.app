@@ -1,0 +1,155 @@
+---
+// The one-minute film on its own page, in this page's language, with the browser's own controls
+// (play, seek, full screen, keyboard) and links to the MP4 files themselves. Phones get the
+// portrait composition. Nothing plays until it is asked to.
+import Base from '../layouts/Base.astro';
+import Icon from './Icon.astro';
+import SiteFooter from './SiteFooter.astro';
+import SiteHeader from './SiteHeader.astro';
+import { copyFor } from '../i18n';
+import { MP4_TYPE, NARROW, WEBM_TYPE, filmSize, filmUrl, posterUrl } from '../lib/media';
+import { LOCALE_PATH, RELEASE, localeHref, type Locale } from '../lib/site';
+import { phrased } from '../lib/text';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const copy = copyFor(locale);
+const w = copy.watch;
+const film = copy.hero.film;
+---
+
+<Base locale={locale} title={w.meta.title} description={w.meta.description} path={`${LOCALE_PATH[locale]}watch/`} route="watch/" ogAlt={copy.meta.ogAlt}>
+  <a class="skip" href="#main">{copy.skip}</a>
+  <SiteHeader locale={locale} copy={copy} route="watch/" />
+  <main id="main" class="watch">
+    <header class="head wrap">
+      <h1 class="headline" set:html={phrased(w.title)} />
+      <p class="sub">{w.lede}</p>
+    </header>
+
+    <figure class="player">
+      <div class="frame">
+        <video
+          controls
+          playsinline
+          preload="metadata"
+          poster={posterUrl(locale, 'wide')}
+          data-poster-narrow={posterUrl(locale, 'tall')}
+          data-narrow={NARROW}
+          data-watch-video
+          aria-label={film.label}
+        >
+          <source src={filmUrl(locale, 'tall', 'mp4')} type={MP4_TYPE} media={NARROW} />
+          <source src={filmUrl(locale, 'tall', 'webm')} type={WEBM_TYPE} media={NARROW} />
+          <source src={filmUrl(locale, 'wide', 'mp4')} type={MP4_TYPE} />
+          <source src={filmUrl(locale, 'wide', 'webm')} type={WEBM_TYPE} />
+          <p>{film.fallback} <a href={filmUrl(locale, 'wide', 'mp4')}>MP4</a></p>
+        </video>
+      </div>
+      <figcaption class="fine">{w.note}</figcaption>
+    </figure>
+
+    <div class="after wrap">
+      <p class="files">
+        <a class="more" href={filmUrl(locale, 'wide', 'mp4')} data-mp4="wide">{w.mp4.replace('{size}', filmSize(locale, 'wide', 'mp4'))}</a>
+        <a class="more" href={filmUrl(locale, 'tall', 'mp4')} data-mp4="tall">{w.mp4Tall.replace('{size}', filmSize(locale, 'tall', 'mp4'))}</a>
+      </p>
+      <div class="actions">
+        <a class="btn btn-night" href={RELEASE.url} data-download="watch"><Icon name="download" size={18} />{copy.hero.cta}</a>
+      </div>
+      <p class="fine">{copy.hero.meta}</p>
+      <a class="more back" href={localeHref(locale)}>{w.back}</a>
+    </div>
+  </main>
+  <SiteFooter locale={locale} copy={copy} route="watch/" />
+</Base>
+
+<script>
+  // The language menu and footer (remembered choice, Escape and outside clicks), as on every page.
+  import '../scripts/page';
+
+  // The poster that matches the composition this screen gets.
+  for (const video of document.querySelectorAll<HTMLVideoElement>('[data-watch-video]')) {
+    const narrow = video.dataset.narrow;
+    if (narrow && matchMedia(narrow).matches && video.dataset.posterNarrow) video.poster = video.dataset.posterNarrow;
+  }
+</script>
+
+<style>
+  .watch {
+    padding-block: clamp(28px, 5vh, 64px) clamp(56px, 10vh, 120px);
+  }
+
+  .head {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    margin-bottom: clamp(24px, 4vh, 44px);
+    text-align: center;
+  }
+
+  .head .sub {
+    max-width: 32em;
+  }
+
+  .player {
+    width: min(100% - 2 * var(--gutter), 1280px);
+    margin: 0 auto;
+  }
+
+  .frame {
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    border-radius: clamp(14px, 2vw, 26px);
+    background: #0a1538;
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.06),
+      0 30px 70px -30px rgb(20 30 60 / 0.35);
+  }
+
+  .frame video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #0a1538;
+  }
+
+  .player .fine {
+    max-width: 52em;
+    margin: 14px auto 0;
+    text-align: center;
+  }
+
+  .after {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    margin-top: clamp(28px, 5vh, 48px);
+    text-align: center;
+  }
+
+  .files {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 28px;
+    margin: 0;
+  }
+
+  .actions {
+    margin-top: 8px;
+  }
+
+  .back {
+    margin-top: 6px;
+  }
+
+  @media (max-width: 640px) {
+    .frame {
+      aspect-ratio: 4 / 5;
+    }
+  }
+</style>

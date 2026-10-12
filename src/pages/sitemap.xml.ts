@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 import { LOCALES, LOCALE_PATH, LOCALE_TAG, RELEASE, canonical } from '../lib/site';
 
-// Every page exists once per locale: home and the download details.
-const ROUTES = ['', 'details/'];
+// Every page exists once per locale: home, the download details and the film.
+const ROUTES = ['', 'details/', 'watch/'];
 
 export const GET: APIRoute = () => {
   const urls = ROUTES.flatMap((route) => {

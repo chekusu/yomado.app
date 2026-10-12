@@ -1,22 +1,20 @@
 ---
-// The concept film, rendered from the story timeline (scripts/render-film.mjs). Muted and inline;
-// it starts after the page has loaded and while it is in view, never under reduced motion.
-// Without JavaScript the browser's own controls appear instead of the play/pause button.
+// The one-minute product film in this page's language (src/lib/media.ts), rendered from its own
+// timeline (src/lib/film.ts). Muted and inline; it starts after the page has loaded and while it
+// is in view, never under reduced motion. Without JavaScript the browser's own controls appear
+// instead of the play/pause button. The watch page plays it with full controls.
 import Icon from './Icon.astro';
-import { withBase } from '../lib/site';
+import { MP4_TYPE, NARROW, WEBM_TYPE, filmUrl, posterUrl } from '../lib/media';
+import { localeHref, type Locale } from '../lib/site';
 import type { Copy } from '../i18n';
 
 interface Props {
+  locale: Locale;
   copy: Copy;
 }
 
-const { copy } = Astro.props;
+const { locale, copy } = Astro.props;
 const film = copy.hero.film;
-const media = (file: string) => withBase(`media/${file}`);
-// H.264 High profile; VP9 for browsers built without H.264.
-const MP4 = 'video/mp4; codecs="avc1.640028"';
-const WEBM = 'video/webm; codecs="vp9"';
-const NARROW = '(max-width: 640px)';
 ---
 
 <figure class="film" data-film>
@@ -27,16 +25,16 @@ const NARROW = '(max-width: 640px)';
       playsinline
       controls
       preload="none"
-      poster={media('film-wide-poster.webp')}
-      data-poster-narrow={media('film-tall-poster.webp')}
+      poster={posterUrl(locale, 'wide')}
+      data-poster-narrow={posterUrl(locale, 'tall')}
       data-narrow={NARROW}
       aria-label={film.label}
     >
-      <source src={media('film-tall.mp4')} type={MP4} media={NARROW} />
-      <source src={media('film-tall.webm')} type={WEBM} media={NARROW} />
-      <source src={media('film-wide.mp4')} type={MP4} />
-      <source src={media('film-wide.webm')} type={WEBM} />
-      <p>{film.fallback} <a href={media('film-wide.mp4')}>MP4</a></p>
+      <source src={filmUrl(locale, 'tall', 'mp4')} type={MP4_TYPE} media={NARROW} />
+      <source src={filmUrl(locale, 'tall', 'webm')} type={WEBM_TYPE} media={NARROW} />
+      <source src={filmUrl(locale, 'wide', 'mp4')} type={MP4_TYPE} />
+      <source src={filmUrl(locale, 'wide', 'webm')} type={WEBM_TYPE} />
+      <p>{film.fallback} <a href={filmUrl(locale, 'wide', 'mp4')}>MP4</a></p>
     </video>
     <button
       class="toggle"
@@ -54,7 +52,10 @@ const NARROW = '(max-width: 640px)';
       <span class="i-replay"><Icon name="replay" size={18} /></span>
     </button>
   </div>
-  <figcaption class="fine caption">{film.caption}</figcaption>
+  <figcaption class="fine caption">
+    {film.caption}
+    <a class="more watch" href={localeHref(locale, 'watch/')} data-watch-link>{film.watch}</a>
+  </figcaption>
 </figure>
 
 <style>
@@ -119,6 +120,9 @@ const NARROW = '(max-width: 640px)';
   }
 
   .caption {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
     margin-top: 14px;
     text-align: center;
   }

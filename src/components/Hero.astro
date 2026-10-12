@@ -1,15 +1,16 @@
 ---
 import Film from './Film.astro';
 import Icon from './Icon.astro';
-import { RELEASE } from '../lib/site';
+import { RELEASE, type Locale } from '../lib/site';
 import { phrased } from '../lib/text';
 import type { Copy } from '../i18n';
 
 interface Props {
+  locale: Locale;
   copy: Copy;
 }
 
-const { copy } = Astro.props;
+const { locale, copy } = Astro.props;
 ---
 
 <section class="hero" aria-labelledby="hero-title">
@@ -21,7 +22,7 @@ const { copy } = Astro.props;
     </div>
     <p class="fine">{copy.hero.meta}</p>
   </div>
-  <Film copy={copy} />
+  <Film locale={locale} copy={copy} />
 </section>
 
 <style>
