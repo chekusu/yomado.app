@@ -1,0 +1,67 @@
+1
+00:00:00,500 --> 00:00:02,580
+Certains travaux ont besoin d’un écran.
+
+2
+00:00:02,580 --> 00:00:04,862
+Comme Blender ou Marvelous Designer.
+
+3
+00:00:08,050 --> 00:00:10,770
+Donnez à votre agent un écran de travail dédié.
+
+4
+00:00:10,770 --> 00:00:13,090
+Créez un écran virtuel avec yomado,
+
+5
+00:00:13,090 --> 00:00:14,581
+et nommez-le Codex.
+
+6
+00:00:19,450 --> 00:00:21,530
+Glissez-y les apps dont il a besoin.
+
+7
+00:00:21,530 --> 00:00:24,010
+Blender. Marvelous Designer.
+
+8
+00:00:24,010 --> 00:00:25,981
+Vos autres fenêtres ne bougent pas.
+
+9
+00:00:31,500 --> 00:00:33,420
+L’agent lit des captures d’écran,
+
+10
+00:00:33,420 --> 00:00:35,500
+clique sur les commandes et écrit.
+
+11
+00:00:35,500 --> 00:00:37,140
+Il passe par l’interface,
+
+12
+00:00:37,140 --> 00:00:40,094
+même sans intégration MCP propre à l’app.
+
+13
+00:00:44,000 --> 00:00:46,160
+Ajoutez un autre écran pour GrokBot.
+
+14
+00:00:46,160 --> 00:00:48,040
+Récupérez les apps au besoin,
+
+15
+00:00:48,040 --> 00:00:49,329
+puis fermez l’écran.
+
+16
+00:00:54,400 --> 00:00:56,880
+yomado. Pour les agents visuels.
+
+17
+00:00:56,880 --> 00:00:58,919
+À télécharger sur yomado.app.

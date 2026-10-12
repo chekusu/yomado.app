@@ -1,0 +1,24 @@
+{
+  "tag": "tr",
+  "dir": "ltr",
+  "family": "en",
+  "cues": {
+    "en01": "Bazı işler bir ekran gerektirir.",
+    "en02": "Blender ya da Marvelous Designer gibi.",
+    "en03": "Ajanınıza özel bir çalışma ekranı verin.",
+    "en04": "yomado ile sanal bir ekran oluşturun",
+    "en05": "ve adını Codex koyun.",
+    "en06": "İhtiyaç duyduğu uygulamaları sürükleyin.",
+    "en07": "Blender. Marvelous Designer.",
+    "en08": "Diğer pencereleriniz yerinde kalır.",
+    "en09": "Ajan ekran görüntülerini okur,",
+    "en10": "kontrollere tıklar ve yazar.",
+    "en11": "Arayüz üzerinden çalışır,",
+    "en12": "uygulamaya özel MCP entegrasyonu olmasa bile.",
+    "en13": "GrokBot için bir ekran daha ekleyin.",
+    "en14": "Gerekince uygulamaları geri getirin,",
+    "en15": "sonra ekranı kapatın.",
+    "en16": "yomado. Görsel ajanlar için.",
+    "en17": "yomado.app adresinden indirin."
+  }
+}

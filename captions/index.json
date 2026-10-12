@@ -1,0 +1,151 @@
+{
+  "about": "Captions for the one-minute film in 16 languages. zh-CN and zh-TW follow the Simplified Chinese narration; the others follow the English narration (River voice-over), cue for cue. family names the timing in timing.json; visual names the film whose supers they go with. Translations are machine-assisted and not proofread by native speakers.",
+  "order": [
+    "en",
+    "zh-CN",
+    "zh-TW",
+    "ja",
+    "ko",
+    "es",
+    "fr",
+    "de",
+    "it",
+    "pt-BR",
+    "nl",
+    "pl",
+    "tr",
+    "ar",
+    "hi",
+    "id"
+  ],
+  "locales": {
+    "en": {
+      "name": "English",
+      "short": "EN",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "zh-CN": {
+      "name": "简体中文",
+      "short": "简体",
+      "dir": "ltr",
+      "family": "zh",
+      "visual": "zh-cn",
+      "narration": "zh-CN"
+    },
+    "zh-TW": {
+      "name": "繁體中文",
+      "short": "繁體",
+      "dir": "ltr",
+      "family": "zh",
+      "visual": "zh-cn",
+      "narration": "zh-CN"
+    },
+    "ja": {
+      "name": "日本語",
+      "short": "日本語",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "ja",
+      "narration": "en"
+    },
+    "ko": {
+      "name": "한국어",
+      "short": "한국어",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "es": {
+      "name": "Español",
+      "short": "ES",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "fr": {
+      "name": "Français",
+      "short": "FR",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "de": {
+      "name": "Deutsch",
+      "short": "DE",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "it": {
+      "name": "Italiano",
+      "short": "IT",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "pt-BR": {
+      "name": "Português (Brasil)",
+      "short": "PT",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "nl": {
+      "name": "Nederlands",
+      "short": "NL",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "pl": {
+      "name": "Polski",
+      "short": "PL",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "tr": {
+      "name": "Türkçe",
+      "short": "TR",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "ar": {
+      "name": "العربية",
+      "short": "عربي",
+      "dir": "rtl",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "hi": {
+      "name": "हिन्दी",
+      "short": "हिन्दी",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    },
+    "id": {
+      "name": "Bahasa Indonesia",
+      "short": "ID",
+      "dir": "ltr",
+      "family": "en",
+      "visual": "en",
+      "narration": "en"
+    }
+  }
+}

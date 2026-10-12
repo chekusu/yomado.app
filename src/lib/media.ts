@@ -35,14 +35,28 @@ export function posterUrl(locale: Locale, layout: FilmLayout): string {
 }
 
 /**
- * The size of a rendered file, as Finder shows it; read at build time. Only the film's own render
- * build (FILM_STAGE=1), which runs before the files exist, may go without.
+ * The size of a file under public/media/, as Finder shows it; read at build time. Only the film's
+ * own render build (FILM_STAGE=1), which runs before the files exist, may go without.
  */
-export function filmSize(locale: Locale, layout: FilmLayout, ext: 'mp4' | 'webm'): string {
+export function mediaSize(path: string): string {
   try {
-    return formatSize(statSync(join(process.cwd(), 'public/media', filmFile(locale, layout, ext))).size);
+    return formatSize(statSync(join(process.cwd(), 'public/media', path)).size);
   } catch (error) {
     if (process.env.FILM_STAGE === '1') return '';
     throw error;
   }
 }
+
+export const filmSize = (locale: Locale, layout: FilmLayout, ext: 'mp4' | 'webm'): string => mediaSize(filmFile(locale, layout, ext));
+
+/**
+ * Captions (scripts/caption-film.mjs, captions/): a caption file per locale, the film with that
+ * locale's captions in its pixels for sharing, and the website's band masters: the same films,
+ * the picture a little smaller above a night-blue caption band, so the switchable tracks never
+ * cover the film's own titles, panel or typing (also in full screen).
+ */
+export const captionFile = (tag: string, ext: 'vtt' | 'srt') => `captions/yomado-film-${tag}-${filmMedia.captions}.${ext}`;
+export const captionedFile = (tag: string, layout: FilmLayout) => `captioned/yomado-film-${tag}-${layout}-${filmMedia.captions}.mp4`;
+export const bandFile = (visual: Locale, layout: FilmLayout, ext: 'mp4' | 'webm') => `film-${visual}-${layout}-band-${filmMedia.captions}.${ext}`;
+export const bandPosterFile = (visual: Locale, layout: FilmLayout) => `film-${visual}-${layout}-band-poster-${filmMedia.captions}.webp`;
+export const mediaUrl = (path: string) => withBase(`media/${path}`);

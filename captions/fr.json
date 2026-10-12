@@ -1,0 +1,24 @@
+{
+  "tag": "fr",
+  "dir": "ltr",
+  "family": "en",
+  "cues": {
+    "en01": "Certains travaux ont besoin d’un écran.",
+    "en02": "Comme Blender ou Marvelous Designer.",
+    "en03": "Donnez à votre agent un écran de travail dédié.",
+    "en04": "Créez un écran virtuel avec yomado,",
+    "en05": "et nommez-le Codex.",
+    "en06": "Glissez-y les apps dont il a besoin.",
+    "en07": "Blender. Marvelous Designer.",
+    "en08": "Vos autres fenêtres ne bougent pas.",
+    "en09": "L’agent lit des captures d’écran,",
+    "en10": "clique sur les commandes et écrit.",
+    "en11": "Il passe par l’interface,",
+    "en12": "même sans intégration MCP propre à l’app.",
+    "en13": "Ajoutez un autre écran pour GrokBot.",
+    "en14": "Récupérez les apps au besoin,",
+    "en15": "puis fermez l’écran.",
+    "en16": "yomado. Pour les agents visuels.",
+    "en17": "À télécharger sur yomado.app."
+  }
+}

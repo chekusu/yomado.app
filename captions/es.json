@@ -1,0 +1,24 @@
+{
+  "tag": "es",
+  "dir": "ltr",
+  "family": "en",
+  "cues": {
+    "en01": "Hay trabajo que necesita una pantalla.",
+    "en02": "Como Blender o Marvelous Designer.",
+    "en03": "Dale a tu agente una pantalla de trabajo propia.",
+    "en04": "Crea una pantalla virtual con yomado",
+    "en05": "y llámala Codex.",
+    "en06": "Arrastra las apps que necesita.",
+    "en07": "Blender. Marvelous Designer.",
+    "en08": "Tus otras ventanas no se mueven.",
+    "en09": "El agente lee capturas de pantalla,",
+    "en10": "hace clic en los controles y escribe.",
+    "en11": "Trabaja a través de la interfaz,",
+    "en12": "incluso sin una integración MCP para esa app.",
+    "en13": "Añade otra pantalla para GrokBot.",
+    "en14": "Trae las apps cuando las necesites",
+    "en15": "y cierra la pantalla.",
+    "en16": "yomado. Para agentes visuales.",
+    "en17": "Descárgalo en yomado.app."
+  }
+}

@@ -1,0 +1,67 @@
+1
+00:00:00,500 --> 00:00:02,580
+Sebagian pekerjaan butuh layar.
+
+2
+00:00:02,580 --> 00:00:04,862
+Seperti Blender atau Marvelous Designer.
+
+3
+00:00:08,050 --> 00:00:10,770
+Beri agen Anda layar kerja khusus.
+
+4
+00:00:10,770 --> 00:00:13,090
+Buat layar virtual dengan yomado,
+
+5
+00:00:13,090 --> 00:00:14,581
+lalu beri nama Codex.
+
+6
+00:00:19,450 --> 00:00:21,530
+Seret aplikasi yang ia butuhkan.
+
+7
+00:00:21,530 --> 00:00:24,010
+Blender. Marvelous Designer.
+
+8
+00:00:24,010 --> 00:00:25,981
+Jendela lain Anda tetap di tempatnya.
+
+9
+00:00:31,500 --> 00:00:33,420
+Agen membaca tangkapan layar,
+
+10
+00:00:33,420 --> 00:00:35,500
+mengeklik kontrol, dan mengetik.
+
+11
+00:00:35,500 --> 00:00:37,140
+Ia bekerja lewat antarmuka,
+
+12
+00:00:37,140 --> 00:00:40,094
+bahkan tanpa integrasi MCP khusus aplikasi.
+
+13
+00:00:44,000 --> 00:00:46,160
+Tambahkan layar lain untuk GrokBot.
+
+14
+00:00:46,160 --> 00:00:48,040
+Kembalikan aplikasi saat dibutuhkan,
+
+15
+00:00:48,040 --> 00:00:49,329
+lalu tutup layarnya.
+
+16
+00:00:54,400 --> 00:00:56,880
+yomado. Untuk agen visual.
+
+17
+00:00:56,880 --> 00:00:58,919
+Unduh di yomado.app.

@@ -1,0 +1,24 @@
+{
+  "tag": "en",
+  "dir": "ltr",
+  "family": "en",
+  "cues": {
+    "en01": "Some work needs a screen.",
+    "en02": "Like Blender, or Marvelous Designer.",
+    "en03": "Give your agent a dedicated work screen.",
+    "en04": "Create a virtual display with yomado,",
+    "en05": "and name it Codex.",
+    "en06": "Drag in the apps it needs.",
+    "en07": "Blender. Marvelous Designer.",
+    "en08": "Your other windows stay where they are.",
+    "en09": "The agent reads screenshots,",
+    "en10": "clicks controls, and types.",
+    "en11": "It works through the interface,",
+    "en12": "even without an app-specific MCP integration.",
+    "en13": "Add another screen for GrokBot.",
+    "en14": "Bring apps back when you need them,",
+    "en15": "then close the screen.",
+    "en16": "yomado. For visual agents.",
+    "en17": "Download at yomado.app."
+  }
+}

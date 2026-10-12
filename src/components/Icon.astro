@@ -1,6 +1,6 @@
 ---
 interface Props {
-  name: 'download' | 'replay' | 'play' | 'pause' | 'sound' | 'muted';
+  name: 'download' | 'replay' | 'play' | 'pause' | 'sound' | 'muted' | 'captions';
   size?: number;
 }
 
@@ -49,6 +49,14 @@ const { name, size = 20 } = Astro.props;
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3.75 7.6h2.5L9.9 4.7v10.6l-3.65-2.9h-2.5a.9.9 0 0 1-.9-.9V8.5c0-.5.4-.9.9-.9Z" fill="currentColor" />
       <path d="m13 7.9 4.1 4.2M17.1 7.9 13 12.1" />
+    </svg>
+  )
+}
+{
+  name === 'captions' && (
+    <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2.75" y="4.25" width="14.5" height="11.5" rx="2.4" />
+      <path d="M8.6 8.4a2 2 0 1 0 0 3.2M13.9 8.4a2 2 0 1 0 0 3.2" />
     </svg>
   )
 }

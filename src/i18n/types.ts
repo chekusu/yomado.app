@@ -28,11 +28,20 @@ export interface Copy {
       watch: string;
       /**
        * The sound button on the hero film, which starts muted: its name and short visible text
-       * while muted, and its name and text once the narration is on.
+       * while muted, per narration (English or Chinese), and its name and text once it is on.
        */
-      soundOn: string;
-      soundOnText: string;
+      soundOn: { en: string; zh: string };
+      soundOnText: { en: string; zh: string };
       mute: string;
+      /** The subtitle menu (its name, and its entry for no subtitles). */
+      captions: string;
+      captionsOff: string;
+      /**
+       * The two narrations, by name: they group the subtitle menu and fill `{narration}` in the
+       * film's label; narrationNote opens the caption under the film.
+       */
+      narration: { en: string; zh: string };
+      narrationNote: { en: string; zh: string };
     };
   };
   /**
@@ -55,6 +64,10 @@ export interface Copy {
     /** "MP4 · 1920 × 1080 · 1:00 · {size}", and the same for the portrait composition. */
     mp4: string;
     mp4Tall: string;
+    /** Over the downloads: "With {language} subtitles", or without; and the subtitle file. */
+    withSubtitles: string;
+    withoutSubtitles: string;
+    srt: string;
     back: string;
   };
   story: { label: string; acts: { title: string; text: string }[] };

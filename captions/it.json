@@ -1,0 +1,24 @@
+{
+  "tag": "it",
+  "dir": "ltr",
+  "family": "en",
+  "cues": {
+    "en01": "Certi lavori richiedono uno schermo.",
+    "en02": "Come Blender o Marvelous Designer.",
+    "en03": "Dai al tuo agente uno schermo di lavoro dedicato.",
+    "en04": "Crea un display virtuale con yomado",
+    "en05": "e chiamalo Codex.",
+    "en06": "Trascina dentro le app che gli servono.",
+    "en07": "Blender. Marvelous Designer.",
+    "en08": "Le tue altre finestre non si spostano.",
+    "en09": "L’agente legge gli screenshot,",
+    "en10": "fa clic sui controlli e digita.",
+    "en11": "Lavora attraverso l’interfaccia,",
+    "en12": "anche senza un’integrazione MCP specifica per l’app.",
+    "en13": "Aggiungi un altro schermo per GrokBot.",
+    "en14": "Riporta le app quando ti servono,",
+    "en15": "poi chiudi lo schermo.",
+    "en16": "yomado. Per agenti visivi.",
+    "en17": "Scaricalo su yomado.app."
+  }
+}

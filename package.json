@@ -22,7 +22,8 @@
     "assets": "node scripts/render-assets.mjs",
     "icons": "node scripts/extract-icons.mjs",
     "film": "node scripts/render-film.mjs",
-    "film:narrate": "node scripts/narrate-film.mjs"
+    "film:narrate": "node scripts/narrate-film.mjs",
+    "film:captions": "node scripts/caption-film.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
@@ -31,8 +32,12 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@fontsource-variable/noto-sans-arabic": "^5.3.0",
+    "@fontsource-variable/noto-sans-devanagari": "^5.3.0",
     "@fontsource-variable/noto-sans-jp": "^5.3.1",
+    "@fontsource-variable/noto-sans-kr": "^5.3.1",
     "@fontsource-variable/noto-sans-sc": "^5.3.1",
+    "@fontsource-variable/noto-sans-tc": "^5.3.1",
     "@types/node": "^22.20.5",
     "@types/three": "^0.186.0",
     "playwright": "^1.64.0",

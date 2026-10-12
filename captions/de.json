@@ -1,0 +1,24 @@
+{
+  "tag": "de",
+  "dir": "ltr",
+  "family": "en",
+  "cues": {
+    "en01": "Manche Arbeit braucht einen Bildschirm.",
+    "en02": "Etwa Blender oder Marvelous Designer.",
+    "en03": "Gib deinem Agenten einen eigenen Arbeitsbildschirm.",
+    "en04": "Erstelle mit yomado ein virtuelles Display",
+    "en05": "und nenne es Codex.",
+    "en06": "Zieh die Apps hinein, die er braucht.",
+    "en07": "Blender. Marvelous Designer.",
+    "en08": "Andere Fenster bleiben an ihrem Platz.",
+    "en09": "Der Agent liest Screenshots,",
+    "en10": "klickt auf Bedienelemente und tippt.",
+    "en11": "Er arbeitet über die Oberfläche,",
+    "en12": "auch ohne app-spezifische MCP-Integration.",
+    "en13": "Noch ein Display für GrokBot.",
+    "en14": "Hol Apps bei Bedarf zurück,",
+    "en15": "dann schließ das Display.",
+    "en16": "yomado. Für visuelle Agenten.",
+    "en17": "Download unter yomado.app."
+  }
+}

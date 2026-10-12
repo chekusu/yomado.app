@@ -1,0 +1,24 @@
+{
+  "tag": "nl",
+  "dir": "ltr",
+  "family": "en",
+  "cues": {
+    "en01": "Sommig werk vraagt om een scherm.",
+    "en02": "Zoals Blender of Marvelous Designer.",
+    "en03": "Geef je agent een eigen werkscherm.",
+    "en04": "Maak met yomado een virtueel scherm",
+    "en05": "en noem het Codex.",
+    "en06": "Sleep de apps erin die hij nodig heeft.",
+    "en07": "Blender. Marvelous Designer.",
+    "en08": "Je andere vensters blijven staan.",
+    "en09": "De agent leest screenshots,",
+    "en10": "klikt op bedieningselementen en typt.",
+    "en11": "Hij werkt via de interface,",
+    "en12": "ook zonder app-specifieke MCP-integratie.",
+    "en13": "Voeg nog een scherm toe voor GrokBot.",
+    "en14": "Haal apps terug als je ze nodig hebt",
+    "en15": "en sluit dan het scherm.",
+    "en16": "yomado. Voor visuele agents.",
+    "en17": "Download op yomado.app."
+  }
+}

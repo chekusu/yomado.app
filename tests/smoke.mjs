@@ -42,6 +42,8 @@ const LOCALES = [
     caption: 'Simulated demo, not a recording of an agent at work. Running with physical displays switched off is not yet verified on real hardware.',
     minute: 'one minute',
     narration: 'English narration',
+    narrationNote: 'English narration. ',
+    pageCaption: 'en',
     ui: 'Simplified Chinese',
     request: 'Use yomado to set up a virtual screen named Codex for this Blender task, move only this task’s windows onto it, and restore them when you’re done.',
   },
@@ -56,6 +58,8 @@ const LOCALES = [
     caption: '模拟演示，并非 Agent 实际工作的录像。实体屏关闭后的运行尚待实机验证。',
     minute: '1 分钟',
     narration: '中文旁白',
+    narrationNote: '中文旁白。',
+    pageCaption: 'zh-CN',
     ui: '简体中文',
     request: '用 yomado 为这次 Blender 任务准备一块叫 Codex 的虚拟屏，只移入本任务的窗口，完成后恢复。',
   },
@@ -67,9 +71,11 @@ const LOCALES = [
     name: '日本語',
     short: '日本語',
     title: /エージェントに、\s*専用の画面を。/,
-    caption: '英語ナレーション付き。シミュレーションによるデモで、エージェントが実際に作業した録画ではありません。実際のディスプレイを消した状態での動作は、実機ではまだ検証していません。',
+    caption: 'シミュレーションによるデモで、エージェントが実際に作業した録画ではありません。実際のディスプレイを消した状態での動作は、実機ではまだ検証していません。',
     minute: '1 分',
     narration: '英語ナレーション',
+    narrationNote: '英語ナレーション付き。',
+    pageCaption: 'ja',
     ui: '簡体字中国語',
     request: 'yomado で、今回の Blender の作業用に Codex という仮想画面を用意して、この作業のウィンドウだけを移し、終わったら元に戻してください。',
   },
@@ -81,7 +87,19 @@ const CLIPBOARD = ['clipboard-read', 'clipboard-write'];
 // The film's files, per locale: wide and tall, MP4 and WebM, and the posters.
 const FILM_SECONDS = [55, 65];
 // The films carry a version in their names (src/lib/film-media.json); posters don't.
-const { version: V } = JSON.parse(await readFile(new URL('../src/lib/film-media.json', import.meta.url), 'utf8'));
+const { version: V, captions: CV } = JSON.parse(await readFile(new URL('../src/lib/film-media.json', import.meta.url), 'utf8'));
+// Subtitles: 16 languages, their text and their timing per narration (captions/).
+const captionIndex = JSON.parse(await readFile(new URL('../captions/index.json', import.meta.url), 'utf8'));
+const captionTiming = JSON.parse(await readFile(new URL('../captions/timing.json', import.meta.url), 'utf8'));
+const captionText = {};
+for (const tag of captionIndex.order) captionText[tag] = JSON.parse(await readFile(new URL(`../captions/${tag}.json`, import.meta.url), 'utf8'));
+/** The subtitle a language shows at a moment of its film (null between cues). */
+const cueAt = (tag, t) => {
+  const { family, cues } = captionText[tag];
+  const cue = captionTiming.families[family].cues.find((c) => t >= c.start && t < c.end);
+  return cue ? cues[cue.key] : null;
+};
+const bandSrc = (visual, layout) => new RegExp(`/film-${visual}-${layout}-band-${CV}\\.(mp4|webm)$`);
 const filmFiles = (key) => [
   ...['wide', 'tall'].flatMap((layout) => [`film-${key}-${layout}-${V}.mp4`, `film-${key}-${layout}-${V}.webm`, `film-${key}-${layout}-poster.webp`]),
 ];
@@ -114,6 +132,8 @@ if (!base) {
     '.avif': 'image/avif',
     '.mp4': 'video/mp4',
     '.webm': 'video/webm',
+    '.vtt': 'text/vtt; charset=utf-8',
+    '.srt': 'application/x-subrip',
     '.woff2': 'font/woff2',
     '.woff': 'font/woff',
     '.txt': 'text/plain; charset=utf-8',
@@ -186,6 +206,13 @@ async function audioDecoded(page, selector) {
   }
   return false;
 }
+
+/** Hold back a film's files for a while, as a slow network would, so a switch is still loading. */
+const slowFilm = (page, re, ms = 1800) =>
+  page.route(re, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+    await route.continue().catch(() => {});
+  });
 
 /** Pretend the tab was hidden or shown again (a headless page is always visible). */
 const setTabHidden = (page, hidden) =>
@@ -330,7 +357,7 @@ for (const locale of LOCALES) {
     assert.ok(attrs.label.includes(locale.minute) && !/16/.test(attrs.label), 'described as the one-minute film');
     assert.ok(attrs.label.includes(locale.narration) && !/no sound|无声|音声なし/.test(attrs.label), 'described with its narration');
     const caption = page.locator('[data-film] figcaption');
-    assert.ok((await caption.innerText()).startsWith(locale.caption), 'caption');
+    assert.ok((await caption.innerText()).startsWith(locale.narrationNote + locale.caption), 'the narration, then the caption');
     assert.equal(await caption.locator('[data-watch-link]').getAttribute('href'), `${new URL(base).pathname}${locale.path}watch/`);
     // Media events arrive asynchronously, so wait for the button to catch up rather than racing it.
     const state = (s) => page.waitForFunction((s) => document.querySelector('[data-film-toggle]').dataset.state === s, s, { timeout: 10000 });
@@ -439,8 +466,10 @@ for (const locale of LOCALES) {
     await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 2.5, null, { timeout: 20000 });
     assert.equal(await video.evaluate((v) => v.muted), true, 'starts muted');
     assert.ok(await sound.isVisible(), 'the sound button shows');
-    assert.equal(await sound.getAttribute('aria-label'), await sound.getAttribute('data-label-on'));
-    assert.equal((await sound.innerText()).trim(), await sound.getAttribute('data-text-on'));
+    const labelOn = await sound.getAttribute('aria-label');
+    const textOn = (await sound.innerText()).trim();
+    assert.ok(labelOn && textOn && labelOn !== (await sound.getAttribute('data-label-off')), 'named for turning the sound on');
+    assert.ok(labelOn.includes(textOn) || textOn.includes(labelOn) || locale.key === 'en', 'the visible text is in its name');
     if (locale.key === 'ja') assert.ok((await sound.innerText()).includes('英語ナレーション'), 'names the English narration');
     // On: with its sound, from the beginning, and the browser decodes it.
     await sound.click();
@@ -511,6 +540,32 @@ for (const locale of LOCALES) {
     await context.close();
   });
 
+  await check(`${locale.lang}: subtitles read under the film, in the page's language and in step`, async () => {
+    const { context, page, errors } = await open(locale.path);
+    const cc = page.locator('[data-film-cc]');
+    assert.ok(await cc.isVisible(), 'the subtitle menu');
+    const select = cc.locator('select');
+    assert.equal(await select.inputValue(), locale.pageCaption);
+    const values = await select.locator('option').evaluateAll((els) => els.map((e) => e.value));
+    assert.deepEqual([...values].sort(), ['off', ...captionIndex.order].sort(), 'off and 16 languages');
+    assert.equal(await select.locator('optgroup').count(), 2, 'grouped by the narration they follow');
+    await page.waitForFunction(() => document.querySelector('[data-film-subtitle]').textContent.trim().length > 0, null, { timeout: 20000 });
+    const at = await page.evaluate(() => {
+      const f = document.querySelector('[data-film] .frame').getBoundingClientRect();
+      const s = document.querySelector('[data-film-subtitle]');
+      return { frameBottom: f.bottom, top: s.getBoundingClientRect().top, t: document.querySelector('[data-film] video').currentTime, text: s.textContent, lang: s.lang };
+    });
+    assert.ok(at.top >= at.frameBottom - 0.5, 'under the picture, not over it');
+    assert.ok([cueAt(locale.pageCaption, at.t - 0.25), cueAt(locale.pageCaption, at.t), cueAt(locale.pageCaption, at.t + 0.25)].includes(at.text), `"${at.text}" at ${at.t.toFixed(2)} s`);
+    assert.equal(at.lang, locale.pageCaption);
+    if (SHOTS) {
+      await mkdir(SHOTS, { recursive: true });
+      await page.locator('[data-film]').screenshot({ path: join(SHOTS, `${locale.key}-desktop-subtitles.png`) });
+    }
+    assert.deepEqual(errors, []);
+    await context.close();
+  });
+
   await check(`${locale.lang}: the watch page plays the whole film with the browser's controls`, async () => {
     const { context, page, errors } = await open(`${locale.path}watch/`);
     assert.equal(await page.getAttribute('html', 'lang'), locale.lang);
@@ -521,16 +576,17 @@ for (const locale of LOCALES) {
     const video = page.locator('[data-watch-video]');
     const before = await video.evaluate((v) => ({ controls: v.controls, paused: v.paused, poster: v.poster, preload: v.preload }));
     assert.ok(before.controls && before.paused, 'the browser’s own controls; nothing plays by itself');
-    assert.match(before.poster, new RegExp(`/film-${locale.key}-wide-poster\\.webp$`));
+    assert.match(before.poster, new RegExp(`/film-${locale.key}-wide-band-poster-${CV}\\.webp$`));
     // Click the film, as a person would; the click is the user gesture that lets it play with sound.
     await video.click();
     await page.waitForTimeout(600);
     if (await video.evaluate((v) => v.paused)) await playFrom(video);
     await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 0.5, null, { timeout: 15000 });
     const meta = await video.evaluate((v) => ({ src: v.currentSrc, duration: v.duration, w: v.videoWidth, h: v.videoHeight }));
-    assert.match(meta.src, filmSrc(locale.key, 'wide'));
+    assert.match(meta.src, bandSrc(locale.key, 'wide'));
     assert.ok(meta.duration >= FILM_SECONDS[0] && meta.duration <= FILM_SECONDS[1], `duration ${meta.duration}`);
     assert.deepEqual([meta.w, meta.h], [1920, 1080]);
+    assert.deepEqual(await video.evaluate((v) => [...v.textTracks].filter((t) => t.mode === 'showing').map((t) => t.language)), [locale.pageCaption], 'its own subtitles');
     assert.deepEqual(await video.evaluate((v) => [v.muted, v.volume > 0]), [false, true], 'plays with its sound');
     assert.ok(await audioDecoded(page, '[data-watch-video]'), 'its audio is decoded');
     assert.ok((await page.locator('.player figcaption').innerText()).includes(locale.narration), 'says which narration');
@@ -540,7 +596,7 @@ for (const locale of LOCALES) {
     await page.waitForFunction(() => document.querySelector('[data-watch-video]').ended, null, { timeout: 15000 });
     for (const layout of ['wide', 'tall']) {
       const link = page.locator(`[data-mp4="${layout}"]`);
-      assert.equal(await link.getAttribute('href'), `${new URL(base).pathname}media/film-${locale.key}-${layout}-${V}.mp4`);
+      assert.equal(await link.getAttribute('href'), `${new URL(base).pathname}media/captioned/yomado-film-${locale.pageCaption}-${layout}-${CV}.mp4`);
       assert.match(await link.innerText(), layout === 'wide' ? /1920 × 1080/ : /1080 × 1350/);
       const response = await page.request.get(new URL(await link.getAttribute('href'), base).href);
       assert.equal(response.status(), 200);
@@ -556,13 +612,13 @@ for (const locale of LOCALES) {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     assert.ok(overflow <= 0, `horizontal overflow ${overflow}px`);
     const video = page.locator('[data-watch-video]');
-    assert.match(await video.evaluate((v) => v.poster), new RegExp(`/film-${locale.key}-tall-poster\\.webp$`));
+    assert.match(await video.evaluate((v) => v.poster), new RegExp(`/film-${locale.key}-tall-band-poster-${CV}\\.webp$`));
     // A tap may only reveal the controls; it still counts as the gesture that allows play.
     await video.tap();
     await page.waitForTimeout(600);
     if (await video.evaluate((v) => v.paused)) await playFrom(video);
     await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 0.5, null, { timeout: 15000 });
-    assert.match(await video.evaluate((v) => v.currentSrc), filmSrc(locale.key, 'tall'));
+    assert.match(await video.evaluate((v) => v.currentSrc), bandSrc(locale.key, 'tall'));
     assert.equal(await video.evaluate((v) => v.muted), false, 'with its sound');
     assert.ok(await audioDecoded(page, '[data-watch-video]'), 'its audio is decoded');
     const frame = await box(page, '[data-watch-video]');
@@ -822,13 +878,550 @@ for (const locale of LOCALES) {
     assert.equal(await page.locator('[data-film] video').evaluate((v) => v.hasAttribute('controls')), true, 'native controls');
     assert.equal(await page.locator('[data-film] video').evaluate((v) => v.muted || v.hasAttribute('muted')), false, 'started by hand, it plays with its sound');
     assert.equal(await page.locator('[data-film] .controls button:visible').count(), 0, 'no buttons without their script');
-    assert.ok((await page.locator('[data-film] figcaption').innerText()).startsWith(locale.caption), 'the caption, with the narration where it is not the page language');
+    assert.ok((await page.locator('[data-film] figcaption').innerText()).startsWith(locale.narrationNote + locale.caption), 'the narration, then the caption');
+    assert.equal(await page.locator('[data-film] video track').count(), 0, 'no subtitle tracks over the full-size film');
     for (const act of await page.locator('[data-act]').all()) assert.ok(await act.isVisible(), 'every act is shown');
     assert.ok(await page.locator('.story .still img').isVisible(), 'a still stands in for the scene');
     assert.ok(await page.locator('a[data-download="finale"]').isVisible());
     await context.close();
   });
 }
+
+await check('subtitles of the other narration bring its film where it was: zh-CN, fr, zh-TW, then seek and replay', async () => {
+  const { context, page, errors } = await open('zh-cn/');
+  const video = page.locator('[data-film] video');
+  const select = page.locator('[data-film-cc] select');
+  const film = () => video.evaluate((v) => ({ src: v.currentSrc, t: v.currentTime, paused: v.paused, muted: v.muted }));
+  const srcIs = (re) => page.waitForFunction((re) => new RegExp(re).test(document.querySelector('[data-film] video').currentSrc), re.source, { timeout: 15000 });
+  await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 1, null, { timeout: 20000 });
+  assert.equal(await select.inputValue(), 'zh-CN');
+  assert.match((await film()).src, filmSrc('zh-cn', 'wide'));
+  // Sound on, then French: the English film at the same moment, still playing, still with sound.
+  await page.locator('[data-film-sound]').click();
+  await page.waitForFunction(() => {
+    const v = document.querySelector('[data-film] video');
+    return !v.muted && v.currentTime > 2.5;
+  }, null, { timeout: 15000 });
+  const before = await film();
+  await select.selectOption('fr');
+  await srcIs(filmSrc('en', 'wide'));
+  await page.waitForFunction(() => !document.querySelector('[data-film] video').paused && document.querySelector('[data-film] video').currentTime > 0, null, { timeout: 15000 });
+  const fr = await film();
+  assert.ok(Math.abs(fr.t - before.t) < 1.5, `kept its place: ${before.t.toFixed(2)} → ${fr.t.toFixed(2)} s`);
+  assert.equal(fr.muted, false, 'kept its sound');
+  assert.equal(await page.locator('[data-film-narration]').textContent(), '英文旁白。');
+  assert.equal(await page.locator('[data-film-subtitle]').getAttribute('lang'), 'fr');
+  // Paused, then Traditional Chinese: the Chinese film, still paused at the same moment.
+  await page.locator('[data-film-toggle]').click();
+  await page.waitForFunction(() => document.querySelector('[data-film] video').paused);
+  const paused = await film();
+  await select.selectOption('zh-TW');
+  await srcIs(filmSrc('zh-cn', 'wide'));
+  await page.waitForFunction((t) => Math.abs(document.querySelector('[data-film] video').currentTime - t) < 0.3, paused.t, { timeout: 15000 });
+  await page.waitForTimeout(500);
+  const tw = await film();
+  assert.ok(tw.paused, 'still paused');
+  assert.equal(tw.muted, false, 'sound as it was');
+  assert.equal(await page.locator('[data-film-narration]').textContent(), '中文旁白。');
+  // Seek into GrokBot's cue; play to the end and replay.
+  await video.evaluate((v) => (v.currentTime = 45));
+  await page.waitForFunction((t) => document.querySelector('[data-film-subtitle]').textContent === t, cueAt('zh-TW', 45), { timeout: 10000 });
+  await playFrom(video, -0.3);
+  await page.waitForFunction(() => document.querySelector('[data-film] video').ended, null, { timeout: 10000 });
+  await page.locator('[data-film-toggle]').click();
+  await page.waitForFunction((t) => document.querySelector('[data-film-subtitle]').textContent === t, cueAt('zh-TW', 1.5), { timeout: 15000 });
+  assert.ok((await film()).t < 4, 'from the beginning');
+  // Kept for the next visit.
+  await page.reload({ waitUntil: 'load' });
+  assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'zh-TW');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await check('a film switch still loading never brings the film back by itself after a pause, a hidden tab or leaving the view', async () => {
+  for (const interrupt of ['pause', 'hidden', 'scroll']) {
+    const { context, page, errors } = await open('zh-cn/');
+    const video = page.locator('[data-film] video');
+    await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 1, null, { timeout: 20000 });
+    await page.locator('[data-film-sound]').click();
+    await page.waitForFunction(() => {
+      const v = document.querySelector('[data-film] video');
+      return !v.muted && v.currentTime > 2.5;
+    }, null, { timeout: 15000 });
+    await slowFilm(page, /film-en-(wide|tall)-v2\.(mp4|webm)/);
+    const before = await video.evaluate((v) => v.currentTime);
+    await page.locator('[data-film-cc] select').selectOption('fr');
+    if (interrupt === 'pause') await page.locator('[data-film-toggle]').click();
+    if (interrupt === 'hidden') await setTabHidden(page, true);
+    if (interrupt === 'scroll') await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    // The new file arrives only after the interruption.
+    await page.waitForFunction(() => {
+      const v = document.querySelector('[data-film] video');
+      return /film-en-wide-v2/.test(v.currentSrc) && v.readyState >= 1;
+    }, null, { timeout: 15000 });
+    await page.waitForTimeout(1200);
+    const after = await video.evaluate((v) => ({ paused: v.paused, t: v.currentTime, muted: v.muted }));
+    assert.equal(after.paused, true, `${interrupt}: stays paused`);
+    assert.ok(Math.abs(after.t - before) < 1, `${interrupt}: kept its place (${before.toFixed(2)} → ${after.t.toFixed(2)} s)`);
+    assert.equal(after.muted, false, `${interrupt}: the sound choice stands`);
+    assert.equal(await page.locator('[data-film-toggle]').getAttribute('data-state'), 'paused');
+    // Coming back doesn't start it either: a film with its sound waits for the play button.
+    if (interrupt === 'hidden') await setTabHidden(page, false);
+    if (interrupt === 'scroll') await page.evaluate(() => scrollTo(0, 0));
+    await page.waitForTimeout(1200);
+    assert.equal(await video.evaluate((v) => v.paused), true, `${interrupt}: no sound by itself on return`);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
+await check('overlapping film switches keep the first place; sound turned on while one loads starts the narration over', async () => {
+  {
+    const { context, page, errors } = await open('zh-cn/');
+    const video = page.locator('[data-film] video');
+    await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 1, null, { timeout: 20000 });
+    await page.locator('[data-film-sound]').click();
+    await page.waitForFunction(() => {
+      const v = document.querySelector('[data-film] video');
+      return !v.muted && v.currentTime > 3;
+    }, null, { timeout: 15000 });
+    await slowFilm(page, /film-(en|zh-cn)-(wide|tall)-v2\.(mp4|webm)/, 1200);
+    const before = await video.evaluate((v) => v.currentTime);
+    const select = page.locator('[data-film-cc] select');
+    await select.selectOption('fr');
+    await page.waitForTimeout(250);
+    await select.selectOption('zh-TW');
+    await page.waitForTimeout(250);
+    await select.selectOption('fr');
+    await page.waitForFunction(() => {
+      const v = document.querySelector('[data-film] video');
+      return /film-en-wide-v2/.test(v.currentSrc) && !v.paused && v.readyState >= 2;
+    }, null, { timeout: 20000 });
+    const t1 = await video.evaluate((v) => v.currentTime);
+    assert.ok(Math.abs(t1 - before) < 2, `kept the first place: ${before.toFixed(2)} → ${t1.toFixed(2)} s`);
+    assert.equal(await video.evaluate((v) => v.muted), false, 'sound as it was');
+    // Nothing late from the replaced switches moves it back.
+    await page.waitForTimeout(2500);
+    const t2 = await video.evaluate((v) => v.currentTime);
+    assert.ok(t2 > t1 + 1.5, `plays on from there: ${t1.toFixed(2)} → ${t2.toFixed(2)} s`);
+    assert.equal(await page.locator('[data-film-subtitle]').getAttribute('lang'), 'fr');
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  {
+    const { context, page, errors } = await open('zh-cn/');
+    const video = page.locator('[data-film] video');
+    await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 3, null, { timeout: 20000 });
+    await slowFilm(page, /film-en-(wide|tall)-v2\.(mp4|webm)/);
+    await page.locator('[data-film-cc] select').selectOption('fr');
+    await page.locator('[data-film-sound]').click();
+    await page.waitForFunction(() => {
+      const v = document.querySelector('[data-film] video');
+      return /film-en-wide-v2/.test(v.currentSrc) && !v.paused && v.readyState >= 2;
+    }, null, { timeout: 20000 });
+    const after = await video.evaluate((v) => ({ t: v.currentTime, muted: v.muted }));
+    assert.ok(after.t < 2.5, `the narration from the beginning (${after.t.toFixed(2)} s)`);
+    assert.equal(after.muted, false);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
+await check('on the watch page a seek made while a film loads wins, and a hidden tab keeps it paused', async () => {
+  for (const interrupt of ['seek', 'hidden']) {
+    const { context, page, errors } = await open('watch/');
+    const video = page.locator('[data-watch-video]');
+    await video.click();
+    await page.waitForTimeout(500);
+    if (await video.evaluate((v) => v.paused)) await playFrom(video);
+    await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 2, null, { timeout: 15000 });
+    await slowFilm(page, new RegExp(`film-zh-cn-(wide|tall)-band-${CV}\\.(mp4|webm)`));
+    const before = await video.evaluate((v) => v.currentTime);
+    await page.locator('[data-watch-cc] select').selectOption('zh-TW');
+    await page.waitForTimeout(200);
+    if (interrupt === 'seek') await video.evaluate((v) => (v.currentTime = 50));
+    if (interrupt === 'hidden') await setTabHidden(page, true);
+    await page.waitForFunction(() => {
+      const v = document.querySelector('[data-watch-video]');
+      return /film-zh-cn-wide-band/.test(v.currentSrc) && v.readyState >= 1;
+    }, null, { timeout: 15000 });
+    await page.waitForTimeout(1200);
+    const after = await video.evaluate((v) => ({ t: v.currentTime, paused: v.paused }));
+    if (interrupt === 'seek') {
+      assert.ok(after.t > 49.5, `the seek wins (${after.t.toFixed(2)} s)`);
+      assert.equal(after.paused, false, 'and it plays on from there');
+    } else {
+      assert.equal(after.paused, true, 'no playing in a hidden tab');
+      assert.ok(Math.abs(after.t - before) < 1, `kept its place (${before.toFixed(2)} → ${after.t.toFixed(2)} s)`);
+    }
+    assert.equal(await video.evaluate((v) => [...v.textTracks].find((t) => t.mode === 'showing')?.language), 'zh-TW');
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
+await check('switches overlapping other choices while loading: a paused start, the same film or off, a new mute, the native menu', async () => {
+  const waitLanded = (page, sel, re) =>
+    page.waitForFunction(
+      ([sel, re]) => {
+        const v = document.querySelector(sel);
+        return new RegExp(re).test(v.currentSrc) && v.readyState >= 1;
+      },
+      [sel, re],
+      { timeout: 20000 },
+    );
+  // Paused at a moment, then zh-CN, fr and zh-TW in a row: only Traditional Chinese lands, paused there.
+  {
+    const { context, page, errors } = await open('zh-cn/');
+    const video = page.locator('[data-film] video');
+    await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 1.5, null, { timeout: 20000 });
+    await page.locator('[data-film-toggle]').click();
+    await page.waitForFunction(() => document.querySelector('[data-film] video').paused);
+    const before = await video.evaluate((v) => v.currentTime);
+    await slowFilm(page, /film-(en|zh-cn)-(wide|tall)-v2\.(mp4|webm)/, 1200);
+    await page.locator('[data-film-cc] select').selectOption('fr');
+    await page.waitForTimeout(150);
+    await page.locator('[data-film-cc] select').selectOption('zh-TW');
+    await waitLanded(page, '[data-film] video', 'film-zh-cn-wide-v2');
+    await page.waitForTimeout(1600);
+    const after = await video.evaluate((v) => ({ paused: v.paused, t: v.currentTime }));
+    assert.equal(after.paused, true, 'still paused');
+    assert.ok(Math.abs(after.t - before) < 0.5, `kept its place (${before.toFixed(2)} → ${after.t.toFixed(2)} s)`);
+    assert.equal(await page.evaluate(() => localStorage.getItem('yomado.captions')), 'zh-TW');
+    assert.equal(await page.locator('[data-film-narration]').textContent(), '中文旁白。');
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // Hero: French loading, then German (the same film), then off: off stands, on the English film, playing on.
+  {
+    const { context, page, errors } = await open('zh-cn/');
+    const video = page.locator('[data-film] video');
+    await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 2, null, { timeout: 20000 });
+    await slowFilm(page, /film-en-(wide|tall)-v2\.(mp4|webm)/, 1500);
+    const select = page.locator('[data-film-cc] select');
+    await select.selectOption('fr');
+    await select.selectOption('de');
+    await select.selectOption('off');
+    await waitLanded(page, '[data-film] video', 'film-en-wide-v2');
+    await page.waitForTimeout(1000);
+    assert.equal(await page.locator('[data-film-subtitle]').isVisible(), false, 'off stands');
+    assert.equal(await page.evaluate(() => localStorage.getItem('yomado.captions')), 'off');
+    assert.equal(await page.locator('[data-film-narration]').textContent(), '英文旁白。');
+    assert.equal(await video.evaluate((v) => v.paused), false, 'the muted film plays on');
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // Hero: a mute made while a switch loads stays, after it lands and after the tab comes back.
+  {
+    const { context, page, errors } = await open('zh-cn/');
+    const video = page.locator('[data-film] video');
+    await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 1, null, { timeout: 20000 });
+    await page.locator('[data-film-sound]').click();
+    await page.waitForFunction(() => !document.querySelector('[data-film] video').muted && document.querySelector('[data-film] video').currentTime > 2, null, { timeout: 15000 });
+    await slowFilm(page, /film-en-(wide|tall)-v2\.(mp4|webm)/, 1500);
+    await page.locator('[data-film-cc] select').selectOption('fr');
+    await page.locator('[data-film-sound]').click();
+    await waitLanded(page, '[data-film] video', 'film-en-wide-v2');
+    await page.waitForTimeout(1200);
+    assert.equal(await video.evaluate((v) => v.muted), true, 'muted after it lands');
+    await setTabHidden(page, true);
+    await setTabHidden(page, false);
+    await page.waitForTimeout(800);
+    assert.equal(await video.evaluate((v) => v.muted), true, 'muted after the tab comes back');
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // Hero: a muted film that leaves the view or the tab and comes back while a switch loads starts
+  // by itself when it lands, as a muted film in view does, from where it was.
+  for (const interrupt of ['scroll', 'hidden']) {
+    const { context, page, errors } = await open('zh-cn/');
+    const video = page.locator('[data-film] video');
+    await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 2, null, { timeout: 20000 });
+    await slowFilm(page, /film-en-(wide|tall)-v2\.(mp4|webm)/, 1500);
+    const before = await video.evaluate((v) => v.currentTime);
+    await page.locator('[data-film-cc] select').selectOption('fr');
+    if (interrupt === 'scroll') await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    else await setTabHidden(page, true);
+    await page.waitForTimeout(300);
+    if (interrupt === 'scroll') await page.evaluate(() => scrollTo(0, 0));
+    else await setTabHidden(page, false);
+    await waitLanded(page, '[data-film] video', 'film-en-wide-v2');
+    await page.waitForFunction(() => !document.querySelector('[data-film] video').paused, null, { timeout: 5000 });
+    const after = await video.evaluate((v) => ({ t: v.currentTime, muted: v.muted }));
+    assert.equal(after.muted, true, `${interrupt}: still muted`);
+    assert.ok(Math.abs(after.t - before) < 1.5, `${interrupt}: from where it was (${before.toFixed(2)} → ${after.t.toFixed(2)} s)`);
+    assert.equal(await page.locator('[data-film-toggle]').getAttribute('data-state'), 'playing');
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // Watch: a pending Chinese film, then zh-CN (the same film), then off: the full-size Chinese film,
+  // no track, downloads without subtitles; and a play and pause on the video while it loads.
+  {
+    const { context, page, errors } = await open('watch/');
+    const video = page.locator('[data-watch-video]');
+    await video.click();
+    await page.waitForTimeout(500);
+    if (await video.evaluate((v) => v.paused)) await playFrom(video);
+    await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 2, null, { timeout: 15000 });
+    await slowFilm(page, /film-zh-cn-(wide|tall)-[^/]*\.(mp4|webm)$/, 1500);
+    const select = page.locator('[data-watch-cc] select');
+    await select.selectOption('zh-TW');
+    await select.selectOption('zh-CN');
+    await select.selectOption('off');
+    await waitLanded(page, '[data-watch-video]', `film-zh-cn-wide-${V}`);
+    await page.waitForTimeout(800);
+    assert.ok((await video.evaluate((v) => [...v.textTracks].map((t) => t.mode))).every((m) => m !== 'showing'), 'no track shown');
+    assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-zh-cn-wide-${V}\\.mp4$`));
+    assert.equal(await page.locator('[data-srt]').isVisible(), false);
+    assert.equal(await page.locator('[data-watch-narration]').textContent(), 'Chinese narration.');
+    // Play and pause on the video while the next one loads: the pause stands.
+    await slowFilm(page, new RegExp(`film-zh-cn-(wide|tall)-band-${CV}\\.(mp4|webm)$`), 1500);
+    const before = await video.evaluate((v) => v.currentTime);
+    await select.selectOption('zh-CN');
+    await video.evaluate((el) => {
+      const v = /** @type {HTMLVideoElement} */ (el);
+      v.play().catch(() => {});
+      v.pause();
+    });
+    await waitLanded(page, '[data-watch-video]', `film-zh-cn-wide-band-${CV}`);
+    await page.waitForTimeout(1200);
+    const after = await video.evaluate((v) => ({ paused: v.paused, t: v.currentTime }));
+    assert.equal(after.paused, true, 'the pause stands');
+    assert.ok(Math.abs(after.t - before) < 1, `kept its place (${before.toFixed(2)} → ${after.t.toFixed(2)} s)`);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // Watch: subtitle files slow too, several choices in a row, then the browser's own menu.
+  {
+    const { context, page, errors } = await open('watch/');
+    const video = page.locator('[data-watch-video]');
+    await page.route(/captions\/yomado-film-.*\.vtt$/, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      await route.continue().catch(() => {});
+    });
+    await slowFilm(page, /film-(en|zh-cn)-(wide|tall)-band-[^/]*\.(mp4|webm)$/, 800);
+    const select = page.locator('[data-watch-cc] select');
+    for (const tag of ['fr', 'de', 'it', 'zh-TW', 'fr']) {
+      await select.selectOption(tag);
+      await page.waitForTimeout(120);
+    }
+    await waitLanded(page, '[data-watch-video]', `film-en-wide-band-${CV}`);
+    await page.waitForTimeout(2000);
+    assert.equal(await page.evaluate(() => localStorage.getItem('yomado.captions')), 'fr', 'the last choice is kept, never off');
+    assert.deepEqual(await video.evaluate((v) => [...v.textTracks].filter((t) => t.mode === 'showing').map((t) => t.language)), ['fr']);
+    assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`yomado-film-fr-wide-${CV}\\.mp4$`));
+    await video.evaluate((v) => {
+      for (const t of v.textTracks) t.mode = t.language === 'de' ? 'showing' : 'disabled';
+    });
+    await page.waitForFunction(() => document.querySelector('[data-watch-cc] select').value === 'de', null, { timeout: 5000 });
+    await page.waitForTimeout(500);
+    assert.equal(await page.evaluate(() => localStorage.getItem('yomado.captions')), 'de');
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
+await check('ended, failed and reduced-motion switches on a phone stay coherent; replay starts over', async () => {
+  const { context, page, errors } = await open('zh-cn/', { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+  const video = page.locator('[data-film] video');
+  await page.waitForTimeout(1200);
+  assert.equal(await video.evaluate((v) => v.paused && v.currentTime === 0), true, 'nothing starts by itself');
+  await page.locator('[data-film-toggle]').tap();
+  await page.waitForFunction(() => !document.querySelector('[data-film] video').paused && document.querySelector('[data-film] video').readyState >= 1, null, { timeout: 15000 });
+  await playFrom(video, -0.3);
+  await page.waitForFunction(() => document.querySelector('[data-film] video').ended, null, { timeout: 10000 });
+  // Ended, then another narration: the new film waits at its end.
+  await slowFilm(page, /film-en-(wide|tall)-v2\.(mp4|webm)/, 1200);
+  await page.locator('[data-film-cc] select').selectOption('fr');
+  await page.waitForFunction(() => /film-en-tall-v2/.test(document.querySelector('[data-film] video').currentSrc) && document.querySelector('[data-film] video').readyState >= 1, null, { timeout: 20000 });
+  await page.waitForTimeout(1000);
+  assert.deepEqual(await video.evaluate((v) => [v.duration - v.currentTime < 0.1, v.paused]), [true, true], 'at its end, not playing');
+  assert.equal(await page.locator('[data-film-toggle]').getAttribute('data-state'), 'ended');
+  await page.locator('[data-film-toggle]').tap();
+  await page.waitForFunction(() => {
+    const v = document.querySelector('[data-film] video');
+    return !v.paused && v.currentTime > 0.2 && v.currentTime < 3;
+  }, null, { timeout: 15000 });
+  // A film that fails to load: nothing plays late; a working choice after it plays as asked.
+  await page.locator('[data-film-toggle]').tap();
+  await page.waitForFunction(() => document.querySelector('[data-film] video').paused);
+  const before = await video.evaluate((v) => v.currentTime);
+  await page.route(/film-zh-cn-(wide|tall)-v2\.(mp4|webm)/, (route) => route.abort());
+  await page.locator('[data-film-cc] select').selectOption('zh-CN');
+  await page.waitForTimeout(2000);
+  assert.equal(await video.evaluate((v) => v.paused), true, 'nothing plays after the failure');
+  await page.unroute(/film-zh-cn-(wide|tall)-v2\.(mp4|webm)/);
+  await page.locator('[data-film-cc] select').selectOption('fr');
+  await page.waitForFunction(() => /film-en-tall-v2/.test(document.querySelector('[data-film] video').currentSrc) && document.querySelector('[data-film] video').readyState >= 1, null, { timeout: 20000 });
+  await page.waitForTimeout(800);
+  assert.equal(await page.locator('[data-film-toggle]').isVisible(), true, 'the buttons are back');
+  assert.equal(await video.evaluate((v) => v.paused), true, 'still paused, as it was');
+  assert.ok(before > 0, 'it had a place');
+  // The failed requests were the test's own (the console names them only as failed loads);
+  // nothing else went wrong.
+  assert.deepEqual(errors.filter((e) => !/film-zh-cn-(wide|tall)-v2/.test(e) && e !== 'Failed to load resource: net::ERR_FAILED'), []);
+  await context.close();
+});
+
+await check('a subtitle choice is kept, wins on every page and on the watch page, and off hides them', async () => {
+  const { context, page, errors } = await open('');
+  await page.locator('[data-film-cc] select').selectOption('de');
+  await page.reload({ waitUntil: 'load' });
+  assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'de');
+  await page.goto(`${base}ja/`, { waitUntil: 'load' });
+  assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'de', 'on the Japanese page too');
+  assert.equal(await page.locator('[data-film] source[src$="film-en-wide-v2.mp4"]').count(), 1, 'with the English film German follows');
+  assert.equal(await page.locator('[data-film-narration]').textContent(), '英語ナレーション付き。');
+  await page.goto(`${base}ja/watch/`, { waitUntil: 'load' });
+  await page.waitForFunction(() => /film-en-wide-band/.test(document.querySelector('[data-watch-video]').currentSrc), null, { timeout: 15000 });
+  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'de');
+  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`yomado-film-de-wide-${CV}\\.mp4$`));
+  await page.goto(`${base}ja/`, { waitUntil: 'load' });
+  await page.locator('[data-film-cc] select').selectOption('off');
+  assert.equal(await page.locator('[data-film-subtitle]').isVisible(), false);
+  await page.reload({ waitUntil: 'load' });
+  assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'off');
+  assert.equal(await page.locator('[data-film-subtitle]').isVisible(), false, 'off stays off');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await check("the browser's language picks the first subtitles", async () => {
+  for (const [path, language, expected] of [
+    ['', 'fr-FR', 'fr'],
+    ['', 'de-DE', 'de'],
+    ['', 'pt-PT', 'pt-BR'],
+    ['', 'ar', 'ar'],
+    ['?lang=en', 'ja-JP', 'en'],
+    ['zh-cn/', 'zh-TW', 'zh-TW'],
+    ['zh-cn/', 'zh-CN', 'zh-CN'],
+    ['ja/', 'fr-FR', 'ja'],
+  ]) {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: language });
+    const page = await context.newPage();
+    await page.goto(base + path, { waitUntil: 'load' });
+    assert.equal(await page.locator('[data-film-cc] select').inputValue(), expected, `${language} on /${path}`);
+    await context.close();
+  }
+});
+
+await check('the subtitle menu works from the keyboard; Arabic reads right to left; phones read under the portrait film', async () => {
+  {
+    const { context, page } = await open('', { reducedMotion: 'reduce' });
+    let focused = false;
+    for (let i = 0; i < 40 && !focused; i++) {
+      await page.keyboard.press('Tab');
+      focused = await page.evaluate(() => document.activeElement?.matches('[data-film-cc] select'));
+    }
+    assert.ok(focused, 'reached with Tab');
+    assert.notEqual(await page.locator('[data-film-cc]').evaluate((el) => getComputedStyle(el).outlineStyle), 'none', 'focus ring');
+    await page.keyboard.press('ArrowDown');
+    await page.waitForFunction(() => document.querySelector('[data-film-cc] select').value !== 'en', null, { timeout: 5000 });
+    await context.close();
+  }
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    const phone = viewport.width < 600;
+    const { context, page, errors } = await open('', { viewport, isMobile: phone, hasTouch: phone });
+    await page.locator('[data-film-cc] select').selectOption('ar');
+    await page.waitForFunction(() => document.querySelector('[data-film-subtitle]').textContent.trim().length > 0, null, { timeout: 20000 });
+    const m = await page.evaluate(() => {
+      const f = document.querySelector('[data-film] .frame').getBoundingClientRect();
+      const s = document.querySelector('[data-film-subtitle]');
+      const r = s.getBoundingClientRect();
+      return { dir: s.dir, lang: s.lang, under: r.top >= f.bottom - 0.5, inside: r.left >= 0 && r.right <= document.documentElement.clientWidth, overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+    });
+    assert.deepEqual([m.dir, m.lang, m.under, m.inside, m.overflow <= 0], ['rtl', 'ar', true, true, true], JSON.stringify(m));
+    if (phone) {
+      const frame = await box(page, '[data-film] .frame');
+      assert.ok(Math.abs(frame.w / frame.h - 0.8) < 0.02, 'the portrait film');
+      assert.match(await page.locator('[data-film] video').evaluate((v) => v.currentSrc), filmSrc('en', 'tall'));
+    }
+    if (SHOTS) {
+      await mkdir(SHOTS, { recursive: true });
+      await page.locator('[data-film]').screenshot({ path: join(SHOTS, `ar-${phone ? 'mobile' : 'desktop'}-subtitles.png`) });
+    }
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
+await check("the watch page: subtitles in the band, its menu and the browser's own, downloads and full screen", async () => {
+  const { context, page, errors } = await open('zh-cn/watch/');
+  const video = page.locator('[data-watch-video]');
+  const tracks = () => video.evaluate((v) => [...v.textTracks].map((t) => `${t.language}:${t.mode}`));
+  const src = () => video.evaluate((v) => v.currentSrc);
+  await page.waitForFunction(() => document.querySelector('[data-watch-video]').readyState >= 1, null, { timeout: 15000 });
+  assert.match(await src(), bandSrc('zh-cn', 'wide'));
+  assert.deepEqual(await tracks(), ['zh-CN:showing', 'zh-TW:disabled']);
+  // The cue of a moment, placed in the band.
+  await video.evaluate((v) => (v.currentTime = 33.4));
+  await page.waitForFunction(() => [...document.querySelector('[data-watch-video]').textTracks].find((t) => t.mode === 'showing')?.activeCues?.length === 1, null, { timeout: 15000 });
+  const cue = await video.evaluate((v) => {
+    const c = [...v.textTracks].find((t) => t.mode === 'showing').activeCues[0];
+    return { text: c.text, line: c.line, snap: c.snapToLines };
+  });
+  assert.deepEqual(cue, { text: cueAt('zh-CN', 33.4), line: 'auto', snap: true });
+  const path = new URL(base).pathname;
+  assert.equal(await page.getAttribute('[data-mp4="wide"]', 'href'), `${path}media/captioned/yomado-film-zh-CN-wide-${CV}.mp4`);
+  assert.equal(await page.getAttribute('[data-srt]', 'href'), `${path}media/captions/yomado-film-zh-CN-${CV}.srt`);
+  for (const href of [await page.getAttribute('[data-srt]', 'href'), `${path}media/captions/yomado-film-zh-CN-${CV}.vtt`]) {
+    const response = await page.request.get(new URL(href, base).href);
+    assert.equal(response.status(), 200, href);
+    if (href.endsWith('.vtt')) assert.match(response.headers()['content-type'], /^text\/vtt/);
+  }
+  if (SHOTS) await page.locator('.player').screenshot({ path: join(SHOTS, 'zh-cn-watch-band.png') });
+  // French: the English band master and its tracks, at the same moment, French downloads.
+  await page.locator('[data-watch-cc] select').selectOption('fr');
+  await page.waitForFunction(() => /film-en-wide-band/.test(document.querySelector('[data-watch-video]').currentSrc), null, { timeout: 15000 });
+  await page.waitForFunction(() => [...document.querySelector('[data-watch-video]').textTracks].some((t) => t.language === 'fr' && t.mode === 'showing'), null, { timeout: 5000 });
+  assert.equal((await tracks()).length, 13, 'the English film carries its 13 languages');
+  assert.ok(Math.abs((await video.evaluate((v) => v.currentTime)) - 33.4) < 0.5, 'kept its place');
+  assert.equal(await page.locator('[data-watch-narration]').textContent(), '英文旁白。');
+  assert.match(await page.getAttribute('[data-mp4="tall"]', 'href'), new RegExp(`yomado-film-fr-tall-${CV}\\.mp4$`));
+  // The browser's own menu: German there is followed and kept.
+  await video.evaluate((v) => {
+    for (const t of v.textTracks) t.mode = t.language === 'de' ? 'showing' : 'disabled';
+  });
+  await page.waitForFunction(() => document.querySelector('[data-watch-cc] select').value === 'de', null, { timeout: 5000 });
+  assert.equal(await page.evaluate(() => localStorage.getItem('yomado.captions')), 'de');
+  // Off: the film full size, no track, downloads without subtitles.
+  await page.locator('[data-watch-cc] select').selectOption('off');
+  await page.waitForFunction(() => /film-en-wide-v2/.test(document.querySelector('[data-watch-video]').currentSrc), null, { timeout: 15000 });
+  assert.ok((await tracks()).every((t) => !t.endsWith(':showing')), 'no subtitles shown');
+  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-en-wide-${V}\\.mp4$`));
+  assert.equal(await page.locator('[data-srt]').isVisible(), false);
+  // Full screen with subtitles: the browser's own controls keep the band and the track.
+  await page.locator('[data-watch-cc] select').selectOption('en');
+  await page.waitForFunction(() => /film-en-wide-band/.test(document.querySelector('[data-watch-video]').currentSrc), null, { timeout: 15000 });
+  await video.click();
+  const full = await video.evaluate(async (v) => {
+    try {
+      await v.requestFullscreen();
+    } catch (e) {
+      return String(e);
+    }
+    return document.fullscreenElement === v;
+  });
+  assert.equal(full, true, `full screen: ${full}`);
+  await page.waitForTimeout(800);
+  assert.ok((await tracks()).includes('en:showing'), 'subtitles in full screen');
+  if (SHOTS) await page.screenshot({ path: join(SHOTS, 'en-watch-fullscreen.png') });
+  await page.evaluate(() => document.exitFullscreen());
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await check('without JavaScript the watch page plays its band master with its own subtitles', async () => {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, javaScriptEnabled: false, locale: 'en-US' });
+  const page = await context.newPage();
+  for (const locale of LOCALES) {
+    await page.goto(`${base}${locale.path}watch/`, { waitUntil: 'load' });
+    assert.equal(await page.locator('[data-watch-video] track[default]').getAttribute('srclang'), locale.pageCaption);
+    assert.match(await page.locator('[data-watch-video] source').nth(2).getAttribute('src'), bandSrc(locale.key, 'wide'));
+    assert.equal(await page.locator('[data-watch-cc]').isVisible(), false, 'the menu needs JavaScript; the browser controls offer the tracks');
+  }
+  await context.close();
+});
 
 await check('with the narration on, the film never starts again by itself', async () => {
   const { context, page, errors } = await open('');

@@ -1,5 +1,6 @@
 {
   "version": "v2",
+  "captions": "c1",
   "narration": { "en": "en", "zh-cn": "zh-cn", "ja": "en" },
   "language": { "en": "eng", "zh-cn": "zho" }
 }

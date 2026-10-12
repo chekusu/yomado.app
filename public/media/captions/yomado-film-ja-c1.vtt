@@ -1,0 +1,69 @@
+WEBVTT
+
+1
+00:00:00.500 --> 00:00:02.580 position:50%,center size:84% align:center
+画面が必要な仕事があります
+
+2
+00:00:02.580 --> 00:00:04.862 position:50%,center size:84% align:center
+たとえば Blender や Marvelous Designer
+
+3
+00:00:08.050 --> 00:00:10.770 position:50%,center size:84% align:center
+エージェントに専用の作業画面を
+
+4
+00:00:10.770 --> 00:00:13.090 position:50%,center size:84% align:center
+yomado で仮想ディスプレイを作って
+
+5
+00:00:13.090 --> 00:00:14.581 position:50%,center size:84% align:center
+Codex と名付けます
+
+6
+00:00:19.450 --> 00:00:21.530 position:50%,center size:84% align:center
+必要なアプリをドラッグで移します
+
+7
+00:00:21.530 --> 00:00:24.010 position:50%,center size:84% align:center
+Blender、Marvelous Designer
+
+8
+00:00:24.010 --> 00:00:25.981 position:50%,center size:84% align:center
+ほかのウィンドウはそのままです
+
+9
+00:00:31.500 --> 00:00:33.420 position:50%,center size:84% align:center
+エージェントはスクリーンショットを読み
+
+10
+00:00:33.420 --> 00:00:35.500 position:50%,center size:84% align:center
+コントロールをクリックし、文字を入力します
+
+11
+00:00:35.500 --> 00:00:37.140 position:50%,center size:84% align:center
+操作はインターフェースを通して
+
+12
+00:00:37.140 --> 00:00:40.094 position:50%,center size:84% align:center
+アプリ専用の MCP 連携がなくてもできます
+
+13
+00:00:44.000 --> 00:00:46.160 position:50%,center size:84% align:center
+GrokBot 用にも画面を追加
+
+14
+00:00:46.160 --> 00:00:48.040 position:50%,center size:84% align:center
+必要なときはアプリを戻して
+
+15
+00:00:48.040 --> 00:00:49.329 position:50%,center size:84% align:center
+画面を閉じます
+
+16
+00:00:54.400 --> 00:00:56.880 position:50%,center size:84% align:center
+yomado。視覚で動くエージェントのために
+
+17
+00:00:56.880 --> 00:00:58.919 position:50%,center size:84% align:center
+ダウンロードは yomado.app から

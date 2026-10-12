@@ -1,13 +1,18 @@
 ---
 // The one-minute film on its own page, in this page's language, with the browser's own controls
-// (play, seek, full screen, keyboard) and links to the MP4 files themselves. Phones get the
-// portrait composition. Nothing plays until it is asked to.
+// (play, seek, full screen, keyboard) and subtitles in 16 languages (src/scripts/watch.ts). With
+// subtitles on it plays the band master: the picture a little smaller above a night-blue band that
+// the browser's own subtitle tracks are placed in, so they never cover the film, in full screen
+// too. Subtitles off plays the film full size. Under the player: the subtitle menu, and that
+// language's captioned MP4s and subtitle file to download. Phones get the portrait composition.
+// Nothing plays until it is asked to.
 import Base from '../layouts/Base.astro';
 import Icon from './Icon.astro';
 import SiteFooter from './SiteFooter.astro';
 import SiteHeader from './SiteHeader.astro';
 import { copyFor } from '../i18n';
-import { MP4_TYPE, NARROW, WEBM_TYPE, filmSize, filmUrl, posterUrl } from '../lib/media';
+import { CAPTION_LOCALES, PAGE_CAPTION, PAGE_NARRATION, captionGroups, filmConfig, tagsFor } from '../lib/captions';
+import { MP4_TYPE, NARROW, WEBM_TYPE, bandFile, bandPosterFile, captionFile, captionedFile, mediaSize, mediaUrl } from '../lib/media';
 import { LOCALE_PATH, RELEASE, localeHref, type Locale } from '../lib/site';
 import { phrased } from '../lib/text';
 
@@ -19,6 +24,9 @@ const { locale } = Astro.props;
 const copy = copyFor(locale);
 const w = copy.watch;
 const film = copy.hero.film;
+const caption = PAGE_CAPTION[locale];
+const narration = PAGE_NARRATION[locale];
+const exportLink = (layout: 'wide' | 'tall') => ({ href: mediaUrl(captionedFile(caption, layout)), size: mediaSize(captionedFile(caption, layout)) });
 ---
 
 <Base locale={locale} title={w.meta.title} description={w.meta.description} path={`${LOCALE_PATH[locale]}watch/`} route="watch/" ogAlt={copy.meta.ogAlt}>
@@ -36,26 +44,49 @@ const film = copy.hero.film;
           controls
           playsinline
           preload="metadata"
-          poster={posterUrl(locale, 'wide')}
-          data-poster-narrow={posterUrl(locale, 'tall')}
+          poster={mediaUrl(bandPosterFile(locale, 'wide'))}
+          data-poster-narrow={mediaUrl(bandPosterFile(locale, 'tall'))}
           data-narrow={NARROW}
           data-watch-video
-          aria-label={film.label}
+          aria-label={film.label.replace('{narration}', film.narration[narration])}
         >
-          <source src={filmUrl(locale, 'tall', 'mp4')} type={MP4_TYPE} media={NARROW} />
-          <source src={filmUrl(locale, 'tall', 'webm')} type={WEBM_TYPE} media={NARROW} />
-          <source src={filmUrl(locale, 'wide', 'mp4')} type={MP4_TYPE} />
-          <source src={filmUrl(locale, 'wide', 'webm')} type={WEBM_TYPE} />
-          <p>{film.fallback} <a href={filmUrl(locale, 'wide', 'mp4')}>MP4</a></p>
+          <source src={mediaUrl(bandFile(locale, 'tall', 'mp4'))} type={MP4_TYPE} media={NARROW} />
+          <source src={mediaUrl(bandFile(locale, 'tall', 'webm'))} type={WEBM_TYPE} media={NARROW} />
+          <source src={mediaUrl(bandFile(locale, 'wide', 'mp4'))} type={MP4_TYPE} />
+          <source src={mediaUrl(bandFile(locale, 'wide', 'webm'))} type={WEBM_TYPE} />
+          {tagsFor(locale).map((tag) => <track kind="subtitles" srclang={tag} label={CAPTION_LOCALES[tag].name} src={mediaUrl(captionFile(tag, 'vtt'))} default={tag === caption} />)}
+          <p>{film.fallback} <a href={mediaUrl(captionedFile(caption, 'wide'))}>MP4</a></p>
         </video>
       </div>
-      <figcaption class="fine">{w.note}</figcaption>
+      <figcaption class="fine"><span data-watch-narration>{film.narrationNote[narration]}</span>{locale === 'en' ? ' ' : ''}{w.note}</figcaption>
     </figure>
 
     <div class="after wrap">
-      <p class="files">
-        <a class="more" href={filmUrl(locale, 'wide', 'mp4')} data-mp4="wide">{w.mp4.replace('{size}', filmSize(locale, 'wide', 'mp4'))}</a>
-        <a class="more" href={filmUrl(locale, 'tall', 'mp4')} data-mp4="tall">{w.mp4Tall.replace('{size}', filmSize(locale, 'tall', 'mp4'))}</a>
+      <label class="subs" hidden data-watch-cc>
+        <Icon name="captions" size={18} />
+        <span>{film.captions}</span>
+        <select data-watch-cc-select>
+          <option value="off">{film.captionsOff}</option>
+          {
+            captionGroups(locale).map((group) => (
+              <optgroup label={film.narration[group.narration]}>
+                {group.tags.map((tag) => (
+                  <option value={tag} lang={tag}>
+                    {CAPTION_LOCALES[tag].name}
+                  </option>
+                ))}
+              </optgroup>
+            ))
+          }
+        </select>
+      </label>
+      <p class="files" data-watch-files>
+        <span class="files-label" data-with={w.withSubtitles} data-without={w.withoutSubtitles} data-watch-files-label>
+          {w.withSubtitles.replace('{language}', CAPTION_LOCALES[caption].name)}
+        </span>
+        <a class="more" href={exportLink('wide').href} data-mp4="wide" data-template={w.mp4} download>{w.mp4.replace('{size}', exportLink('wide').size)}</a>
+        <a class="more" href={exportLink('tall').href} data-mp4="tall" data-template={w.mp4Tall} download>{w.mp4Tall.replace('{size}', exportLink('tall').size)}</a>
+        <a class="more" href={mediaUrl(captionFile(caption, 'srt'))} data-srt download>{w.srt}</a>
       </p>
       <div class="actions">
         <a class="btn btn-night" href={RELEASE.url} data-download="watch"><Icon name="download" size={18} />{copy.hero.cta}</a>
@@ -67,15 +98,13 @@ const film = copy.hero.film;
   <SiteFooter locale={locale} copy={copy} route="watch/" />
 </Base>
 
-<script>
-  // The language menu and footer (remembered choice, Escape and outside clicks), as on every page.
-  import '../scripts/page';
+<script is:inline type="application/json" data-film-config set:html={JSON.stringify(filmConfig(locale, copy)).replace(/</g, '\\u003c')} />
 
-  // The poster that matches the composition this screen gets.
-  for (const video of document.querySelectorAll<HTMLVideoElement>('[data-watch-video]')) {
-    const narrow = video.dataset.narrow;
-    if (narrow && matchMedia(narrow).matches && video.dataset.posterNarrow) video.poster = video.dataset.posterNarrow;
-  }
+<script>
+  // The language menu and footer (remembered choice, Escape and outside clicks), as on every page;
+  // the poster for the composition this screen gets, and the subtitles.
+  import '../scripts/page';
+  import '../scripts/watch';
 </script>
 
 <style>
@@ -137,6 +166,48 @@ const film = copy.hero.film;
     justify-content: center;
     gap: 8px 28px;
     margin: 0;
+  }
+
+  .files [hidden] {
+    display: none;
+  }
+
+  .files-label {
+    flex-basis: 100%;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  /* The subtitle menu: the browser's own select, labelled. */
+  .subs {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  .subs[hidden] {
+    display: none;
+  }
+
+  .subs select {
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--white);
+    color: var(--ink);
+    font: 500 0.9375rem var(--font-sans);
+  }
+
+  /* Subtitle tracks sit in the master's band (cue settings in the caption files): text only,
+     near-white on the band, no boxes of their own. */
+  .frame video::cue {
+    background-color: transparent;
+    color: #f5f5f7;
+    font-family: var(--font-sans);
+    font-weight: 500;
   }
 
   .actions {

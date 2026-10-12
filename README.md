@@ -72,6 +72,26 @@ its Japanese supers and has the English narration, and its caption and sound but
 There is one pointer throughout, yours or Codex's: the screens share one keyboard, pointer and
 focus. The panel, menus and dialog use the app's own interface text (Simplified Chinese).
 
+**Subtitles in 16 languages** (en, zh-CN, zh-TW, ja, ko, es, fr, de, it, pt-BR, nl, pl, tr, ar,
+hi, id) follow the narration word for word in time: zh-CN and zh-TW the Chinese narration, the
+other fourteen the English one; there are only those two voices. A subtitle language comes with
+its film: zh-CN and zh-TW with the Chinese film, ja with the Japanese film, the rest with the
+English film. The film's own titles, the panel being dragged and the typing sit near the bottom
+of the frame, so subtitles keep off the picture: in the hero they read in a line under the film;
+the watch page plays band masters (the picture at 86.67 % or 88.89 % above a night-blue band,
+inside the same 1920 × 1080 or 1080 × 1350 frame) and the browser's own subtitle tracks read in
+that band, also in full screen (while the browser shows its own controls it lifts them just above
+the controls, which on a phone covers the bottom of the picture until the controls hide); and
+each language has the film with its subtitles burned into that band, wide and tall, for sharing
+as a file (`media/captioned/yomado-film-<tag>-<wide|tall>-c1.mp4`), plus WebVTT and SRT files
+(`media/captions/`). Choosing a language that follows the other narration loads that narration's
+film where the current one was, playing or paused, with the sound as it was; the note under the
+film says which narration plays. The page starts with its own language (zh-TW where the browser
+prefers Traditional Chinese; on the English page the browser's language when it is one of the
+16), `?cc=<tag>` asks for one, and a choice made in a subtitle menu is kept in the browser and
+wins. The translations are machine-assisted and reviewed for timing and meaning, not proofread by
+native speakers.
+
 In the hero the film plays by itself only muted. Its sound button (named, keyboard-operable)
 turns the narration on, the first time from the beginning so it is heard whole; the play and
 replay buttons play it with sound too, unless it was muted by hand, and a mute holds. Leaving the
@@ -102,10 +122,12 @@ public/apps/       the apps' icons, extracted from their .icns, and sources.json
 public/media/      the film per locale (MP4 + WebM with narration, wide and tall, the version in
                    each name), posters, story stills
 narration/         the narration, English and Simplified Chinese (AAC), as approved
+captions/          subtitle text per language (<tag>.json), its timing per narration (timing.json,
+                   from the approved script's character timings) and the language list (index.json)
 public/            favicons and Open Graph cards (generated, committed)
 functions/         a Pages Function that answers byte ranges for the films on Cloudflare
 scripts/           verify-dist.mjs, media-info.mjs, render-film.mjs, narrate-film.mjs,
-                   render-assets.mjs, extract-icons.mjs
+                   caption-cues.mjs, caption-film.mjs, render-assets.mjs, extract-icons.mjs
 tests/             smoke.mjs (browser), language.mjs, download.mjs (real download acceptance)
 ```
 
@@ -178,6 +200,8 @@ npm run film -- --stills 0,36.9 --out d    # PNG stills of single moments, for r
 npm run film -- --locale ja --layout tall  # one variant
 npm run film -- --encode-only              # re-encode the last render's frames
 npm run film:narrate                       # add the narration to the last render again
+npm run film:captions                      # subtitle files, captioned exports and band masters
+npm run film:captions -- --proof <dir>     # proof frames of chosen cues, before rendering
 npm run assets                             # Open Graph cards and favicons (use the story still)
 npm run assets -- ja                       # just the named cards (en, zh-cn, ja)
 npm run icons -- <folder>                  # the apps' icons from their .icns (see Assets)
@@ -201,6 +225,17 @@ an older file. Each film's poster is its first frame, so playback starts without
 home page's no-JavaScript stills come from the story scene at the end of act 3. Rendering uses
 three.js and the Noto Sans SC and JP fonts, development dependencies that the site never loads.
 `.film-build/render-manifest.json` records the settings, sizes and SHA-256 of each file.
+
+Subtitles: `node scripts/caption-cues.mjs <alignment.json>` splits the approved narration script
+(kept outside the repository, with a start and end for every character) into short phrases and
+writes their timing to `captions/timing.json`: a cue runs from its first to its last spoken
+character, may stay up to 0.6 s longer but never past the next cue, and a section's last cue ends
+at that section's measured speech end. `npm run film:captions` writes the WebVTT (placed in the
+band) and SRT files, sets every cue in Chromium on its band (Noto Sans SC, TC, JP, KR, Arabic and
+Devanagari with Inter for Latin; at most two lines inside the band's safe area, checked) and has
+ffmpeg scale the lossless frames, lay each band over its cue's window and copy the narration in,
+for the 32 exports and the six band masters. `.film-build/captions-manifest.json` records every
+file's hash and how each cue broke into lines.
 Re-render after changing `src/lib/film.ts`, `FilmStage.astro`, `ControlPanel.astro` or the
 film's copy, and `npm run assets` after the story scene changes.
 
@@ -281,6 +316,10 @@ voice-over of the app's own narrated demos (`docs/media/yomado-en-river.mp4` and
 `yomado-zh-cn-river.mp4` in chekusu/yomado): the wide MP4s here carry exactly those audio streams
 over exactly the same video. It is the app owner's published product material, used here as part
 of the film.
+
+**Subtitle fonts.** The exports' subtitles are set in Inter and Noto Sans SC, TC, JP, KR, Arabic and
+Devanagari (SIL Open Font License, from Fontsource, development dependencies only; the site itself
+keeps the reader's system fonts).
 
 **Everything else** is original to this repository under MIT: the scene, the film and its 3D dress,
 and the control panel rebuilt in HTML from the app's 0.3.3 layout with example displays. The

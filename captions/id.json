@@ -1,0 +1,24 @@
+{
+  "tag": "id",
+  "dir": "ltr",
+  "family": "en",
+  "cues": {
+    "en01": "Sebagian pekerjaan butuh layar.",
+    "en02": "Seperti Blender atau Marvelous Designer.",
+    "en03": "Beri agen Anda layar kerja khusus.",
+    "en04": "Buat layar virtual dengan yomado,",
+    "en05": "lalu beri nama Codex.",
+    "en06": "Seret aplikasi yang ia butuhkan.",
+    "en07": "Blender. Marvelous Designer.",
+    "en08": "Jendela lain Anda tetap di tempatnya.",
+    "en09": "Agen membaca tangkapan layar,",
+    "en10": "mengeklik kontrol, dan mengetik.",
+    "en11": "Ia bekerja lewat antarmuka,",
+    "en12": "bahkan tanpa integrasi MCP khusus aplikasi.",
+    "en13": "Tambahkan layar lain untuk GrokBot.",
+    "en14": "Kembalikan aplikasi saat dibutuhkan,",
+    "en15": "lalu tutup layarnya.",
+    "en16": "yomado. Untuk agen visual.",
+    "en17": "Unduh di yomado.app."
+  }
+}

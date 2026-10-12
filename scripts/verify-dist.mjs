@@ -167,10 +167,93 @@ for (const locale of Object.keys(LOCALES)) {
     const poster = await stat(join(dist, 'media', `${name}-poster.webp`)).then((st) => st.size).catch(() => 0);
     if (!poster || poster > 2e5) fail(`media/${name}-poster.webp`, poster ? `${poster} bytes, over 200000` : 'missing');
     // Earlier versions of the film (the silent one had no version in its name) stay out.
-    for (const old of (await readdir(join(dist, 'media'))).filter((f) => f.startsWith(`${name}`) && /\.(mp4|webm)$/.test(f) && !f.startsWith(file + '.'))) {
+    for (const old of (await readdir(join(dist, 'media'))).filter((f) => f.startsWith(`${name}`) && /\.(mp4|webm)$/.test(f) && !f.startsWith(file + '.') && !f.includes('-band-'))) {
       fail(`media/${old}`, `an earlier version of the film; this build serves ${file}`);
     }
   }
+}
+// Captions: per locale a WebVTT and an SRT with exactly the cues of captions/<tag>.json on its
+// narration's timing (captions/timing.json); the film with those captions in its pixels, wide and
+// tall, with that narration; and per film the band masters the watch page plays with tracks.
+const captionIndex = JSON.parse(await readFile(join(root, 'captions/index.json'), 'utf8'));
+const captionTiming = JSON.parse(await readFile(join(root, 'captions/timing.json'), 'utf8'));
+const CV = filmMedia.captions;
+const toSeconds = (stamp) => {
+  const [h, m, rest] = stamp.split(':');
+  return Number(h) * 3600 + Number(m) * 60 + Number(rest.replace(',', '.'));
+};
+function parseCues(body, kind) {
+  const blocks = body.replace(/\r/g, '').split(/\n\n+/).map((b) => b.replace(/\n+$/, '')).filter((b) => b.trim());
+  if (kind === 'vtt' && blocks[0].trim() !== 'WEBVTT') throw new Error('no WEBVTT header');
+  return blocks
+    .filter((b) => b.includes('-->'))
+    .map((b) => {
+      const lines = b.split('\n');
+      const at = lines.findIndex((l) => l.includes('-->'));
+      const [start, rest] = lines[at].split(' --> ');
+      const unescape = (t) => (kind === 'vtt' ? t.replaceAll('&lt;', '<').replaceAll('&amp;', '&') : t);
+      return { start: toSeconds(start.trim()), end: toSeconds(rest.trim().split(/\s+/)[0]), settings: rest.trim().split(/\s+/).slice(1).join(' '), text: unescape(lines.slice(at + 1).join('\n')) };
+    });
+}
+for (const tag of captionIndex.order) {
+  const loc = JSON.parse(await readFile(join(root, 'captions', `${tag}.json`), 'utf8'));
+  const expected = captionTiming.families[loc.family].cues.map((c) => ({ start: c.start, end: c.end, text: loc.cues[c.key] }));
+  for (const kind of ['vtt', 'srt']) {
+    const where = `media/captions/yomado-film-${tag}-${CV}.${kind}`;
+    try {
+      const cues = parseCues(await readFile(join(dist, where), 'utf8'), kind);
+      if (cues.length !== expected.length) fail(where, `${cues.length} cues, expected ${expected.length}`);
+      cues.forEach((c, i) => {
+        const e = expected[i];
+        if (!e) return;
+        if (Math.abs(c.start - e.start) > 0.0015 || Math.abs(c.end - e.end) > 0.0015) fail(where, `cue ${i + 1} at ${c.start}–${c.end}, expected ${e.start}–${e.end}`);
+        if (c.text !== e.text) fail(where, `cue ${i + 1} reads "${c.text}", expected "${e.text}"`);
+        if (!(c.end > c.start) || (i && c.start < cues[i - 1].end) || c.end > captionTiming.duration) fail(where, `cue ${i + 1} out of order or range`);
+        if (kind === 'vtt' && (/line:/.test(c.settings) || !/size:84%/.test(c.settings))) fail(where, `cue ${i + 1} settings "${c.settings}": cues snap to the last line (the band), 84 % wide`);
+      });
+    } catch (e) {
+      fail(where, `missing or unreadable (${e.message})`);
+    }
+  }
+  const language = filmMedia.language[loc.family === 'zh' ? 'zh-cn' : 'en'];
+  for (const [layout, [w, h]] of Object.entries(SIZE)) {
+    const where = `media/captioned/yomado-film-${tag}-${layout}-${CV}.mp4`;
+    try {
+      const mp4 = await mp4Info(join(dist, where));
+      if (mp4.width !== w || mp4.height !== h || mp4.codec !== 'avc1' || mp4.pixelFormat !== 'yuv420p' || !mp4.faststart) fail(where, `${mp4.codec} ${mp4.width} × ${mp4.height} ${mp4.pixelFormat}${mp4.faststart ? '' : ', not faststart'}`);
+      if (mp4.frames !== 1801 || Math.abs(mp4.duration - captionTiming.duration) > 0.05) fail(where, `${mp4.frames} frames, ${mp4.duration.toFixed(3)} s`);
+      if (mp4.audio?.codecs !== 'mp4a.40.2' || mp4.audio.language !== language) fail(where, `audio ${mp4.audio?.codecs} ${mp4.audio?.language}, expected AAC-LC ${language}`);
+      if (mp4.bytes > FILM.maxBytes) fail(where, `${mp4.bytes} bytes, over ${FILM.maxBytes}`);
+    } catch (e) {
+      fail(where, `missing or unreadable (${e.message})`);
+    }
+  }
+}
+for (const visual of Object.keys(LOCALES)) {
+  const language = filmMedia.language[filmMedia.narration[visual]];
+  for (const [layout, [w, h]] of Object.entries(SIZE)) {
+    const where = `media/film-${visual}-${layout}-band-${CV}`;
+    try {
+      const mp4 = await mp4Info(join(dist, `${where}.mp4`));
+      if (mp4.width !== w || mp4.height !== h || mp4.frames !== 1801 || !mp4.faststart || mp4.audio?.language !== language) fail(`${where}.mp4`, `${mp4.width} × ${mp4.height}, ${mp4.frames} frames, audio ${mp4.audio?.language}`);
+      const webm = await webmInfo(join(dist, `${where}.webm`));
+      if (webm.width !== w || webm.height !== h || webm.codec !== 'V_VP9' || webm.audio?.codec !== 'A_OPUS' || webm.audio.language !== language) fail(`${where}.webm`, `${webm.codec} ${webm.width} × ${webm.height}, audio ${webm.audio?.codec} ${webm.audio?.language}`);
+    } catch (e) {
+      fail(where, `missing or unreadable (${e.message})`);
+    }
+    const poster = await stat(join(dist, 'media', `film-${visual}-${layout}-band-poster-${CV}.webp`)).then((st) => st.size).catch(() => 0);
+    if (!poster || poster > 2e5) fail(`${where}-poster`, poster ? `${poster} bytes` : 'missing');
+  }
+}
+// The watch pages play the band masters with their film's tracks; the hero gets every language.
+for (const [locale, prefix] of Object.entries(LOCALES)) {
+  const watch = await readFile(join(dist, prefix, 'watch/index.html'), 'utf8');
+  if (!watch.includes(`film-${locale}-wide-band-${CV}.mp4`)) fail(`${prefix}watch/index.html`, 'does not play the band master');
+  const tracks = attr(watch, /<track[^>]*srclang="([^"]+)"/g);
+  const own = captionIndex.order.filter((t) => captionIndex.locales[t].visual === locale);
+  if (tracks.join() !== own.join()) fail(`${prefix}watch/index.html`, `tracks ${tracks.join(', ')}, expected ${own.join(', ')}`);
+  const home = await readFile(join(dist, prefix, 'index.html'), 'utf8');
+  for (const tag of captionIndex.order) if (!home.includes(`captions/yomado-film-${tag}-${CV}.vtt`)) fail(`${prefix}index.html`, `no ${tag} subtitles`);
 }
 for (const file of ['story-wide.webp', 'story-tall.webp']) {
   const size = await stat(join(dist, 'media', file)).then((st) => st.size).catch(() => 0);
