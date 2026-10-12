@@ -10,8 +10,10 @@
 // the end, the keyboard, poster, fallback, reduced motion, byte ranges and media types of every
 // file), the watch page (the browser's own controls, seeking, the MP4 links), the scroll story and
 // finale, the language menu between every pair of locales on home, details and watch pages, the
-// details page with checksum copy, the page without JavaScript, the header on phones with classic
-// scrollbars, 404, sitemap and robots.
+// details page with checksum copy, the agent setup under the panel and on the details page (the
+// skill link, the request to copy by mouse or keyboard, the clipboard fallback, phones, without
+// JavaScript), the page without JavaScript, the header on phones with classic scrollbars, 404,
+// sitemap and robots.
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { mkdir, readFile, stat } from 'node:fs/promises';
@@ -38,6 +40,7 @@ const LOCALES = [
     caption: 'Simulated demo, not a recording of an agent at work. Running with physical displays switched off is not yet verified on real hardware.',
     minute: 'one minute',
     ui: 'Simplified Chinese',
+    request: 'Use yomado to set up a virtual screen named Codex for this Blender task, move only this task’s windows onto it, and restore them when you’re done.',
   },
   {
     key: 'zh-cn',
@@ -50,6 +53,7 @@ const LOCALES = [
     caption: '模拟演示，并非 Agent 实际工作的录像。实体屏关闭后的运行尚待实机验证。',
     minute: '1 分钟',
     ui: '简体中文',
+    request: '用 yomado 为这次 Blender 任务准备一块叫 Codex 的虚拟屏，只移入本任务的窗口，完成后恢复。',
   },
   {
     key: 'ja',
@@ -62,9 +66,13 @@ const LOCALES = [
     caption: 'シミュレーションによるデモで、エージェントが実際に作業した録画ではありません。実際のディスプレイを消した状態での動作は、実機ではまだ検証していません。',
     minute: '1 分',
     ui: '簡体字中国語',
+    request: 'yomado で、今回の Blender の作業用に Codex という仮想画面を用意して、この作業のウィンドウだけを移し、終わったら元に戻してください。',
   },
 ];
 const ROUTES = ['', 'details/', 'watch/'];
+// The yomado skill's public folder in the app's repository.
+const SKILL_URL = 'https://github.com/chekusu/yomado/tree/main/skills/yomado';
+const CLIPBOARD = ['clipboard-read', 'clipboard-write'];
 // The film's files, per locale: wide and tall, MP4 and WebM, and the posters.
 const FILM_SECONDS = [55, 65];
 const filmFiles = (key) => [
@@ -543,7 +551,7 @@ for (const locale of LOCALES) {
     const downloads = await page.$$eval('a[data-download]', (els) => els.map((e) => e.href));
     assert.deepEqual(downloads, [RELEASE.url, RELEASE.url]);
     assert.equal((await page.locator('#sha256').innerText()).trim(), RELEASE.sha256);
-    assert.equal(await page.locator('.steps li').count(), 3);
+    assert.equal(await page.locator('section[aria-labelledby="install"] .steps li').count(), 3);
     assert.ok((await page.locator('main').innerText()).includes(RELEASE.fileName));
     assert.equal(await page.locator(`a[href="${RELEASE.checksumsUrl}"]`).count(), 1);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -554,7 +562,7 @@ for (const locale of LOCALES) {
     const origin = new URL(base).origin;
     const granted = await open(path, { permissions: ['clipboard-read', 'clipboard-write'] });
     await granted.context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin });
-    const button = granted.page.locator('button[data-copy]');
+    const button = granted.page.locator('button[data-copy="#sha256"]');
     await button.click();
     assert.equal(await granted.page.evaluate(() => navigator.clipboard.readText()), RELEASE.sha256);
     assert.equal((await button.innerText()).trim(), await button.getAttribute('data-copied'));
@@ -566,7 +574,7 @@ for (const locale of LOCALES) {
     await denied.page.evaluate(() => {
       Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) } });
     });
-    const fallback = denied.page.locator('button[data-copy]');
+    const fallback = denied.page.locator('button[data-copy="#sha256"]');
     await fallback.click();
     assert.equal(await denied.page.evaluate(() => window.getSelection().toString().trim()), RELEASE.sha256);
     assert.equal((await fallback.innerText()).trim(), await fallback.getAttribute('data-fallback'));
@@ -575,6 +583,121 @@ for (const locale of LOCALES) {
       await denied.page.screenshot({ path: join(SHOTS, `${locale.key}-details-mobile.png`), fullPage: true });
     }
     await denied.context.close();
+  });
+
+  await check(`${locale.lang}: under the panel, the skill and a request to copy`, async () => {
+    const origin = new URL(base).origin;
+    const { context, page, errors } = await open(locale.path, { permissions: CLIPBOARD });
+    await context.grantPermissions(CLIPBOARD, { origin });
+    const block = page.locator('.panel #agent-setup');
+    await block.scrollIntoViewIfNeeded();
+    assert.ok(await block.isVisible(), 'one short message under the panel');
+    assert.equal(await page.locator('[role="img"] #agent-setup, [role="img"] #agent-request').count(), 0, 'outside the panel illustration');
+    assert.equal((await page.locator('#agent-request').innerText()).trim(), locale.request);
+    const links = await block.locator('a').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+    assert.deepEqual(links, [SKILL_URL, `${new URL(base).pathname}${locale.path}details/#agent-setup`]);
+    // The keyboard reaches the button; Enter copies the request exactly as shown and says so.
+    const button = block.locator('button[data-copy="#agent-request"]');
+    assert.ok((await button.getAttribute('aria-label'))?.length > 3, 'a descriptive name');
+    await button.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => {
+      const b = document.querySelector('[data-copy="#agent-request"]');
+      return b.textContent.trim() === b.dataset.copied;
+    });
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), locale.request);
+    assert.equal((await block.locator('[data-copy-status]').textContent()).trim(), await button.getAttribute('data-copied'));
+    // A second copy works the same.
+    await page.evaluate(() => navigator.clipboard.writeText(''));
+    await button.click();
+    let copied = '';
+    for (let i = 0; i < 30 && copied !== locale.request; i++) {
+      await page.waitForTimeout(100);
+      copied = await page.evaluate(() => navigator.clipboard.readText());
+    }
+    assert.equal(copied, locale.request, 'copies again');
+    if (SHOTS) {
+      await mkdir(SHOTS, { recursive: true });
+      await block.screenshot({ path: join(SHOTS, `${locale.key}-desktop-agent.png`) });
+    }
+    assert.deepEqual(errors, []);
+    await context.close();
+
+    // Phones: the request wraps inside its box and nothing leaves the screen.
+    for (const width of [320, 390]) {
+      const phone = await open(locale.path, { viewport: { width, height: 800 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+      const area = phone.page.locator('.panel #agent-setup');
+      await area.scrollIntoViewIfNeeded();
+      const m = await area.evaluate((el) => {
+        const box = el.querySelector('.copy-text').getBoundingClientRect();
+        const button = el.querySelector('button').getBoundingClientRect();
+        const text = el.querySelector('#agent-request');
+        return {
+          left: Math.min(box.left, button.left),
+          right: Math.max(box.right, button.right),
+          room: document.documentElement.clientWidth,
+          text: text.scrollWidth - text.clientWidth,
+          page: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+      assert.ok(m.left >= 0 && m.right <= m.room, `@${width}: the request box leaves the screen (${Math.round(m.left)}–${Math.round(m.right)})`);
+      assert.ok(m.text <= 0 && m.page <= 0, `@${width}: overflow ${m.text}/${m.page}px`);
+      if (SHOTS && width === 390) await area.screenshot({ path: join(SHOTS, `${locale.key}-mobile-agent.png`) });
+      await phone.context.close();
+    }
+
+    // Where the clipboard is refused, the request is selected for ⌘C instead.
+    const denied = await open(locale.path);
+    await denied.page.evaluate(() => {
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) } });
+    });
+    const fallback = denied.page.locator('button[data-copy="#agent-request"]');
+    await fallback.scrollIntoViewIfNeeded();
+    await fallback.click();
+    assert.equal(await denied.page.evaluate(() => window.getSelection().toString().trim()), locale.request);
+    assert.equal((await fallback.innerText()).trim(), await fallback.getAttribute('data-fallback'));
+    await denied.context.close();
+  });
+
+  await check(`${locale.lang}: details explain how to install the skill, and both copy buttons work`, async () => {
+    const origin = new URL(base).origin;
+    const { context, page, errors } = await open(`${locale.path}details/`, { permissions: CLIPBOARD });
+    await context.grantPermissions(CLIPBOARD, { origin });
+    const section = page.locator('#agent-setup');
+    assert.equal(await section.evaluate((el) => el.previousElementSibling?.getAttribute('aria-labelledby')), 'install', 'right after the install steps');
+    const text = await section.innerText();
+    for (const words of ['$CODEX_HOME/skills', '~/.codex/skills', 'SKILL.md', 'Codex']) assert.ok(text.includes(words), `mentions ${words}`);
+    assert.equal(await section.locator(`a[href="${SKILL_URL}"]`).count(), 1, 'links the skill folder');
+    assert.equal((await section.locator('#agent-request').innerText()).trim(), locale.request);
+    // Each button copies its own text, one after the other.
+    await section.locator('button[data-copy="#agent-request"]').click();
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), locale.request);
+    await page.locator('button[data-copy="#sha256"]').click();
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), RELEASE.sha256);
+    assert.deepEqual(errors, []);
+    await context.close();
+    // The language menu keeps the reader at this section.
+    const target = LOCALES.find((l) => l !== locale);
+    const there = await open(`${locale.path}details/#agent-setup`);
+    await there.page.locator('header [data-lang-menu] summary').click();
+    await there.page.locator(`header [data-lang-menu] a[hreflang="${target.lang}"]`).click();
+    await there.page.waitForURL((url) => url.href === `${base}${target.path}details/#agent-setup`);
+    await there.context.close();
+  });
+
+  await check(`${locale.lang}: without JavaScript the request still reads, with no dead copy button`, async () => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, javaScriptEnabled: false, locale: 'en-US' });
+    const page = await context.newPage();
+    for (const route of ['', 'details/']) {
+      await page.goto(`${base}${locale.path}${route}`, { waitUntil: 'load' });
+      const request = page.locator('#agent-request');
+      assert.ok(await request.isVisible(), `${route || 'home'}: the request is shown`);
+      assert.equal((await request.innerText()).trim(), locale.request);
+      const shown = await page.locator('button[data-copy]').evaluateAll((els) => els.filter((e) => e.offsetParent !== null).length);
+      assert.equal(shown, 0, `${route || 'home'}: copy buttons wait for JavaScript`);
+      assert.ok(await page.locator(`a[href="${SKILL_URL}"]`).first().isVisible(), 'the skill link');
+    }
+    await context.close();
   });
 
   await check(`${locale.lang}: without JavaScript the story and film still read`, async () => {

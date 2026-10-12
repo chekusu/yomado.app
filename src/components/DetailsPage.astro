@@ -2,11 +2,13 @@
 // The secondary destination: everything about the download that the home page leaves out.
 import '@fontsource/fragment-mono/400.css';
 import Base from '../layouts/Base.astro';
+import CopyText from './CopyText.astro';
 import Icon from './Icon.astro';
 import SiteFooter from './SiteFooter.astro';
 import SiteHeader from './SiteHeader.astro';
 import { copyFor } from '../i18n';
 import { LOCALE_PATH, RELEASE, SITE, localeHref, type Locale } from '../lib/site';
+import { SKILL_URL } from '../lib/skill';
 
 interface Props {
   locale: Locale;
@@ -15,6 +17,7 @@ interface Props {
 const { locale } = Astro.props;
 const copy = copyFor(locale);
 const d = copy.details;
+const skillLink = `<a href="${SKILL_URL}">skills/yomado</a>`;
 ---
 
 <Base
@@ -58,16 +61,38 @@ const d = copy.details;
         <ol class="steps">{d.installHtml.map((step) => <li set:html={step} />)}</ol>
       </section>
 
+      <section class="row" id="agent-setup" aria-labelledby="agent-setup-title">
+        <h2 id="agent-setup-title">{d.agent.title}</h2>
+        <div class="agent">
+          <p>{d.agent.lede}</p>
+          <ol class="steps">
+            {
+              d.agent.stepsHtml.map((step, i) => (
+                <li>
+                  <span set:html={step.replace('{skill}', skillLink)} />
+                  {i === d.agent.stepsHtml.length - 1 && (
+                    <CopyText
+                      id="agent-request"
+                      text={copy.agent.request}
+                      copy={d.copy}
+                      name={copy.agent.copyName}
+                      copied={d.copied}
+                      fallback={d.copyFallback}
+                    />
+                  )}
+                </li>
+              ))
+            }
+          </ol>
+          <p class="note">{d.agent.note}</p>
+        </div>
+      </section>
+
       <section class="row" id="verify" aria-labelledby="verify-title">
         <h2 id="verify-title">{d.verifyTitle}</h2>
         <div class="verify">
           <p>{d.verifyText}</p>
-          <div class="hash">
-            <span class="hash-label">{d.hashLabel}</span>
-            <code id="sha256">{RELEASE.sha256}</code>
-            <button type="button" class="copy" data-copy="#sha256" data-copied={d.copied} data-fallback={d.copyFallback}>{d.copy}</button>
-            <span class="visually-hidden" data-copy-status aria-live="polite"></span>
-          </div>
+          <CopyText id="sha256" text={RELEASE.sha256} label={d.hashLabel} mono copy={d.copy} copied={d.copied} fallback={d.copyFallback} />
           <pre><code>shasum -a 256 {RELEASE.fileName}</code></pre>
           <p><a class="more" href={RELEASE.checksumsUrl}>{d.links.checksums}</a></p>
         </div>
@@ -137,6 +162,16 @@ const d = copy.details;
     font-size: 1.3125rem;
     font-weight: 650;
     letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  /* A heading that needs two lines breaks between phrases, never inside a word. */
+  h2:lang(zh-CN) {
+    word-break: keep-all;
+  }
+
+  h2:lang(ja) {
+    word-break: auto-phrase;
   }
 
   .specs {
@@ -176,54 +211,35 @@ const d = copy.details;
     color: var(--ink-3);
   }
 
-  .verify {
+  .verify,
+  .agent {
     display: grid;
     gap: 14px;
     min-width: 0;
   }
 
-  .verify p {
+  .verify p,
+  .agent p {
     margin: 0;
   }
 
-  .hash {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px 14px;
-    padding: 14px 16px;
-    border-radius: 14px;
-    background: var(--paper);
+  .agent .note {
+    color: var(--ink-2);
   }
 
-  .hash-label {
-    color: var(--ink-2);
-    font-size: 0.8125rem;
-    font-weight: 600;
+  .agent .steps :global(.copy-text) {
+    margin-top: 10px;
   }
 
   code,
-  pre {
+  pre,
+  .steps :global(code) {
     font-family: var(--font-mono);
     font-size: 0.875rem;
   }
 
-  .hash code {
-    flex: 1 1 18em;
-    min-width: 0;
+  .steps :global(code) {
     overflow-wrap: anywhere;
-    letter-spacing: 0.01em;
-  }
-
-  .copy {
-    min-height: 32px;
-    padding: 0 14px;
-    border: 0;
-    border-radius: 999px;
-    background: var(--night-800);
-    color: #fff;
-    font: 600 0.8125rem var(--font-sans);
-    cursor: pointer;
   }
 
   pre {

@@ -1,16 +1,21 @@
 ---
 // The control panel, rebuilt from the app's own layout with example displays and the real icons of
-// the apps on each screen (src/components/ControlPanel.astro).
+// the apps on each screen (src/components/ControlPanel.astro). Under it, outside the illustration:
+// an agent can prepare its own screen in the real panel with the yomado skill, with a request to copy.
 import ControlPanel from './ControlPanel.astro';
+import CopyText from './CopyText.astro';
 import { exampleCards } from '../lib/panel';
+import { localeHref, type Locale } from '../lib/site';
+import { SKILL_URL } from '../lib/skill';
 import { phrased } from '../lib/text';
 import type { Copy } from '../i18n';
 
 interface Props {
+  locale: Locale;
   copy: Copy;
 }
 
-const { copy } = Astro.props;
+const { locale, copy } = Astro.props;
 // Codex holds the two apps the agent works in; your own apps stay on your displays.
 const cards = exampleCards({ one: ['wechat'], two: ['chrome'], codex: ['blender', 'md'] });
 ---
@@ -26,6 +31,22 @@ const cards = exampleCards({ one: ['wechat'], two: ['chrome'], codex: ['blender'
     </div>
     <figcaption class="fine">{copy.panel.caption}</figcaption>
   </figure>
+  <div class="agent wrap" id="agent-setup">
+    <p class="agent-text" set:html={copy.agent.textHtml} />
+    <CopyText
+      id="agent-request"
+      text={copy.agent.request}
+      label={copy.agent.requestLabel}
+      copy={copy.details.copy}
+      name={copy.agent.copyName}
+      copied={copy.details.copied}
+      fallback={copy.details.copyFallback}
+    />
+    <p class="links">
+      <a class="more" href={SKILL_URL}>{copy.agent.skill}</a>
+      <a class="more" href={`${localeHref(locale, 'details/')}#agent-setup`}>{copy.agent.setup}</a>
+    </p>
+  </div>
 </section>
 
 <style>
@@ -72,6 +93,48 @@ const cards = exampleCards({ one: ['wechat'], two: ['chrome'], codex: ['blender'
   .fine {
     margin-top: 16px;
     text-align: center;
+  }
+
+  .agent {
+    display: grid;
+    justify-items: center;
+    gap: 18px;
+    margin-top: clamp(48px, 8vh, 88px);
+    text-align: center;
+  }
+
+  .agent-text {
+    max-width: 36em;
+    margin: 0;
+    color: var(--ink-2);
+    text-wrap: balance;
+  }
+
+  .agent-text :global(strong) {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  :lang(zh-CN) .agent-text {
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  :lang(ja) .agent-text {
+    word-break: auto-phrase;
+  }
+
+  .agent :global(.copy-text) {
+    --copy-bg: var(--white);
+    width: min(100%, 40rem);
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 28px;
+    margin: 0;
   }
 
   /* The panel settles into place as it scrolls in, where the browser can tie motion to scroll. */

@@ -64,6 +64,14 @@ export default (r: ReleaseFacts): Copy => ({
     imageAlt: 'yomado 控制面板：Studio Display 1 上有微信，Studio Display 2 上有 Google Chrome，名为 Codex、分辨率 1920 × 1080 的虚拟屏上有 Blender 和 Marvelous Designer；每张卡片显示该屏上应用的图标。',
     caption: '按应用布局重建的控制面板，示例显示器数据，应用为其自己的图标。界面语言为简体中文。',
   },
+  agent: {
+    textHtml: '<strong>不用替 Agent 手动建屏。</strong>yomado skill 会指导它在 yomado 面板里自己准备工作屏。',
+    requestLabel: '可以这样说',
+    request: '用 yomado 为这次 Blender 任务准备一块叫 Codex 的虚拟屏，只移入本任务的窗口，完成后恢复。',
+    copyName: '复制这段请求',
+    skill: 'GitHub 上的 yomado skill',
+    setup: '安装 skill',
+  },
   finale: {
     title: '给 Agent|一扇|亮着的窗。',
     cta: '下载 Mac 版',
@@ -106,6 +114,17 @@ export default (r: ReleaseFacts): Copy => ({
       '应用已附带 Apple 公证票据。首次打开下载的应用时，macOS 仍可能要求你确认。',
       '移动窗口需要辅助功能权限。点击面板中的锁形图标会打开系统设置中的对应页面，由你自己开启。',
     ],
+    agent: {
+      title: '交给 Agent 准备',
+      lede: 'yomado skill 指导 Agent 通过 yomado 自己的面板建屏、命名，只移入本次任务的窗口，确认能看到并操作它们，完成后把窗口恢复。它不提供新的 API，也不提供单独的输入。',
+      stepsHtml: [
+        '按上文安装 yomado，并开启辅助功能权限。',
+        '为 Agent 配备能截取虚拟屏画面、操作指针和键盘的电脑操作工具；首次 macOS 系统授权由你完成。',
+        '在 Codex 中，将 yomado 仓库的 {skill} 文件夹放到 <code>$CODEX_HOME/skills</code>（默认为 <code>~/.codex/skills</code>），下一轮对话即可使用，无需重启。其他 Agent 可以通过自己的 skill 机制读取同一份 <code>SKILL.md</code>。',
+        '然后这样告诉它：',
+      ],
+      note: 'Agent 工作时，Mac 需保持登录且未锁屏，你和 Agent 共用同一套指针、键盘和焦点。能操作哪些应用，取决于它的工具。',
+    },
     verifyTitle: '校验下载',
     verifyText: '把压缩包的 SHA-256 与下面的值比对：',
     hashLabel: 'SHA-256',

@@ -1,0 +1,92 @@
+---
+// A line of text with a button that copies it: the release checksum on the details page and the
+// example request to an agent. src/scripts/page.ts copies the text, or selects it where the
+// clipboard is unavailable, and announces the result in the status beside the button. Without
+// JavaScript the button stays hidden and the text can be selected as usual.
+interface Props {
+  id: string;
+  text: string;
+  /** A short label: before a hash, above a sentence. */
+  label?: string;
+  /** Monospace, for hashes. */
+  mono?: boolean;
+  /** The button's text, its accessible name where the text alone is too short, and what a click reports. */
+  copy: string;
+  name?: string;
+  copied: string;
+  fallback: string;
+}
+
+const { id, text, label, mono = false, copy, name, copied, fallback } = Astro.props;
+---
+
+<div class:list={['copy-text', { mono }]}>
+  {label && <span class="label">{label}</span>}
+  {mono ? <code id={id}>{text}</code> : <span id={id} class="text">{text}</span>}
+  <button type="button" class="copy" data-copy={`#${id}`} data-copied={copied} data-fallback={fallback} aria-label={name}>{copy}</button>
+  <span class="visually-hidden" data-copy-status aria-live="polite"></span>
+</div>
+
+<style>
+  .copy-text {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--copy-bg, var(--paper));
+    text-align: start;
+  }
+
+  .label {
+    color: var(--ink-2);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  /* A sentence takes its label on a line of its own. */
+  .copy-text:not(.mono) .label {
+    flex-basis: 100%;
+  }
+
+  code {
+    flex: 1 1 18em;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+    letter-spacing: 0.01em;
+  }
+
+  .text {
+    flex: 1 1 16em;
+    min-width: 0;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+
+  .text:lang(zh-CN) {
+    word-break: keep-all;
+  }
+
+  .text:lang(ja) {
+    word-break: auto-phrase;
+  }
+
+  .copy {
+    min-height: 32px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--night-800);
+    color: #fff;
+    font: 600 0.8125rem var(--font-sans);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  :global(html:not(.js)) .copy {
+    display: none;
+  }
+</style>

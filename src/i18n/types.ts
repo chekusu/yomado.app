@@ -52,6 +52,19 @@ export interface Copy {
   };
   story: { label: string; acts: { title: string; text: string }[] };
   panel: { title: string; text: string; imageAlt: string; caption: string };
+  /**
+   * Under the panel: the agent can prepare its own screen with the yomado skill. One short message,
+   * an example request to copy (copied exactly as written) and links to the skill and its setup.
+   */
+  agent: {
+    textHtml: string;
+    requestLabel: string;
+    request: string;
+    /** The copy button's accessible name; its visible text is details.copy. */
+    copyName: string;
+    skill: string;
+    setup: string;
+  };
   finale: { title: string; cta: string; meta: string; details: string; source: string };
   footer: {
     navLabel: string;
@@ -76,6 +89,12 @@ export interface Copy {
     specs: { term: string; value: string }[];
     installTitle: string;
     installHtml: string[];
+    /**
+     * Setting the agent up to prepare its own screen: what the skill does, then the steps in order.
+     * In the steps `{skill}` becomes a link to the skill's folder; the last step is followed by the
+     * example request (agent.request).
+     */
+    agent: { title: string; lede: string; stepsHtml: string[]; note: string };
     verifyTitle: string;
     verifyText: string;
     hashLabel: string;

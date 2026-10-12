@@ -73,6 +73,14 @@ export default (r: ReleaseFacts): Copy => ({
       'The yomado control panel: Studio Display 1 with WeChat, Studio Display 2 with Google Chrome, and a virtual screen named Codex at 1920 × 1080 with Blender and Marvelous Designer. Each card shows the icons of the apps on that screen.',
     caption: 'The control panel, rebuilt from the app’s layout with example displays and the apps’ own icons. Its interface is in Simplified Chinese.',
   },
+  agent: {
+    textHtml: '<strong>You don’t have to set up your agent’s screen by hand.</strong> The yomado skill guides the agent to prepare its own work screen in yomado’s panel.',
+    requestLabel: 'Try asking',
+    request: 'Use yomado to set up a virtual screen named Codex for this Blender task, move only this task’s windows onto it, and restore them when you’re done.',
+    copyName: 'Copy the request',
+    skill: 'yomado skill on GitHub',
+    setup: 'Install the skill',
+  },
   finale: {
     title: 'A window, lit for your agents.',
     cta: 'Download for Mac',
@@ -115,6 +123,17 @@ export default (r: ReleaseFacts): Copy => ({
       'The app includes its Apple notarization ticket. macOS may still ask you to confirm the first time you open a downloaded app.',
       'Moving windows needs Accessibility permission. The lock icon in the panel opens the right page in System Settings; you switch it on yourself.',
     ],
+    agent: {
+      title: 'Let your agent set it up',
+      lede: 'The yomado skill guides an agent through yomado’s own panel: create and name a work screen, move in only the task’s windows, check that it can see and operate them, and return them when it’s done. It adds no API and no input of its own.',
+      stepsHtml: [
+        'Install yomado and switch on Accessibility, as above.',
+        'Give your agent computer-use tools that can capture the virtual screen and work the pointer and keyboard. You grant their macOS permissions the first time.',
+        'For Codex, put the {skill} folder from the yomado repository in <code>$CODEX_HOME/skills</code> (by default <code>~/.codex/skills</code>). It’s available from the next turn; nothing needs restarting. Other agents can read the same <code>SKILL.md</code> with their own skill mechanism.',
+        'Then ask, for example:',
+      ],
+      note: 'While it works, your Mac stays logged in and unlocked, and you and the agent share one pointer, keyboard and focus. Which apps it can work in depends on its tools.',
+    },
     verifyTitle: 'Verify the download',
     verifyText: 'Compare the archive’s SHA-256 with this value:',
     hashLabel: 'SHA-256',
