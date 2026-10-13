@@ -3,9 +3,10 @@
 // Pages serves static files whole, but Safari plays video only from servers that honour
 // `Range` (it starts with `bytes=0-1`), and every browser needs ranges to seek. This passes
 // each request to the static file and, when a single range was asked for, returns that slice
-// as 206 Partial Content. A file asked for with `?download` (the watch page's download buttons)
-// comes as an attachment under its own name, so a phone saves it instead of opening a player;
-// the same address without it still plays inline. Everything else is passed through untouched.
+// as 206 Partial Content. A file asked for with `?download` (the watch page's download buttons
+// link `?download=1`) comes as an attachment under its own name, so a phone saves it instead of
+// opening a player; the same address without it still plays inline. Everything else is passed
+// through untouched.
 
 const RANGE = /^bytes=(\d*)-(\d*)$/;
 

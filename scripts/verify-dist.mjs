@@ -265,7 +265,7 @@ for (const visual of FILMS) {
 }
 // Each language shows the film its own subtitles go with (zh-CN and zh-TW the Chinese one, ja the
 // Japanese one, the rest the English one): the hero plays it, the watch page its band masters with
-// that film's tracks and, as downloads (?download), that language's captioned MP4s and SRT. The
+// that film's tracks and, as downloads (?download=1), that language's captioned MP4s and SRT. The
 // hero gets every language's subtitles.
 for (const [locale, prefix] of Object.entries(LOCALES)) {
   const tag = TAG[locale];
@@ -276,9 +276,9 @@ for (const [locale, prefix] of Object.entries(LOCALES)) {
   const own = captionIndex.order.filter((t) => captionIndex.locales[t].visual === visual);
   if (tracks.join() !== own.join()) fail(`${prefix}watch/index.html`, `tracks ${tracks.join(', ')}, expected ${own.join(', ')}`);
   for (const layout of ['wide', 'tall']) {
-    if (!watch.includes(`href="${base}media/captioned/yomado-film-${tag}-${layout}-${CV}.mp4?download"`)) fail(`${prefix}watch/index.html`, `no ${layout} ${tag} download`);
+    if (!watch.includes(`href="${base}media/captioned/yomado-film-${tag}-${layout}-${CV}.mp4?download=1"`)) fail(`${prefix}watch/index.html`, `no ${layout} ${tag} download`);
   }
-  if (!watch.includes(`href="${base}media/captions/yomado-film-${tag}-${CV}.srt?download"`)) fail(`${prefix}watch/index.html`, `no ${tag} SRT download`);
+  if (!watch.includes(`href="${base}media/captions/yomado-film-${tag}-${CV}.srt?download=1"`)) fail(`${prefix}watch/index.html`, `no ${tag} SRT download`);
   const home = await readFile(join(dist, prefix, 'index.html'), 'utf8');
   if (!home.includes(`film-${visual}-wide-${filmMedia.version}.mp4`)) fail(`${prefix}index.html`, `does not play the ${visual} film`);
   for (const t of captionIndex.order) if (!home.includes(`captions/yomado-film-${t}-${CV}.vtt`)) fail(`${prefix}index.html`, `no ${t} subtitles`);

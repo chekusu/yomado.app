@@ -72,4 +72,4 @@ export const mediaUrl = (path: string) => withBase(`media/${path}`);
  * address with `Content-Disposition: attachment` and the file's name, so phones save the file
  * instead of opening a player. The plain address still plays inline.
  */
-export const downloadUrl = (path: string) => `${mediaUrl(path)}?download`;
+export const downloadUrl = (path: string) => `${mediaUrl(path)}?download=1`;

@@ -324,7 +324,7 @@ const savedCaption = (page) =>
     }
   });
 /** A media file's download address, as the pages write it. */
-const downloadPath = (path) => `${new URL(base).pathname}media/${path}?download`;
+const downloadPath = (path) => `${new URL(base).pathname}media/${path}?download=1`;
 /**
  * A download address answers as an attachment under the file's name, with the file's media type,
  * also for a byte range; the same file without ?download still plays inline. Returns its size.
@@ -340,7 +340,7 @@ async function assertDownload(page, href, name, type) {
   assert.equal(range.headers()['content-disposition'], `attachment; filename="${name}"`, `${href} range disposition`);
   const size = Number(/^bytes 0-1\/(\d+)$/.exec(range.headers()['content-range'] ?? '')?.[1]);
   assert.ok(size > 1000, `${href} content-range ${range.headers()['content-range']}`);
-  const plain = await page.request.get(url.replace(/\?download$/, ''), { headers: { Range: 'bytes=0-1' } });
+  const plain = await page.request.get(url.replace(/\?download=1$/, ''), { headers: { Range: 'bytes=0-1' } });
   assert.equal(plain.status(), 206, `${href} without ?download`);
   assert.equal(plain.headers()['content-disposition'], undefined, `${href} without ?download plays inline`);
   return size;
@@ -1501,7 +1501,7 @@ await check('switches overlapping other choices while loading: a paused start, t
     await waitLanded(page, '[data-watch-video]', `film-zh-cn-wide-${V}`);
     await page.waitForTimeout(800);
     assert.ok((await video.evaluate((v) => [...v.textTracks].map((t) => t.mode))).every((m) => m !== 'showing'), 'no track shown');
-    assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-zh-cn-wide-${V}\\.mp4\\?download$`));
+    assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-zh-cn-wide-${V}\\.mp4\\?download=1$`));
     assert.equal(await page.locator('[data-srt]').isVisible(), false);
     assert.equal(await page.locator('[data-watch-narration]').textContent(), 'Chinese narration.');
     // Play and pause on the video while the next one loads: the pause stands.
@@ -1539,7 +1539,7 @@ await check('switches overlapping other choices while loading: a paused start, t
     await page.waitForTimeout(2000);
     assert.deepEqual(await savedCaption(page), { site: 'en', cc: 'fr' }, 'the last choice is kept, never off');
     assert.deepEqual(await video.evaluate((v) => [...v.textTracks].filter((t) => t.mode === 'showing').map((t) => t.language)), ['fr']);
-    assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`yomado-film-fr-wide-${CV}\\.mp4\\?download$`));
+    assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`yomado-film-fr-wide-${CV}\\.mp4\\?download=1$`));
     await video.evaluate((v) => {
       for (const t of v.textTracks) t.mode = t.language === 'de' ? 'showing' : 'disabled';
     });
@@ -1602,7 +1602,7 @@ await check('a subtitle choice is kept for its website language: on its other pa
   await page.goto(`${base}watch/`, { waitUntil: 'load' });
   await page.waitForFunction(() => /film-en-wide-band/.test(document.querySelector('[data-watch-video]').currentSrc), null, { timeout: 15000 });
   assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'de', 'on the English watch page too');
-  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`yomado-film-de-wide-${CV}\\.mp4\\?download$`));
+  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`yomado-film-de-wide-${CV}\\.mp4\\?download=1$`));
   // The Japanese page, opened by its address, starts with Japanese and the Japanese film.
   await page.goto(`${base}ja/`, { waitUntil: 'load' });
   assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'ja');
@@ -1719,7 +1719,7 @@ await check("the watch page: subtitles in the band, its menu and the browser's o
   assert.equal((await tracks()).length, 13, 'the English film carries its 13 languages');
   assert.ok(Math.abs((await video.evaluate((v) => v.currentTime)) - 33.4) < 0.5, 'kept its place');
   assert.equal(await page.locator('[data-watch-narration]').textContent(), '英文旁白。');
-  assert.match(await page.getAttribute('[data-mp4="tall"]', 'href'), new RegExp(`yomado-film-fr-tall-${CV}\\.mp4\\?download$`));
+  assert.match(await page.getAttribute('[data-mp4="tall"]', 'href'), new RegExp(`yomado-film-fr-tall-${CV}\\.mp4\\?download=1$`));
   // The browser's own menu: German there is followed and kept.
   await video.evaluate((v) => {
     for (const t of v.textTracks) t.mode = t.language === 'de' ? 'showing' : 'disabled';
@@ -1730,7 +1730,7 @@ await check("the watch page: subtitles in the band, its menu and the browser's o
   await page.locator('[data-watch-cc] select').selectOption('off');
   await page.waitForFunction(() => /film-en-wide-v2/.test(document.querySelector('[data-watch-video]').currentSrc), null, { timeout: 15000 });
   assert.ok((await tracks()).every((t) => !t.endsWith(':showing')), 'no subtitles shown');
-  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-en-wide-${V}\\.mp4\\?download$`));
+  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-en-wide-${V}\\.mp4\\?download=1$`));
   assert.equal(await page.locator('[data-srt]').isVisible(), false);
   // Full screen with subtitles: the browser's own controls keep the band and the track.
   await page.locator('[data-watch-cc] select').selectOption('en');
@@ -1887,7 +1887,7 @@ await check('?cc= asks a page for subtitles; a choice made there replaces it; a 
   // Off asked for on the Korean watch page: the film without subtitles, its downloads without them.
   await page.goto(`${base}ko/watch/?cc=off`, { waitUntil: 'load' });
   await watchLanded(page, filmSrc('en', 'wide'));
-  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-en-wide-${V}\\.mp4\\?download$`));
+  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-en-wide-${V}\\.mp4\\?download=1$`));
   assert.equal(await page.locator('[data-srt]').isVisible(), false);
   await context.close();
   // A value kept by the previous version of the site (a bare tag, no language with it).
@@ -1981,7 +1981,7 @@ await check('the captioned films download as files, named, on desktop and phones
     assert.equal(page.url(), base + path, 'the page stays');
     // Opened by its address, the download saves the file too; the plain address plays in the browser.
     const direct = await context.newPage();
-    const [saved] = await Promise.all([direct.waitForEvent('download', { timeout: 120000 }), direct.goto(`${base}media/captioned/yomado-film-${tag}-tall-${CV}.mp4?download`).catch(() => {})]);
+    const [saved] = await Promise.all([direct.waitForEvent('download', { timeout: 120000 }), direct.goto(`${base}media/captioned/yomado-film-${tag}-tall-${CV}.mp4?download=1`).catch(() => {})]);
     assert.equal(saved.suggestedFilename(), `yomado-film-${tag}-tall-${CV}.mp4`);
     const inline = await context.newPage();
     let started = false;

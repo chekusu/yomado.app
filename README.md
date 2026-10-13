@@ -119,11 +119,12 @@ replay buttons play it with sound too, unless it was muted by hand, and a mute h
 view or the tab pauses it; only a muted film resumes by itself. The watch page waits for a click
 and plays with sound, with the browser's controls (their timeline runs left to right in Arabic
 too). Under it, the chosen language's captioned MP4s, landscape and portrait, and its SRT are
-offered as downloads: big buttons, one per line on phones, that link the file with `?download`.
-`functions/media/[[path]].js` answers those addresses with `Content-Disposition: attachment` and
-the file's name (`yomado-film-<tag>-<wide|tall>-c1.mp4`), so a phone saves the file instead of
-opening a player; ranges and media types are the file's own, and the same file without
-`?download` still plays inline. With subtitles off, the downloads are the films without them.
+offered as downloads: big buttons, one per line on phones, that link the file with
+`?download=1`. `functions/media/[[path]].js` answers any `?download` address with
+`Content-Disposition: attachment` and the file's name (`yomado-film-<tag>-<wide|tall>-c1.mp4`), so
+a phone saves the file instead of opening a player; ranges and media types are the file's own, and
+the same file without the query still plays inline. With subtitles off, the downloads are the films
+without them.
 
 ## Stack
 
