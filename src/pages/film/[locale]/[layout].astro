@@ -1,21 +1,22 @@
 ---
-// Render stage for the one-minute film, one per locale and layout. Built only when FILM_STAGE=1
-// (npm run film), never deployed: the site's build has no /film/ pages.
+// Render stage for the one-minute film, one per film language (en, zh-cn, ja) and layout. Built
+// only when FILM_STAGE=1 (npm run film), never deployed: the site's build has no /film/ pages.
 import '@fontsource-variable/inter/opsz.css';
 import '@fontsource-variable/noto-sans-sc/wght.css';
 import '@fontsource-variable/noto-sans-jp/wght.css';
 import '../../../styles/global.css';
 import FilmStage from '../../../components/FilmStage.astro';
-import { copyFor } from '../../../i18n';
-import { LOCALES, LOCALE_TAG, type Locale } from '../../../lib/site';
+import { filmScriptFor } from '../../../i18n';
+import { LOCALE_TAG } from '../../../lib/site';
+import { FILM_LOCALES, type FilmLocale } from '../../../lib/media';
 import type { FilmLayout } from '../../../lib/film';
 
 export function getStaticPaths() {
   if (process.env.FILM_STAGE !== '1') return [];
-  return LOCALES.flatMap((locale) => (['wide', 'tall'] as const).map((layout) => ({ params: { locale, layout } })));
+  return FILM_LOCALES.flatMap((locale) => (['wide', 'tall'] as const).map((layout) => ({ params: { locale, layout } })));
 }
 
-const locale = Astro.params.locale as Locale;
+const locale = Astro.params.locale as FilmLocale;
 const layout = Astro.params.layout as FilmLayout;
 const lang = LOCALE_TAG[locale];
 ---
@@ -36,7 +37,7 @@ const lang = LOCALE_TAG[locale];
     </style>
   </head>
   <body>
-    <FilmStage layout={layout} copy={copyFor(locale)} lang={lang} />
+    <FilmStage layout={layout} script={filmScriptFor(locale)} lang={lang} />
     <script>
       import { FilmView } from '../../../scripts/film-view';
       import { FILM_DURATION } from '../../../lib/film';

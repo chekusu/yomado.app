@@ -1,0 +1,11 @@
+---
+// The watch page in every language but English (src/pages/watch/index.astro).
+import WatchPage from '../../../components/WatchPage.astro';
+import { LOCALES, type Locale } from '../../../lib/site';
+
+export const getStaticPaths = () => LOCALES.filter((locale) => locale !== 'en').map((locale) => ({ params: { locale } }));
+
+const locale = Astro.params.locale as Locale;
+---
+
+<WatchPage locale={locale} />

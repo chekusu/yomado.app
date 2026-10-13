@@ -2,12 +2,13 @@
 //
 // With subtitles on it plays the band master (the picture above a night-blue band) and shows the
 // chosen track in that band, through the browser's own rendering, so it works in full screen too;
-// off, it plays the film full size. The page starts with its own language (src/scripts/captions.ts
-// decides when another was chosen before). A language that follows the other narration brings
-// that narration's film and its tracks, where the film was, playing or paused. The browser's own
-// subtitle menu works as well: choosing there is remembered the same way. The downloads under the
-// player follow the choice: that language's captioned MP4s and subtitle file, or the film without
-// subtitles.
+// off, it plays the film full size. The page starts with its own language's subtitles and film
+// (src/scripts/captions.ts decides when the address or an earlier choice on this language asks for
+// others). A language that follows the other narration brings that narration's film and its
+// tracks, where the film was, playing or paused. The browser's own subtitle menu works as well:
+// choosing there is remembered the same way. The downloads under the player follow the choice:
+// that language's captioned MP4s, landscape and portrait, and subtitle file, or the film without
+// subtitles, each as a download (the file is saved, not opened in a player).
 import { filmSwitcher, initialCaption, narrowMatches, readConfig, saveCaption } from './captions';
 
 const config = readConfig(document);
@@ -28,7 +29,7 @@ if (video && config) {
   const note = document.querySelector<HTMLElement>('[data-watch-narration]');
 
   let current = initialCaption(config);
-  let visual = config.page;
+  let visual = config.visual;
   let band = true;
   // Our own changes to the tracks fire the same events as the browser's menu, and the browser may
   // pick a track by itself when tracks or files change (by its language): for a moment after each,
@@ -83,14 +84,15 @@ if (video && config) {
   };
   const setDownloads = () => {
     const name = (a: HTMLAnchorElement | null, href: string, size: string) => {
-      if (!a) return;
+      const meta = a?.querySelector<HTMLElement>('[data-meta]');
+      if (!a || !meta) return;
       a.href = href;
-      a.textContent = (a.dataset.template ?? '').replace('{size}', size);
+      meta.textContent = (meta.dataset.template ?? '').replace('{size}', size);
     };
     if (current === 'off') {
       const films = config.visuals[visual].plain;
-      name(wide, films.wide.mp4, films.wide.size);
-      name(tall, films.tall.mp4, films.tall.size);
+      name(wide, films.wide.download, films.wide.size);
+      name(tall, films.tall.download, films.tall.size);
       if (srt) srt.hidden = true;
       if (label) label.textContent = label.dataset.without ?? '';
     } else {
@@ -130,7 +132,7 @@ if (video && config) {
     if (current === next) showTrack();
   };
   const choose = (next: string) => {
-    saveCaption(next);
+    saveCaption(config, next);
     void show(next);
   };
 

@@ -1,6 +1,17 @@
 // Every visible string, per locale. Fields ending in `Html` may contain inline markup
 // (links, <strong>, <kbd>) and are rendered as HTML. Titles may mark phrase breaks with `|`.
 
+/**
+ * Text rendered into the film itself (src/lib/film.ts): a label that stays on screen, one super
+ * per shot for shots 1–5, and the end card. Supers and the tagline may mark phrase breaks with `|`.
+ */
+export interface FilmScript {
+  label: string;
+  supers: [string, string, string, string, string];
+  tagline: string;
+  cta: string;
+}
+
 export interface Copy {
   meta: { title: string; description: string; ogAlt: string };
   skip: string;
@@ -45,28 +56,29 @@ export interface Copy {
     };
   };
   /**
-   * Text rendered into the film itself (src/lib/film.ts): a label that stays on screen, one super
-   * per shot for shots 1–5, and the end card. Supers and the tagline may mark phrase breaks with `|`.
+   * Only in the three languages that have a film of their own (en, zh-cn, ja); every other language
+   * shows one of them (src/lib/captions.ts).
    */
-  filmScript: {
-    label: string;
-    supers: [string, string, string, string, string];
-    tagline: string;
-    cta: string;
-  };
-  /** The watch page: the whole film with the browser's own controls, and the MP4 itself. */
+  filmScript?: FilmScript;
+  /** The watch page: the whole film with the browser's own controls, and the MP4s to keep. */
   watch: {
     meta: { title: string; description: string };
     title: string;
     lede: string;
     /** Under the player: what the film is and isn't. */
     note: string;
-    /** "MP4 · 1920 × 1080 · 1:00 · {size}", and the same for the portrait composition. */
-    mp4: string;
-    mp4Tall: string;
-    /** Over the downloads: "With {language} subtitles", or without; and the subtitle file. */
+    /** The downloads' heading, then over them "With {language} subtitles", or without. */
+    downloads: string;
     withSubtitles: string;
     withoutSubtitles: string;
+    /**
+     * Each MP4 by its shape, with "MP4 · 1920 × 1080 · 1:00 · {size}" under it (1080 × 1350 for the
+     * portrait one); and the subtitle file (SRT).
+     */
+    wide: string;
+    tall: string;
+    mp4: string;
+    mp4Tall: string;
     srt: string;
     back: string;
   };

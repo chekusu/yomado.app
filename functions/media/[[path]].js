@@ -1,15 +1,24 @@
-// Cloudflare Pages Function for /media/*: answers byte-range requests.
+// Cloudflare Pages Function for /media/*: answers byte-range requests, and serves downloads.
 //
 // Pages serves static files whole, but Safari plays video only from servers that honour
 // `Range` (it starts with `bytes=0-1`), and every browser needs ranges to seek. This passes
 // each request to the static file and, when a single range was asked for, returns that slice
-// as 206 Partial Content. Everything else is passed through untouched.
+// as 206 Partial Content. A file asked for with `?download` (the watch page's download buttons)
+// comes as an attachment under its own name, so a phone saves it instead of opening a player;
+// the same address without it still plays inline. Everything else is passed through untouched.
 
 const RANGE = /^bytes=(\d*)-(\d*)$/;
 
 /** @param {{ request: Request, next: () => Promise<Response> }} context */
 export async function onRequest({ request, next }) {
-  const response = await next();
+  let response = await next();
+  if (response.status === 200 && new URL(request.url).searchParams.has('download')) {
+    const name = new URL(request.url).pathname.split('/').pop() ?? '';
+    const file = name.startsWith('yomado-') ? name : `yomado-${name}`;
+    const headers = new Headers(response.headers);
+    headers.set('Content-Disposition', /^[\w.-]+$/.test(file) ? `attachment; filename="${file}"` : 'attachment');
+    response = new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  }
   const range = request.headers.get('Range');
   if (!range || (request.method !== 'GET' && request.method !== 'HEAD') || response.status !== 200) return response;
 

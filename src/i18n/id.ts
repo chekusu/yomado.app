@@ -1,0 +1,161 @@
+import type { ReleaseFacts } from '../lib/site';
+import type { Copy } from './types';
+
+// Indonesian. The film is the English one with the English narration, and the copy says so; the
+// app's own interface is Simplified Chinese only.
+export default (r: ReleaseFacts): Copy => ({
+  meta: {
+    title: 'yomado — layar untuk agen Anda',
+    description:
+      'yomado memberi Codex dan agen visual lain sebuah layar virtual di Mac Anda, agar mereka bisa bekerja di aplikasi seperti Blender dan Marvelous Designer melalui tangkapan layar, klik, dan ketikan, tanpa MCP khusus aplikasi. Gratis, open source, eksperimental.',
+    ogAlt: 'yomado — Layar untuk agen Anda.',
+  },
+  skip: 'Langsung ke konten',
+  nav: {
+    label: 'Navigasi utama',
+    details: 'Detail',
+    download: 'Unduh',
+    language: 'Bahasa',
+    home: 'Beranda yomado',
+  },
+  hero: {
+    title: 'Layar untuk agen Anda.',
+    sub: 'Layar virtual untuk Blender, Marvelous Designer, dan lainnya. Codex dan agen lain bekerja melalui tangkapan layar, klik, dan ketikan, tanpa MCP khusus aplikasi.',
+    cta: 'Unduh untuk Mac',
+    meta: `Versi eksperimental · v${r.version} · Apple silicon`,
+    film: {
+      label:
+        'Film produk, satu menit; demo simulasi. {narration}. Codex bekerja di Blender pada layar Anda melalui tangkapan layar dan klik. Ikon yomado di bilah menu membuka panel kontrol, yang menambahkan layar virtual di sebelah kanan kedua layar Anda; layar itu diberi nama Codex. Blender dan Marvelous Designer diseret ke sana dan jendelanya ikut pindah, sementara jendela Anda tetap di tempatnya. Di Codex, Codex mengambil tangkapan layar, menambahkan modifier Subdivision Surface, mengetik 3, memutar tampilan, lalu beralih ke shading rendered. Layar kedua, GrokBot, mendapat Google Chrome; Marvelous Designer diseret kembali; saat GrokBot ditutup dari bilah menu, Chrome lebih dulu kembali ke layarnya. Malam tiba dan Codex berubah menjadi tanda yomado.',
+      caption: 'Demo simulasi, bukan rekaman agen yang sedang bekerja. Cara kerja dengan layar fisik dimatikan belum diverifikasi pada perangkat keras sungguhan.',
+      play: 'Putar film',
+      pause: 'Jeda film',
+      replay: 'Putar ulang film',
+      fallback: 'Browser Anda tidak dapat memutar video ini.',
+      watch: 'Tonton film lengkapnya',
+      soundOn: { en: 'Nyalakan suara', zh: 'Nyalakan suara' },
+      soundOnText: { en: 'Suara', zh: 'Suara' },
+      mute: 'Bisukan',
+      captions: 'Subtitle',
+      captionsOff: 'Mati',
+      narration: { en: 'Narasi bahasa Inggris', zh: 'Narasi bahasa Mandarin' },
+      narrationNote: { en: 'Narasi bahasa Inggris.', zh: 'Narasi bahasa Mandarin.' },
+    },
+  },
+  watch: {
+    meta: {
+      title: 'yomado dalam satu menit — film produk',
+      description:
+        'Demo simulasi yomado selama satu menit: layar virtual bernama untuk Codex, aplikasi yang diseret ke sana dari panel kontrol, dan Codex yang bekerja di Blender melalui tangkapan layar, klik, dan ketikan.',
+    },
+    title: 'yomado dalam satu menit.',
+    lede: 'Buka layar, pindahkan aplikasi agen ke sana, biarkan ia bekerja, lalu kembalikan jendelanya.',
+    note: 'Demo simulasi, bukan rekaman kerja agen yang sesungguhnya. Jendela aplikasi adalah tiruan yang disederhanakan; ikonnya adalah ikon aplikasi itu sendiri. Cara kerja dengan layar fisik dimatikan belum diverifikasi.',
+    downloads: 'Unduh film',
+    withSubtitles: 'Dengan subtitle ({language})',
+    withoutSubtitles: 'Tanpa subtitle',
+    wide: 'Video lanskap',
+    tall: 'Video potret',
+    mp4: 'MP4 · 1920 × 1080 · 1:00 · {size}',
+    mp4Tall: 'MP4 · 1080 × 1350 · 1:00 · {size}',
+    srt: 'File subtitle',
+    back: 'Kembali ke yomado',
+  },
+  story: {
+    label: 'Cara kerjanya',
+    acts: [
+      { title: 'Buka layar. Beri nama.', text: 'Tambahkan layar virtual dan beri nama sesuai agen yang akan memakainya.' },
+      { title: 'Aplikasinya pindah. Milik Anda tetap.', text: 'Kirim aplikasi ke layar agen. Semua yang lain tetap di tempat Anda meninggalkannya.' },
+      { title: 'Satu layar untuk setiap agen.', text: 'Satu untuk Codex, satu lagi untuk GrokBot, masing-masing dengan aplikasinya sendiri.' },
+    ],
+  },
+  panel: {
+    title: 'Semua layar. Satu panel.',
+    text: 'Layar Anda sesuai skala, setiap aplikasi tampil di layar tempatnya berada.',
+    imageAlt:
+      'Panel kontrol yomado: Studio Display 1 dengan WeChat, Studio Display 2 dengan Google Chrome, dan layar virtual bernama Codex berukuran 1920 × 1080 dengan Blender dan Marvelous Designer. Setiap kartu menampilkan ikon aplikasi di layar tersebut.',
+    caption: 'Panel kontrol, dibuat ulang dari tata letak aplikasinya dengan layar contoh dan ikon asli setiap aplikasi. Antarmukanya dalam bahasa Mandarin Sederhana.',
+  },
+  agent: {
+    textHtml: '<strong>Anda tidak perlu menyiapkan layar agen secara manual.</strong> Skill yomado memandu agen untuk menyiapkan layar kerjanya sendiri di panel yomado.',
+    requestLabel: 'Coba minta',
+    request: 'Gunakan yomado untuk menyiapkan layar virtual bernama Codex untuk tugas Blender ini, pindahkan hanya jendela tugas ini ke sana, lalu kembalikan ke tempatnya setelah selesai.',
+    copyName: 'Salin permintaan',
+    skill: 'Skill yomado di GitHub',
+    setup: 'Pasang skill',
+  },
+  finale: {
+    title: 'Jendela yang menyala untuk agen Anda.',
+    cta: 'Unduh untuk Mac',
+    meta: `Versi eksperimental ${r.version} · Apple silicon · macOS 14 atau lebih baru · Gratis dan open source`,
+    details: 'Pasang dan verifikasi',
+    source: 'Kode sumber di GitHub',
+  },
+  footer: {
+    navLabel: 'Footer',
+    tagline: 'Layar kerja untuk agen visual.',
+    details: 'Detail',
+    film: 'Film',
+    releases: 'Rilis',
+    source: 'Kode sumber aplikasi',
+    site: 'Kode sumber situs',
+    license: 'Lisensi MIT',
+    fine: 'Perangkat lunak eksperimental yang memakai API privat macOS. Blender, Marvelous Designer, Google Chrome, WeChat, Codex, GrokBot, dan macOS adalah milik pemiliknya masing-masing; nama dan ikonnya hanya untuk mengenali aplikasinya dan tidak menyiratkan dukungan.',
+  },
+  details: {
+    meta: {
+      title: `yomado ${r.version} — instalasi, checksum, dan persyaratan`,
+      description: `Unduh yomado ${r.version} untuk Mac dengan Apple silicon: apa yang Anda perlukan, cara memasangnya, cara memverifikasi arsipnya, dan apa yang belum diverifikasi.`,
+    },
+    eyebrow: 'Detail',
+    title: `yomado ${r.version}`,
+    lede: 'Versi eksperimental untuk Mac dengan Apple silicon. Gratis dan open source di bawah lisensi MIT.',
+    cta: 'Unduh untuk Mac',
+    ctaMeta: `${r.fileName} · ${r.size}`,
+    specsTitle: 'Persyaratan',
+    specs: [
+      { term: 'Versi', value: `${r.version} (build ${r.build}) · pra-rilis · ${r.date}` },
+      { term: 'Mac', value: 'Apple silicon (arm64). Tidak ada build untuk Intel.' },
+      { term: 'macOS', value: 'Dibuat untuk macOS 14 dan yang lebih baru; tidak semua versi sudah diuji.' },
+      { term: 'Tanda tangan', value: 'Ditandatangani dengan Developer ID oleh CHEKUSU dan dinotarisasi oleh Apple.' },
+      { term: 'Antarmuka', value: 'Mandarin Sederhana' },
+    ],
+    installTitle: 'Instalasi',
+    installHtml: [
+      'Ekstrak arsipnya, lalu buka <strong>Yomado.app</strong>. Aplikasi ini berjalan di bilah menu; menutup panel tidak menghentikannya.',
+      'Aplikasi ini menyertakan tiket notarisasi Apple. Meski begitu, macOS mungkin tetap meminta konfirmasi saat Anda pertama kali membuka aplikasi yang diunduh.',
+      'Memindahkan jendela memerlukan izin Aksesibilitas. Ikon gembok di panel membuka halaman yang tepat di Pengaturan Sistem; Anda sendiri yang menyalakannya.',
+    ],
+    agent: {
+      title: 'Biarkan agen Anda yang menyiapkannya',
+      lede: 'Skill yomado memandu agen melalui panel yomado itu sendiri: membuat dan menamai layar kerja, memindahkan hanya jendela tugas itu ke sana, memeriksa bahwa ia bisa melihat dan mengoperasikannya, lalu mengembalikannya setelah selesai. Skill ini tidak menambahkan API atau input tersendiri.',
+      stepsHtml: [
+        'Pasang yomado dan nyalakan Aksesibilitas, seperti di atas.',
+        'Beri agen Anda alat penggunaan komputer yang bisa menangkap layar virtual serta mengoperasikan penunjuk dan keyboard. Izin macOS untuk alat itu Anda berikan sendiri pada kali pertama.',
+        'Untuk Codex, letakkan folder {skill} dari repositori yomado di <code>$CODEX_HOME/skills</code> (secara default <code>~/.codex/skills</code>). Skill tersedia mulai giliran berikutnya; tidak ada yang perlu dimulai ulang. Agen lain dapat membaca <code>SKILL.md</code> yang sama dengan mekanisme skill mereka sendiri.',
+        'Lalu minta, misalnya:',
+      ],
+      note: 'Selama agen bekerja, Mac Anda tetap masuk dan tidak terkunci, dan Anda berbagi satu penunjuk, keyboard, dan fokus dengan agen. Aplikasi mana yang bisa ia kerjakan bergantung pada alatnya.',
+    },
+    verifyTitle: 'Verifikasi unduhan',
+    verifyText: 'Bandingkan SHA-256 arsip dengan nilai ini:',
+    hashLabel: 'SHA-256',
+    copy: 'Salin',
+    copied: 'Tersalin',
+    copyFallback: 'Terpilih — tekan ⌘C',
+    knowTitle: 'Perlu diketahui',
+    know: [
+      'yomado menyediakan layarnya. Agen Anda melihat dan bertindak dengan alat tangkapan layar dan input miliknya sendiri.',
+      'Layar virtual adalah bagian dari sesi login Anda, jadi Anda dan agen berbagi satu keyboard, penunjuk, dan fokus.',
+      'Keluar dari yomado menutup layar-layarnya, dan layar itu tidak dibuat ulang setelah mulai ulang.',
+      'Belum diverifikasi: kerja agen dengan layar fisik dimatikan, penghematan daya, dan proses panjang tanpa pengawasan.',
+    ],
+    links: { notes: 'Catatan rilis', checksums: 'File checksum', source: 'Kode sumber aplikasi', site: 'Kode sumber situs' },
+    back: 'Kembali ke yomado',
+  },
+  notFound: {
+    meta: 'Halaman tidak ditemukan — yomado',
+    title: 'Jendela ini gelap.',
+    text: 'Tidak ada apa pun di alamat ini. Unduhan ada di beranda.',
+    home: 'Kembali ke yomado',
+  },
+});

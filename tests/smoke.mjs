@@ -4,24 +4,35 @@
 //   BASE_URL=https://host/path/ npm test  tests an already deployed copy
 //   SCREENSHOT_DIR=dir npm test           also writes desktop and phone screenshots to dir
 //
-// Covers all three locales (English, Simplified Chinese, Japanese) at desktop, laptop, tablet and
-// phone widths: metadata, console errors, failed requests, horizontal overflow, the download entry
-// points, the one-minute film (its real length and size, autoplay, play/pause/replay, seeking to
-// the end, the keyboard, poster, fallback, reduced motion, byte ranges and media types of every
-// file; its narration: muted by itself, the sound button, the first time from the beginning, a mute
-// that holds, nothing audible starting by itself, refused or interrupted play()), the watch page
-// (the browser's own controls with sound, seeking, the MP4 links), the scroll story and
-// finale, the language menu between every pair of locales on home, details and watch pages, the
-// details page with checksum copy, the agent setup under the panel and on the details page (the
-// skill link, the request to copy by mouse or keyboard, the clipboard fallback, phones, without
-// JavaScript), the page without JavaScript, the header on phones with classic scrollbars, 404,
-// sitemap and robots.
+// The three languages with a film of their own (English, Simplified Chinese, Japanese) in depth, at
+// desktop, laptop, tablet and phone widths: metadata, console errors, failed requests, horizontal
+// overflow, the download entry points, the one-minute film (its real length and size, autoplay,
+// play/pause/replay, seeking to the end, the keyboard, poster, fallback, reduced motion, byte
+// ranges and media types of every file; its narration: muted by itself, the sound button, the
+// first time from the beginning, a mute that holds, nothing audible starting by itself, refused or
+// interrupted play()), the watch page (the browser's own controls with sound, seeking, the MP4
+// downloads), the scroll story and finale, the language menu, the details page with checksum copy,
+// the agent setup under the panel and on the details page (the skill link, the request to copy by
+// mouse or keyboard, the clipboard fallback, phones, without JavaScript), the page without
+// JavaScript. All 16 website languages: home, details and watch in the language and its direction
+// (Arabic right to left), metadata and Open Graph card, the menu and footer linking every page to the
+// same page in each language, no overflow and a one-line header from 1440 to 320 px, the hero's film
+// (the one its subtitles go with) with its subtitles and audible narration, the watch page's band
+// master with its subtitles and sound, and its captioned MP4s and subtitle file as downloads
+// (attachment, name, ranges, media type; saved by the browser, on phones too). Then which
+// subtitles a page starts with: a website-language switch always brings that language's own
+// (over an old choice, Off or ?cc=), a choice holds within its website language, ?cc= in the
+// address; switches between films on real, delayed media (time, pause, speed, seeks); 404, sitemap
+// and robots.
 import { chromium } from 'playwright';
+import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdir, readFile, stat } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+// The site's own Pages Function for /media/ (byte ranges, downloads): the local server runs it too.
+import { onRequest as mediaFunction } from '../functions/media/[[path]].js';
 
 const config = JSON.parse(await readFile(new URL('../site.config.json', import.meta.url), 'utf8'));
 const SITE = (process.env.SITE_URL || config.siteUrl).replace(/\/?$/, '/');
@@ -53,7 +64,7 @@ const LOCALES = [
     lang: 'zh-CN',
     og: 'zh_CN',
     name: '简体中文',
-    short: '中文',
+    short: '简体',
     title: /给 Agent\s*一块屏幕/,
     caption: '模拟演示，并非 Agent 实际工作的录像。实体屏关闭后的运行尚待实机验证。',
     minute: '1 分钟',
@@ -93,6 +104,34 @@ const captionIndex = JSON.parse(await readFile(new URL('../captions/index.json',
 const captionTiming = JSON.parse(await readFile(new URL('../captions/timing.json', import.meta.url), 'utf8'));
 const captionText = {};
 for (const tag of captionIndex.order) captionText[tag] = JSON.parse(await readFile(new URL(`../captions/${tag}.json`, import.meta.url), 'utf8'));
+// All 16 website languages, the subtitle languages (captions/index.json): each one's Open Graph
+// locale, its name in the menu (in full and short), its home page's headline, and the note under the
+// hero film that names its narration (the English one, except for both Chinese).
+const SITE_TABLE = {
+  en: ['en_US', 'English', 'EN', /A screen for your agents/, 'English narration.'],
+  'zh-cn': ['zh_CN', '简体中文', '简体', /给 Agent\s*一块屏幕/, '中文旁白。'],
+  'zh-tw': ['zh_TW', '繁體中文', '繁體', /給 Agent\s*一塊螢幕/, '中文旁白。'],
+  ja: ['ja_JP', '日本語', '日本語', /エージェントに、\s*専用の画面を。/, '英語ナレーション付き。'],
+  ko: ['ko_KR', '한국어', '한국어', /에이전트에게, 전용 화면을/, '영어 내레이션.'],
+  es: ['es_ES', 'Español', 'ES', /Una pantalla para tus agentes/, 'Narración en inglés.'],
+  fr: ['fr_FR', 'Français', 'FR', /Un écran pour vos agents/, 'Narration en anglais.'],
+  de: ['de_DE', 'Deutsch', 'DE', /Ein Bildschirm für deine Agenten/, 'Englische Sprecherstimme.'],
+  it: ['it_IT', 'Italiano', 'IT', /Uno schermo per i tuoi agenti/, 'Narrazione in inglese.'],
+  'pt-br': ['pt_BR', 'Português (Brasil)', 'PT', /Uma tela para os seus agentes/, 'Narração em inglês.'],
+  nl: ['nl_NL', 'Nederlands', 'NL', /Een scherm voor je agents/, 'Engelse voice-over.'],
+  pl: ['pl_PL', 'Polski', 'PL', /Ekran dla twoich agentów/, 'Narracja po angielsku.'],
+  tr: ['tr_TR', 'Türkçe', 'TR', /Ajanlarınız için bir ekran/, 'İngilizce anlatım.'],
+  ar: ['ar_AR', 'العربية', 'عربي', /شاشة لوكلائك/, 'تعليق صوتي بالإنجليزية.'],
+  hi: ['hi_IN', 'हिन्दी', 'हिन्दी', /आपके एजेंट्स के लिए एक स्क्रीन/, 'अंग्रेज़ी वॉइसओवर।'],
+  id: ['id_ID', 'Bahasa Indonesia', 'ID', /Layar untuk agen Anda/, 'Narasi bahasa Inggris.'],
+};
+const SITE_LOCALES = captionIndex.order.map((tag) => {
+  const key = tag.toLowerCase();
+  const [og, name, short, title, narrationNote] = SITE_TABLE[key];
+  const { dir, visual, family } = captionIndex.locales[tag];
+  return { key, tag, lang: tag, path: key === 'en' ? '' : `${key}/`, dir, visual, family, og, name, short, title, narrationNote };
+});
+const siteLocale = (key) => SITE_LOCALES.find((l) => l.key === key);
 /** The subtitle a language shows at a moment of its film (null between cues). */
 const cueAt = (tag, t) => {
   const { family, cues } = captionText[tag];
@@ -112,8 +151,8 @@ const VIEWPORTS = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'small', width: 320, height: 640 },
 ];
-// hreflang alternates every page should list: one per locale plus x-default (English).
-const alternatesFor = (route) => [...LOCALES.map((l) => `${l.lang} ${SITE}${l.path}${route}`), `x-default ${SITE}${route}`].sort();
+// hreflang alternates every page should list: one per website language plus x-default (English).
+const alternatesFor = (route) => [...SITE_LOCALES.map((l) => `${l.lang} ${SITE}${l.path}${route}`), `x-default ${SITE}${route}`].sort();
 
 let server;
 let base = process.env.BASE_URL;
@@ -147,13 +186,13 @@ if (!base) {
     try {
       if ((await stat(file)).isDirectory()) file = join(file, 'index.html');
       const body = await readFile(file);
-      const headers = { 'Content-Type': types[extname(file)] ?? 'application/octet-stream', 'Accept-Ranges': 'bytes' };
-      const range = /bytes=(\d*)-(\d*)/.exec(req.headers.range ?? '');
-      if (range) {
-        const start = range[1] ? Number(range[1]) : body.length - Number(range[2]);
-        const end = range[1] && range[2] ? Math.min(Number(range[2]), body.length - 1) : body.length - 1;
-        res.writeHead(206, { ...headers, 'Content-Range': `bytes ${start}-${end}/${body.length}` });
-        return res.end(body.subarray(start, end + 1));
+      const headers = { 'Content-Type': types[extname(file)] ?? 'application/octet-stream', 'Content-Length': String(body.length) };
+      // Media goes through the site's own Pages Function, as on Cloudflare: byte ranges, downloads.
+      if (url.pathname.startsWith(`${prefix}media/`)) {
+        const request = new Request(`http://x${req.url}`, { method: req.method, headers: req.headers.range ? { Range: req.headers.range } : {} });
+        const answer = await mediaFunction({ request, next: async () => new Response(body, { status: 200, headers }) });
+        res.writeHead(answer.status, Object.fromEntries(answer.headers));
+        return res.end(Buffer.from(await answer.arrayBuffer()));
       }
       res.writeHead(200, headers);
       res.end(body);
@@ -274,6 +313,39 @@ const box = (page, selector) =>
     });
 const inside = (a, b) => a.x >= b.x - 1 && a.y >= b.y - 1 && a.x + a.w <= b.x + b.w + 1 && a.y + a.h <= b.y + b.h + 1;
 
+/** The subtitle choice this browser keeps: the website language it was made on, and the choice. */
+const savedCaption = (page) =>
+  page.evaluate(() => {
+    const raw = localStorage.getItem('yomado.captions');
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw;
+    }
+  });
+/** A media file's download address, as the pages write it. */
+const downloadPath = (path) => `${new URL(base).pathname}media/${path}?download`;
+/**
+ * A download address answers as an attachment under the file's name, with the file's media type,
+ * also for a byte range; the same file without ?download still plays inline. Returns its size.
+ */
+async function assertDownload(page, href, name, type) {
+  const url = new URL(href, base).href;
+  const whole = await page.request.fetch(url, { method: 'HEAD' });
+  assert.equal(whole.status(), 200, href);
+  assert.equal(whole.headers()['content-type'].split(';')[0], type, `${href} type`);
+  assert.equal(whole.headers()['content-disposition'], `attachment; filename="${name}"`, `${href} disposition`);
+  const range = await page.request.get(url, { headers: { Range: 'bytes=0-1' } });
+  assert.equal(range.status(), 206, `${href} range`);
+  assert.equal(range.headers()['content-disposition'], `attachment; filename="${name}"`, `${href} range disposition`);
+  const size = Number(/^bytes 0-1\/(\d+)$/.exec(range.headers()['content-range'] ?? '')?.[1]);
+  assert.ok(size > 1000, `${href} content-range ${range.headers()['content-range']}`);
+  const plain = await page.request.get(url.replace(/\?download$/, ''), { headers: { Range: 'bytes=0-1' } });
+  assert.equal(plain.status(), 206, `${href} without ?download`);
+  assert.equal(plain.headers()['content-disposition'], undefined, `${href} without ?download plays inline`);
+  return size;
+}
+
 for (const locale of LOCALES) {
   await check(`${locale.lang}: metadata and structured data`, async () => {
     const { context, page, errors } = await open(locale.path);
@@ -288,7 +360,7 @@ for (const locale of LOCALES) {
     assert.equal(await page.getAttribute('meta[property="og:url"]', 'content'), SITE + locale.path);
     assert.equal(await page.getAttribute('meta[property="og:locale"]', 'content'), locale.og);
     const ogAlternates = await page.$$eval('meta[property="og:locale:alternate"]', (els) => els.map((e) => e.content));
-    assert.deepEqual(ogAlternates.sort(), LOCALES.filter((l) => l !== locale).map((l) => l.og).sort());
+    assert.deepEqual(ogAlternates.sort(), SITE_LOCALES.filter((l) => l.key !== locale.key).map((l) => l.og).sort());
     assert.equal(await page.getAttribute('meta[property="og:image"]', 'content'), `${SITE}og/${locale.key}.png`);
     assert.equal(await page.getAttribute('meta[name="twitter:card"]', 'content'), 'summary_large_image');
     const ld = JSON.parse(await page.locator('script[type="application/ld+json"]').innerText());
@@ -597,11 +669,9 @@ for (const locale of LOCALES) {
     await page.waitForFunction(() => document.querySelector('[data-watch-video]').ended, null, { timeout: 15000 });
     for (const layout of ['wide', 'tall']) {
       const link = page.locator(`[data-mp4="${layout}"]`);
-      assert.equal(await link.getAttribute('href'), `${new URL(base).pathname}media/captioned/yomado-film-${locale.pageCaption}-${layout}-${CV}.mp4`);
+      assert.equal(await link.getAttribute('href'), downloadPath(`captioned/yomado-film-${locale.pageCaption}-${layout}-${CV}.mp4`));
       assert.match(await link.innerText(), layout === 'wide' ? /1920 × 1080/ : /1080 × 1350/);
-      const response = await page.request.get(new URL(await link.getAttribute('href'), base).href);
-      assert.equal(response.status(), 200);
-      assert.equal(response.headers()['content-type'], 'video/mp4');
+      await assertDownload(page, await link.getAttribute('href'), `yomado-film-${locale.pageCaption}-${layout}-${CV}.mp4`, 'video/mp4');
     }
     assert.equal(await page.getAttribute('a[data-download="watch"]', 'href'), RELEASE.url);
     assert.deepEqual(errors, []);
@@ -682,15 +752,16 @@ for (const locale of LOCALES) {
     for (const route of ROUTES) {
       // A place on each page: the download on home, the checksum on details, the film's page itself.
       const hash = { '': '#download', 'details/': '#verify', 'watch/': '#main' }[route];
-      for (const target of LOCALES.filter((l) => l !== locale)) {
+      // The other two languages with a film of their own, and two of the others (one right to left).
+      for (const target of SITE_LOCALES.filter((l) => l.key !== locale.key && ['en', 'zh-cn', 'ja', 'zh-tw', 'ar'].includes(l.key))) {
         const { context, page, errors } = await open(`${locale.path}${route}${hash}`);
         const menu = page.locator('header [data-lang-menu]');
         assert.ok((await menu.locator('summary').innerText()).includes(locale.short), 'the bar shows the current language');
         await menu.locator('summary').click();
         const items = await menu.locator('a[data-lang-switch]').evaluateAll((els) => els.map((e) => [e.textContent.trim(), e.getAttribute('hreflang'), e.getAttribute('aria-current')]));
-        assert.deepEqual(items, LOCALES.map((l) => [l.name, l.lang, l === locale ? 'page' : null]), 'all three, by their own names, the current one marked');
+        assert.deepEqual(items, SITE_LOCALES.map((l) => [l.name, l.lang, l.key === locale.key ? 'page' : null]), 'all 16, by their own names, the current one marked');
         const footer = await page.$$eval('footer [data-lang-switch]', (els) => els.map((e) => [e.textContent.trim(), e.getAttribute('aria-current')]));
-        assert.deepEqual(footer, LOCALES.map((l) => [l.name, l === locale ? 'page' : null]), 'the footer lists all three too');
+        assert.deepEqual(footer, SITE_LOCALES.map((l) => [l.name, l.key === locale.key ? 'page' : null]), 'the footer lists all 16 too');
         await menu.locator(`a[hreflang="${target.lang}"]`).click();
         const query = target.key === 'en' && !route ? '?lang=en' : '';
         await page.waitForURL((url) => url.href === `${base}${target.path}${route}${query}${hash}`);
@@ -849,7 +920,7 @@ for (const locale of LOCALES) {
     assert.deepEqual(errors, []);
     await context.close();
     // The language menu keeps the reader at this section.
-    const target = LOCALES.find((l) => l !== locale);
+    const target = SITE_LOCALES.find((l) => l.key !== locale.key);
     const there = await open(`${locale.path}details/#agent-setup`);
     await there.page.locator('header [data-lang-menu] summary').click();
     await there.page.locator(`header [data-lang-menu] a[hreflang="${target.lang}"]`).click();
@@ -884,6 +955,137 @@ for (const locale of LOCALES) {
     for (const act of await page.locator('[data-act]').all()) assert.ok(await act.isVisible(), 'every act is shown');
     assert.ok(await page.locator('.story .still img').isVisible(), 'a still stands in for the scene');
     assert.ok(await page.locator('a[data-download="finale"]').isVisible());
+    await context.close();
+  });
+}
+
+// All 16 website languages: every page in the language, its film and subtitles, its downloads.
+for (const locale of SITE_LOCALES) {
+  await check(`${locale.lang}: home, details and watch in the language (${locale.dir}), with metadata and links to the same page in each language`, async () => {
+    for (const route of ROUTES) {
+      const { context, page, errors } = await open(`${locale.path}${route}`, { reducedMotion: 'reduce' });
+      assert.equal(await page.getAttribute('html', 'lang'), locale.lang);
+      assert.equal(await page.getAttribute('html', 'dir'), locale.dir);
+      assert.match(await page.title(), /yomado/);
+      assert.equal(await page.locator('h1').count(), 1);
+      if (!route) assert.match(await page.locator('h1').innerText(), locale.title);
+      assert.ok((await page.getAttribute('meta[name=description]', 'content')).length > 40, 'description');
+      assert.equal(await page.getAttribute('link[rel=canonical]', 'href'), `${SITE}${locale.path}${route}`);
+      const alternates = await page.$$eval('link[rel=alternate][hreflang]', (els) => els.map((e) => `${e.hreflang} ${e.href}`));
+      assert.deepEqual(alternates.sort(), alternatesFor(route), 'hreflang for all 16 and x-default');
+      assert.equal(await page.getAttribute('meta[property="og:locale"]', 'content'), locale.og);
+      assert.equal(await page.getAttribute('meta[property="og:image"]', 'content'), `${SITE}og/${locale.key}.png`);
+      assert.equal((await page.request.get(`${base}og/${locale.key}.png`)).status(), 200, 'its Open Graph card');
+      assert.ok((await page.getAttribute('meta[property="og:image:alt"]', 'content')).length > 5, 'og:image:alt');
+      assert.equal(JSON.parse(await page.locator('script[type="application/ld+json"]').innerText()).softwareVersion, RELEASE.version);
+      // The menu and the footer lead to this same page in every language (the English home with ?lang=en).
+      for (const where of ['header [data-lang-menu]', 'footer']) {
+        const links = await page.$$eval(`${where} a[data-lang-switch]`, (els) => els.map((e) => [e.getAttribute('hreflang'), new URL(e.href).pathname + new URL(e.href).search]));
+        const expected = SITE_LOCALES.map((l) => [l.lang, `${new URL(base).pathname}${l.path}${route}${l.key === 'en' && !route ? '?lang=en' : ''}`]);
+        assert.deepEqual(links, expected, `${where} keeps the page`);
+      }
+      assert.ok((await page.locator('header [data-lang-menu] summary').innerText()).includes(locale.short), 'the bar names the language');
+      for (const href of await page.$$eval('a[data-download]', (els) => els.map((e) => e.href))) assert.equal(href, RELEASE.url);
+      if (route === 'details/') {
+        assert.equal((await page.locator('#sha256').innerText()).trim(), RELEASE.sha256, 'the checksum');
+        assert.equal(await page.locator(`.details a[href="${SKILL_URL}"]`).count() >= 1, true, 'the skill');
+      }
+      assert.deepEqual(errors, []);
+      await context.close();
+    }
+  });
+
+  await check(`${locale.lang}: no overflow from 1440 to 320 px, and the download and film in the first screen`, async () => {
+    for (const [route, viewports] of [
+      ['', [VIEWPORTS[0], VIEWPORTS[3], VIEWPORTS[4]]],
+      ['watch/', [VIEWPORTS[3], VIEWPORTS[4]]],
+      ['details/', [VIEWPORTS[4]]],
+    ]) {
+      for (const viewport of viewports) {
+        const { context, page, errors } = await open(`${locale.path}${route}`, { viewport, reducedMotion: 'reduce' });
+        await loadAllImages(page);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        assert.ok(overflow <= 0, `${route || 'home'} @${viewport.width}: horizontal overflow ${overflow}px`);
+        if (!route) {
+          const at = await page.locator('a[data-download="hero"]').boundingBox();
+          assert.ok(at.y + at.height <= viewport.height, `@${viewport.width}: hero download at ${Math.round(at.y)}px`);
+          assert.ok((await box(page, '[data-film] video')).y < viewport.height, `@${viewport.width}: the film starts in the first screen`);
+        }
+        if (route === 'watch/') {
+          // The downloads: one per line on phones, inside the screen, big enough to tap.
+          for (const file of await page.$$eval('.file-list a', (els) => els.map((e) => e.getBoundingClientRect().toJSON()))) {
+            assert.ok(file.left >= 0 && file.right <= viewport.width && file.height >= 44, `@${viewport.width}: a download button ${JSON.stringify(file)}`);
+          }
+        }
+        assert.deepEqual(errors, []);
+        await context.close();
+      }
+    }
+  });
+
+  await check(`${locale.lang}: the hero plays the ${locale.visual} film muted with ${locale.tag} subtitles under it, and its narration when asked`, async () => {
+    const { context, page, errors } = await open(locale.path);
+    const video = page.locator('[data-film] video');
+    assert.equal(await page.locator('[data-film-cc] select').inputValue(), locale.tag);
+    assert.match(await video.evaluate((v) => v.poster), new RegExp(`/film-${locale.visual}-wide-poster\\.webp$`));
+    await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 1.5, null, { timeout: 20000 });
+    assert.match(await video.evaluate((v) => v.currentSrc), filmSrc(locale.visual, 'wide'));
+    assert.equal(await video.evaluate((v) => v.muted), true, 'starts muted');
+    assert.ok((await page.locator('[data-film] figcaption').innerText()).startsWith(locale.narrationNote), 'names the narration that plays');
+    await page.waitForFunction(() => document.querySelector('[data-film-subtitle]').textContent.trim().length > 0, null, { timeout: 20000 });
+    const line = await page.evaluate(() => {
+      const s = document.querySelector('[data-film-subtitle]');
+      const f = document.querySelector('[data-film] .frame').getBoundingClientRect();
+      return { text: s.textContent, lang: s.lang, dir: s.dir, under: s.getBoundingClientRect().top >= f.bottom - 0.5, t: document.querySelector('[data-film] video').currentTime };
+    });
+    assert.deepEqual([line.lang, line.dir, line.under], [locale.tag, locale.dir, true]);
+    assert.ok([cueAt(locale.tag, line.t - 0.25), cueAt(locale.tag, line.t), cueAt(locale.tag, line.t + 0.25)].includes(line.text), `"${line.text}" at ${line.t.toFixed(2)} s`);
+    // The sound button says what it does, its visible text within its name; on, the narration is heard.
+    const sound = page.locator('[data-film-sound]');
+    const name = (await sound.getAttribute('aria-label')).toLocaleLowerCase(locale.lang);
+    const text = (await sound.innerText()).trim().toLocaleLowerCase(locale.lang);
+    assert.ok(text && name.includes(text), `"${text}" in "${name}"`);
+    await sound.click();
+    await page.waitForFunction(() => !document.querySelector('[data-film] video').muted && !document.querySelector('[data-film] video').paused, null, { timeout: 10000 });
+    assert.ok(await audioDecoded(page, '[data-film] video'), 'its narration is decoded');
+    const controls = await page.evaluate(() => {
+      const f = document.querySelector('[data-film] .frame').getBoundingClientRect();
+      return [...document.querySelectorAll('[data-film] .controls > :not([hidden])')].every((b) => {
+        const r = b.getBoundingClientRect();
+        return r.left >= f.left && r.right <= f.right;
+      });
+    });
+    assert.ok(controls, 'the buttons sit inside the frame');
+    assert.deepEqual(errors, []);
+    await context.close();
+  });
+
+  await check(`${locale.lang}: the watch page plays the ${locale.visual} band master with sound and ${locale.tag} subtitles, and offers its MP4s as downloads`, async () => {
+    const { context, page, errors } = await open(`${locale.path}watch/`);
+    const video = page.locator('[data-watch-video]');
+    assert.match(await video.evaluate((v) => v.poster), new RegExp(`/film-${locale.visual}-wide-band-poster-${CV}\\.webp$`));
+    assert.equal(await page.locator('[data-watch-cc] select').inputValue(), locale.tag);
+    assert.equal(await video.evaluate((v) => getComputedStyle(v).direction), 'ltr', 'the timeline runs left to right');
+    await video.click();
+    await page.waitForTimeout(600);
+    if (await video.evaluate((v) => v.paused)) await playFrom(video);
+    await page.waitForFunction(() => document.querySelector('[data-watch-video]').currentTime > 0.5, null, { timeout: 15000 });
+    assert.match(await video.evaluate((v) => v.currentSrc), bandSrc(locale.visual, 'wide'));
+    assert.deepEqual(await video.evaluate((v) => [...v.textTracks].filter((t) => t.mode === 'showing').map((t) => t.language)), [locale.tag]);
+    assert.deepEqual(await video.evaluate((v) => [v.muted, v.volume > 0]), [false, true], 'with its sound');
+    assert.ok(await audioDecoded(page, '[data-watch-video]'), 'its audio is decoded');
+    assert.ok((await page.locator('.player figcaption').innerText()).startsWith(locale.narrationNote), 'names the narration');
+    assert.ok((await page.locator('[data-watch-files-label]').innerText()).includes(captionIndex.locales[locale.tag].name), 'the downloads say their subtitles');
+    for (const layout of ['wide', 'tall']) {
+      const link = page.locator(`[data-mp4="${layout}"]`);
+      assert.equal(await link.getAttribute('href'), downloadPath(`captioned/yomado-film-${locale.tag}-${layout}-${CV}.mp4`));
+      assert.equal(await link.getAttribute('download'), '');
+      assert.match(await link.innerText(), layout === 'wide' ? /1920 × 1080/ : /1080 × 1350/);
+      await assertDownload(page, await link.getAttribute('href'), `yomado-film-${locale.tag}-${layout}-${CV}.mp4`, 'video/mp4');
+    }
+    assert.equal(await page.getAttribute('[data-srt]', 'href'), downloadPath(`captions/yomado-film-${locale.tag}-${CV}.srt`));
+    await assertDownload(page, await page.getAttribute('[data-srt]', 'href'), `yomado-film-${locale.tag}-${CV}.srt`, 'application/x-subrip');
+    assert.deepEqual(errors, []);
     await context.close();
   });
 }
@@ -1215,7 +1417,7 @@ await check('switches overlapping other choices while loading: a paused start, t
     const after = await video.evaluate((v) => ({ paused: v.paused, t: v.currentTime }));
     assert.equal(after.paused, true, 'still paused');
     assert.ok(Math.abs(after.t - before) < 0.5, `kept its place (${before.toFixed(2)} → ${after.t.toFixed(2)} s)`);
-    assert.equal(await page.evaluate(() => localStorage.getItem('yomado.captions')), 'zh-TW');
+    assert.deepEqual(await savedCaption(page), { site: 'zh-cn', cc: 'zh-TW' });
     assert.equal(await page.locator('[data-film-narration]').textContent(), '中文旁白。');
     assert.deepEqual(errors, []);
     await context.close();
@@ -1233,7 +1435,7 @@ await check('switches overlapping other choices while loading: a paused start, t
     await waitLanded(page, '[data-film] video', 'film-en-wide-v2');
     await page.waitForTimeout(1000);
     assert.equal(await page.locator('[data-film-subtitle]').isVisible(), false, 'off stands');
-    assert.equal(await page.evaluate(() => localStorage.getItem('yomado.captions')), 'off');
+    assert.deepEqual(await savedCaption(page), { site: 'zh-cn', cc: 'off' });
     assert.equal(await page.locator('[data-film-narration]').textContent(), '英文旁白。');
     assert.equal(await video.evaluate((v) => v.paused), false, 'the muted film plays on');
     assert.deepEqual(errors, []);
@@ -1299,7 +1501,7 @@ await check('switches overlapping other choices while loading: a paused start, t
     await waitLanded(page, '[data-watch-video]', `film-zh-cn-wide-${V}`);
     await page.waitForTimeout(800);
     assert.ok((await video.evaluate((v) => [...v.textTracks].map((t) => t.mode))).every((m) => m !== 'showing'), 'no track shown');
-    assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-zh-cn-wide-${V}\\.mp4$`));
+    assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-zh-cn-wide-${V}\\.mp4\\?download$`));
     assert.equal(await page.locator('[data-srt]').isVisible(), false);
     assert.equal(await page.locator('[data-watch-narration]').textContent(), 'Chinese narration.');
     // Play and pause on the video while the next one loads: the pause stands.
@@ -1335,15 +1537,15 @@ await check('switches overlapping other choices while loading: a paused start, t
     }
     await waitLanded(page, '[data-watch-video]', `film-en-wide-band-${CV}`);
     await page.waitForTimeout(2000);
-    assert.equal(await page.evaluate(() => localStorage.getItem('yomado.captions')), 'fr', 'the last choice is kept, never off');
+    assert.deepEqual(await savedCaption(page), { site: 'en', cc: 'fr' }, 'the last choice is kept, never off');
     assert.deepEqual(await video.evaluate((v) => [...v.textTracks].filter((t) => t.mode === 'showing').map((t) => t.language)), ['fr']);
-    assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`yomado-film-fr-wide-${CV}\\.mp4$`));
+    assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`yomado-film-fr-wide-${CV}\\.mp4\\?download$`));
     await video.evaluate((v) => {
       for (const t of v.textTracks) t.mode = t.language === 'de' ? 'showing' : 'disabled';
     });
     await page.waitForFunction(() => document.querySelector('[data-watch-cc] select').value === 'de', null, { timeout: 5000 });
     await page.waitForTimeout(500);
-    assert.equal(await page.evaluate(() => localStorage.getItem('yomado.captions')), 'de');
+    assert.deepEqual(await savedCaption(page), { site: 'en', cc: 'de' });
     assert.deepEqual(errors, []);
     await context.close();
   }
@@ -1391,44 +1593,55 @@ await check('ended, failed and reduced-motion switches on a phone stay coherent;
   await context.close();
 });
 
-await check('a subtitle choice is kept, wins on every page and on the watch page, and off hides them', async () => {
+await check('a subtitle choice is kept for its website language: on its other pages and after a reload; off hides them', async () => {
   const { context, page, errors } = await open('');
   await page.locator('[data-film-cc] select').selectOption('de');
+  assert.deepEqual(await savedCaption(page), { site: 'en', cc: 'de' });
   await page.reload({ waitUntil: 'load' });
   assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'de');
-  await page.goto(`${base}ja/`, { waitUntil: 'load' });
-  assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'de', 'on the Japanese page too');
-  assert.equal(await page.locator('[data-film] source[src$="film-en-wide-v2.mp4"]').count(), 1, 'with the English film German follows');
-  assert.equal(await page.locator('[data-film-narration]').textContent(), '英語ナレーション付き。');
-  await page.goto(`${base}ja/watch/`, { waitUntil: 'load' });
+  await page.goto(`${base}watch/`, { waitUntil: 'load' });
   await page.waitForFunction(() => /film-en-wide-band/.test(document.querySelector('[data-watch-video]').currentSrc), null, { timeout: 15000 });
-  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'de');
-  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`yomado-film-de-wide-${CV}\\.mp4$`));
+  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'de', 'on the English watch page too');
+  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`yomado-film-de-wide-${CV}\\.mp4\\?download$`));
+  // The Japanese page, opened by its address, starts with Japanese and the Japanese film.
   await page.goto(`${base}ja/`, { waitUntil: 'load' });
+  assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'ja');
+  assert.equal(await page.locator('[data-film] source[src$="film-ja-wide-v2.mp4"]').count(), 1);
+  assert.equal(await page.locator('[data-film-narration]').textContent(), '英語ナレーション付き。');
   await page.locator('[data-film-cc] select').selectOption('off');
   assert.equal(await page.locator('[data-film-subtitle]').isVisible(), false);
   await page.reload({ waitUntil: 'load' });
   assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'off');
   assert.equal(await page.locator('[data-film-subtitle]').isVisible(), false, 'off stays off');
+  await page.goto(`${base}ja/watch/`, { waitUntil: 'load' });
+  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'off', 'and on its watch page');
+  // One choice is kept: English, which no longer has it, starts with its own again.
+  await page.goto(`${base}watch/`, { waitUntil: 'load' });
+  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'en');
   assert.deepEqual(errors, []);
   await context.close();
 });
 
-await check("the browser's language picks the first subtitles", async () => {
-  for (const [path, language, expected] of [
-    ['', 'fr-FR', 'fr'],
-    ['', 'de-DE', 'de'],
-    ['', 'pt-PT', 'pt-BR'],
-    ['', 'ar', 'ar'],
-    ['?lang=en', 'ja-JP', 'en'],
-    ['zh-cn/', 'zh-TW', 'zh-TW'],
-    ['zh-cn/', 'zh-CN', 'zh-CN'],
-    ['ja/', 'fr-FR', 'ja'],
+await check("each website language starts with its own subtitles; the browser's language picks the language only at the root", async () => {
+  for (const [path, language, landed, expected] of [
+    ['', 'fr-FR', 'fr/', 'fr'],
+    ['', 'de-DE', 'de/', 'de'],
+    ['', 'pt-PT', 'pt-br/', 'pt-BR'],
+    ['', 'ar', 'ar/', 'ar'],
+    ['', 'zh-HK', 'zh-tw/', 'zh-TW'],
+    ['?lang=en', 'ja-JP', '?lang=en', 'en'],
+    ['zh-cn/', 'zh-TW', 'zh-cn/', 'zh-CN'],
+    ['ja/', 'fr-FR', 'ja/', 'ja'],
+    ['watch/', 'ko-KR', 'watch/', 'en'],
+    ['ko/watch/', 'en-US', 'ko/watch/', 'ko'],
   ]) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: language });
     const page = await context.newPage();
-    await page.goto(base + path, { waitUntil: 'load' });
-    assert.equal(await page.locator('[data-film-cc] select').inputValue(), expected, `${language} on /${path}`);
+    await page.goto(base + path, { waitUntil: 'commit' });
+    await page.waitForURL(base + landed);
+    await page.waitForLoadState('load');
+    const select = landed.includes('watch/') ? '[data-watch-cc] select' : '[data-film-cc] select';
+    assert.equal(await page.locator(select).inputValue(), expected, `${language} on /${path}`);
     await context.close();
   }
 });
@@ -1490,13 +1703,13 @@ await check("the watch page: subtitles in the band, its menu and the browser's o
   });
   assert.deepEqual(cue, { text: cueAt('zh-CN', 33.4), line: 'auto', snap: true });
   const path = new URL(base).pathname;
-  assert.equal(await page.getAttribute('[data-mp4="wide"]', 'href'), `${path}media/captioned/yomado-film-zh-CN-wide-${CV}.mp4`);
-  assert.equal(await page.getAttribute('[data-srt]', 'href'), `${path}media/captions/yomado-film-zh-CN-${CV}.srt`);
-  for (const href of [await page.getAttribute('[data-srt]', 'href'), `${path}media/captions/yomado-film-zh-CN-${CV}.vtt`]) {
-    const response = await page.request.get(new URL(href, base).href);
-    assert.equal(response.status(), 200, href);
-    if (href.endsWith('.vtt')) assert.match(response.headers()['content-type'], /^text\/vtt/);
-  }
+  assert.equal(await page.getAttribute('[data-mp4="wide"]', 'href'), downloadPath(`captioned/yomado-film-zh-CN-wide-${CV}.mp4`));
+  assert.equal(await page.getAttribute('[data-srt]', 'href'), downloadPath(`captions/yomado-film-zh-CN-${CV}.srt`));
+  await assertDownload(page, await page.getAttribute('[data-srt]', 'href'), `yomado-film-zh-CN-${CV}.srt`, 'application/x-subrip');
+  const vtt = await page.request.get(`${base}media/captions/yomado-film-zh-CN-${CV}.vtt`);
+  assert.equal(vtt.status(), 200);
+  assert.match(vtt.headers()['content-type'], /^text\/vtt/);
+  assert.equal(vtt.headers()['content-disposition'], undefined, 'the track itself is no download');
   if (SHOTS) await page.locator('.player').screenshot({ path: join(SHOTS, 'zh-cn-watch-band.png') });
   // French: the English band master and its tracks, at the same moment, French downloads.
   await page.locator('[data-watch-cc] select').selectOption('fr');
@@ -1506,18 +1719,18 @@ await check("the watch page: subtitles in the band, its menu and the browser's o
   assert.equal((await tracks()).length, 13, 'the English film carries its 13 languages');
   assert.ok(Math.abs((await video.evaluate((v) => v.currentTime)) - 33.4) < 0.5, 'kept its place');
   assert.equal(await page.locator('[data-watch-narration]').textContent(), '英文旁白。');
-  assert.match(await page.getAttribute('[data-mp4="tall"]', 'href'), new RegExp(`yomado-film-fr-tall-${CV}\\.mp4$`));
+  assert.match(await page.getAttribute('[data-mp4="tall"]', 'href'), new RegExp(`yomado-film-fr-tall-${CV}\\.mp4\\?download$`));
   // The browser's own menu: German there is followed and kept.
   await video.evaluate((v) => {
     for (const t of v.textTracks) t.mode = t.language === 'de' ? 'showing' : 'disabled';
   });
   await page.waitForFunction(() => document.querySelector('[data-watch-cc] select').value === 'de', null, { timeout: 5000 });
-  assert.equal(await page.evaluate(() => localStorage.getItem('yomado.captions')), 'de');
+  assert.deepEqual(await savedCaption(page), { site: 'zh-cn', cc: 'de' });
   // Off: the film full size, no track, downloads without subtitles.
   await page.locator('[data-watch-cc] select').selectOption('off');
   await page.waitForFunction(() => /film-en-wide-v2/.test(document.querySelector('[data-watch-video]').currentSrc), null, { timeout: 15000 });
   assert.ok((await tracks()).every((t) => !t.endsWith(':showing')), 'no subtitles shown');
-  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-en-wide-${V}\\.mp4$`));
+  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-en-wide-${V}\\.mp4\\?download$`));
   assert.equal(await page.locator('[data-srt]').isVisible(), false);
   // Full screen with subtitles: the browser's own controls keep the band and the track.
   await page.locator('[data-watch-cc] select').selectOption('en');
@@ -1540,15 +1753,300 @@ await check("the watch page: subtitles in the band, its menu and the browser's o
   await context.close();
 });
 
-await check('without JavaScript the watch page plays its band master with its own subtitles', async () => {
+await check('without JavaScript every watch page plays its band master with its own subtitles and offers its downloads', async () => {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, javaScriptEnabled: false, locale: 'en-US' });
   const page = await context.newPage();
-  for (const locale of LOCALES) {
+  for (const locale of SITE_LOCALES) {
     await page.goto(`${base}${locale.path}watch/`, { waitUntil: 'load' });
-    assert.equal(await page.locator('[data-watch-video] track[default]').getAttribute('srclang'), locale.pageCaption);
-    assert.match(await page.locator('[data-watch-video] source').nth(2).getAttribute('src'), bandSrc(locale.key, 'wide'));
+    assert.equal(await page.locator('[data-watch-video] track[default]').getAttribute('srclang'), locale.tag);
+    assert.match(await page.locator('[data-watch-video] source').nth(2).getAttribute('src'), bandSrc(locale.visual, 'wide'));
     assert.equal(await page.locator('[data-watch-cc]').isVisible(), false, 'the menu needs JavaScript; the browser controls offer the tracks');
+    assert.equal(await page.getAttribute('[data-mp4="tall"]', 'href'), downloadPath(`captioned/yomado-film-${locale.tag}-tall-${CV}.mp4`));
   }
+  await context.close();
+});
+
+/** The watch page shows a website language's own: its subtitles, film, narration and downloads. */
+async function expectWatchOf(page, key) {
+  const l = siteLocale(key);
+  await page.waitForURL((url) => url.pathname === `${new URL(base).pathname}${l.path}watch/` && !url.search);
+  assert.equal(await page.getAttribute('html', 'lang'), l.lang);
+  assert.equal(await page.getAttribute('html', 'dir'), l.dir);
+  await page.waitForFunction(() => document.querySelector('[data-watch-video]').readyState >= 1, null, { timeout: 20000 });
+  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), l.tag, `${key}: its own subtitles`);
+  assert.match(await page.locator('[data-watch-video]').evaluate((v) => v.currentSrc), bandSrc(l.visual, 'wide'), `${key}: the ${l.visual} film`);
+  await page.waitForFunction((tag) => [...document.querySelector('[data-watch-video]').textTracks].some((t) => t.language === tag && t.mode === 'showing'), l.tag, { timeout: 5000 });
+  assert.equal(await page.locator('[data-watch-narration]').textContent(), l.narrationNote, `${key}: its narration`);
+  assert.equal(await page.getAttribute('[data-mp4="tall"]', 'href'), downloadPath(`captioned/yomado-film-${l.tag}-tall-${CV}.mp4`), `${key}: its downloads`);
+}
+/** The home page shows a website language's own: its subtitles under its film, and its narration. */
+async function expectHeroOf(page, key) {
+  const l = siteLocale(key);
+  await page.waitForURL((url) => url.pathname === `${new URL(base).pathname}${l.path}` && (!url.search || url.search === '?lang=en'));
+  assert.equal(await page.locator('[data-film-cc] select').inputValue(), l.tag, `${key}: its own subtitles`);
+  assert.equal(await page.locator(`[data-film] source[src$="film-${l.visual}-wide-${V}.mp4"]`).count(), 1, `${key}: the ${l.visual} film`);
+  assert.equal(await page.locator('[data-film-narration]').textContent(), l.narrationNote, `${key}: its narration`);
+  assert.equal(await page.locator('[data-film-subtitle]').isVisible(), true, `${key}: subtitles on`);
+}
+
+await check('switching the website language from Chinese to Korean, German or Arabic brings its subtitles, film and downloads over an old choice, Off or ?cc=, also after a reload', async () => {
+  // The watch page: French, Off, or French asked for in the address, each time overruled by the switch.
+  for (const [target, before, via] of [
+    ['ko', 'fr', 'header'],
+    ['de', 'off', 'footer'],
+    ['ar', '?cc=fr', 'header'],
+  ]) {
+    const { context, page, errors } = await open(`zh-cn/watch/${before.startsWith('?') ? before : ''}`);
+    const select = page.locator('[data-watch-cc] select');
+    if (before.startsWith('?')) assert.equal(await select.inputValue(), 'fr', 'the address asks for French');
+    else {
+      await select.selectOption(before);
+      await page.waitForTimeout(300);
+      assert.deepEqual(await savedCaption(page), { site: 'zh-cn', cc: before });
+    }
+    if (via === 'header') {
+      await page.locator('header [data-lang-menu] summary').click();
+      await page.locator(`header [data-lang-menu] a[hreflang="${siteLocale(target).lang}"]`).click();
+    } else await page.locator(`footer [data-lang-switch][hreflang="${siteLocale(target).lang}"]`).click();
+    await expectWatchOf(page, target);
+    assert.equal(await savedCaption(page), null, 'the old choice is gone');
+    await page.reload({ waitUntil: 'load' });
+    await expectWatchOf(page, target);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+  // The home page: the same, from the hero's menu.
+  for (const [target, before] of [
+    ['de', 'fr'],
+    ['ko', 'off'],
+    ['ar', 'ja'],
+  ]) {
+    const { context, page, errors } = await open('zh-cn/', { reducedMotion: 'reduce' });
+    await page.locator('[data-film-cc] select').selectOption(before);
+    await page.locator('header [data-lang-menu] summary').click();
+    await page.locator(`header [data-lang-menu] a[hreflang="${siteLocale(target).lang}"]`).click();
+    await expectHeroOf(page, target);
+    await page.reload({ waitUntil: 'load' });
+    await expectHeroOf(page, target);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
+await check('French chosen on the Chinese watch page gives way to Japanese picked in the footer', async () => {
+  const { context, page, errors } = await open('zh-cn/watch/');
+  await page.locator('[data-watch-cc] select').selectOption('fr');
+  await watchLanded(page, bandSrc('en', 'wide'));
+  await page.locator('footer [data-lang-switch][hreflang="ja"]').click();
+  await expectWatchOf(page, 'ja');
+  assert.equal(await page.evaluate(() => localStorage.getItem('yomado.lang')), 'ja', 'the website language is remembered');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await check('a subtitle choice holds on its own website language, across its pages and reloads; other languages start with their own', async () => {
+  const { context, page, errors } = await open('ko/watch/');
+  await page.locator('[data-watch-cc] select').selectOption('off');
+  await page.waitForTimeout(300);
+  assert.deepEqual(await savedCaption(page), { site: 'ko', cc: 'off' });
+  await page.reload({ waitUntil: 'load' });
+  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'off', 'off after a reload');
+  await page.goto(`${base}ko/`, { waitUntil: 'load' });
+  assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'off', 'and on its home page');
+  assert.equal(await page.locator('[data-film-subtitle]').isVisible(), false);
+  await page.locator('[data-film-cc] select').selectOption('fr');
+  await page.goto(`${base}ko/watch/`, { waitUntil: 'load' });
+  await watchLanded(page, bandSrc('en', 'wide'));
+  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'fr', 'French on its watch page');
+  // Another language opened by its address: its own subtitles; the Korean choice waits for Korean.
+  await page.goto(`${base}de/watch/`, { waitUntil: 'load' });
+  await expectWatchOf(page, 'de');
+  await page.goto(`${base}ko/watch/`, { waitUntil: 'load' });
+  await watchLanded(page, bandSrc('en', 'wide'));
+  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'fr', 'back on Korean, its choice');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await check('?cc= asks a page for subtitles; a choice made there replaces it; a choice kept by the previous site is dropped', async () => {
+  const { context, page, errors } = await open('de/watch/?cc=fr');
+  await watchLanded(page, bandSrc('en', 'wide'));
+  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'fr');
+  assert.equal(await savedCaption(page), null, 'asking is not choosing');
+  await page.locator('[data-watch-cc] select').selectOption('ja');
+  await page.waitForFunction(() => !location.search.includes('cc='), null, { timeout: 5000 });
+  assert.deepEqual(await savedCaption(page), { site: 'de', cc: 'ja' });
+  await page.reload({ waitUntil: 'load' });
+  await watchLanded(page, bandSrc('ja', 'wide'));
+  assert.equal(await page.locator('[data-watch-cc] select').inputValue(), 'ja', 'the choice after a reload');
+  // Traditional Chinese asked for on the German home page: the Chinese film and narration.
+  await page.goto(`${base}de/?cc=zh-TW`, { waitUntil: 'load' });
+  assert.equal(await page.locator('[data-film-cc] select').inputValue(), 'zh-TW');
+  await page.waitForFunction(() => /film-zh-cn-(wide|tall)-v2/.test(document.querySelector('[data-film] video source').src), null, { timeout: 15000 });
+  assert.equal(await page.locator('[data-film-narration]').textContent(), 'Chinesische Sprecherstimme.');
+  // Off asked for on the Korean watch page: the film without subtitles, its downloads without them.
+  await page.goto(`${base}ko/watch/?cc=off`, { waitUntil: 'load' });
+  await watchLanded(page, filmSrc('en', 'wide'));
+  assert.match(await page.getAttribute('[data-mp4="wide"]', 'href'), new RegExp(`film-en-wide-${V}\\.mp4\\?download$`));
+  assert.equal(await page.locator('[data-srt]').isVisible(), false);
+  await context.close();
+  // A value kept by the previous version of the site (a bare tag, no language with it).
+  const old = await open('', { reducedMotion: 'reduce' });
+  await old.page.evaluate(() => localStorage.setItem('yomado.captions', 'fr'));
+  await old.page.goto(`${base}es/watch/`, { waitUntil: 'load' });
+  await expectWatchOf(old.page, 'es');
+  assert.equal(await savedCaption(old.page), null, 'dropped');
+  assert.deepEqual(errors, []);
+  assert.deepEqual(old.errors, []);
+  await old.context.close();
+});
+
+await check('on a German watch page, paused at 18 s at 1.5×, zh-TW brings the Chinese film there; with the films delayed a seek to the start stands; it plays with sound', async () => {
+  const { context, page, errors } = await watchAt('de/watch/', 18);
+  const video = page.locator('[data-watch-video]');
+  await video.evaluate((v) => {
+    v.muted = true;
+    v.playbackRate = 1.5;
+  });
+  await page.locator('[data-watch-cc] select').selectOption('zh-TW');
+  await page.waitForFunction(() => /film-zh-cn-wide-band/.test(document.querySelector('[data-watch-video]').currentSrc) && document.querySelector('[data-watch-video]').readyState >= 2, null, { timeout: 20000 });
+  const tw = await watchState(page);
+  assert.ok(Math.abs(tw.t - 18) < 0.3, `kept its place (${tw.t.toFixed(2)} s)`);
+  assert.deepEqual([tw.paused, tw.muted, tw.rate], [true, true, 1.5], 'paused, muted, at 1.5×');
+  assert.equal(await page.locator('[data-watch-narration]').textContent(), 'Chinesische Sprecherstimme.');
+  // Back to German with the films held up, and a seek to the start while it loads: the start stands.
+  await slowBands(page);
+  await page.locator('[data-watch-cc] select').selectOption('de');
+  await page.waitForTimeout(120);
+  assert.equal(await video.evaluate((v) => v.readyState), 0, 'the English film is still loading');
+  await video.evaluate((v) => (v.currentTime = 0));
+  await watchLanded(page, bandSrc('en', 'wide'));
+  await page.waitForTimeout(600);
+  const de = await watchState(page);
+  assert.ok(de.t < 0.3, `the seek to the start stands (${de.t.toFixed(2)} s)`);
+  assert.deepEqual([de.paused, de.rate], [true, 1.5], 'still paused at 1.5×');
+  // Played, with its sound: the English narration is decoded, at that speed.
+  await video.evaluate((v) => (v.muted = false));
+  await playFrom(video);
+  assert.ok(await audioDecoded(page, '[data-watch-video]'), 'its audio is decoded');
+  assert.equal(await video.evaluate((v) => v.playbackRate), 1.5);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await check('on the Korean home page the hero switches to the Chinese film where it was, and plays its Chinese narration when asked', async () => {
+  const { context, page, errors } = await open('ko/');
+  const video = page.locator('[data-film] video');
+  await page.waitForFunction(() => document.querySelector('[data-film] video').currentTime > 2, null, { timeout: 20000 });
+  const before = await video.evaluate((v) => v.currentTime);
+  await page.locator('[data-film-cc] select').selectOption('zh-CN');
+  await page.waitForFunction(() => /film-zh-cn-wide-v2/.test(document.querySelector('[data-film] video').currentSrc) && document.querySelector('[data-film] video').readyState >= 2, null, { timeout: 20000 });
+  const t = await video.evaluate((v) => v.currentTime);
+  assert.ok(Math.abs(t - before) < 2, `kept its place (${before.toFixed(2)} → ${t.toFixed(2)} s)`);
+  assert.equal(await page.locator('[data-film-narration]').textContent(), '중국어 내레이션.');
+  await page.locator('[data-film-sound]').click();
+  await page.waitForFunction(() => !document.querySelector('[data-film] video').muted && !document.querySelector('[data-film] video').paused, null, { timeout: 10000 });
+  assert.ok(await audioDecoded(page, '[data-film] video'), 'the Chinese narration is decoded');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+await check('the captioned films download as files, named, on desktop and phones: English, Chinese, Arabic, landscape and portrait', async () => {
+  const sha = (buf) => createHash('sha256').update(buf).digest('hex');
+  for (const [path, tag, phone] of [
+    ['watch/', 'en', false],
+    ['zh-cn/watch/', 'zh-CN', true],
+    ['zh-tw/watch/', 'zh-TW', false],
+    ['ar/watch/', 'ar', true],
+  ]) {
+    const context = await browser.newContext({
+      acceptDownloads: true,
+      locale: 'en-US',
+      ...(phone ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } }),
+    });
+    const page = await context.newPage();
+    await page.goto(base + path, { waitUntil: 'load' });
+    for (const layout of ['wide', 'tall']) {
+      const name = `yomado-film-${tag}-${layout}-${CV}.mp4`;
+      const link = page.locator(`[data-mp4="${layout}"]`);
+      await link.scrollIntoViewIfNeeded();
+      const [download] = await Promise.all([page.waitForEvent('download', { timeout: 120000 }), phone ? link.tap() : link.click()]);
+      assert.equal(download.suggestedFilename(), name, `${path} ${layout}`);
+      assert.equal(await download.failure(), null);
+      const file = await readFile(await download.path());
+      assert.equal(file.subarray(4, 8).toString('latin1'), 'ftyp', `${name} is an MP4`);
+      const played = await page.request.get(`${base}media/captioned/${name}`);
+      assert.equal(sha(file), sha(await played.body()), `${name}: the same file the address plays`);
+    }
+    assert.equal(page.url(), base + path, 'the page stays');
+    // Opened by its address, the download saves the file too; the plain address plays in the browser.
+    const direct = await context.newPage();
+    const [saved] = await Promise.all([direct.waitForEvent('download', { timeout: 120000 }), direct.goto(`${base}media/captioned/yomado-film-${tag}-tall-${CV}.mp4?download`).catch(() => {})]);
+    assert.equal(saved.suggestedFilename(), `yomado-film-${tag}-tall-${CV}.mp4`);
+    const inline = await context.newPage();
+    let started = false;
+    inline.on('download', () => (started = true));
+    await inline.goto(`${base}media/captioned/yomado-film-${tag}-tall-${CV}.mp4`, { waitUntil: 'load' });
+    await inline.waitForTimeout(800);
+    assert.equal(started, false, 'the plain address does not download');
+    assert.equal(await inline.locator('video').count(), 1, 'it plays');
+    await context.close();
+  }
+});
+
+await check('Arabic reads right to left: the layout mirrors; versions, sizes, code and the video timeline keep their own order', async () => {
+  const { context, page, errors } = await open('ar/', { reducedMotion: 'reduce' });
+  assert.ok((await box(page, 'header .home')).x > (await box(page, 'header nav')).x, 'the brand on the right, the menu on the left');
+  const frame = await box(page, '[data-film] .frame');
+  const controls = await box(page, '[data-film] .controls');
+  assert.ok(controls.x + controls.w < frame.x + frame.w / 2, 'the film controls at the start of the line, on the left');
+  // Inside a text: "إصدار تجريبي · v0.3.3 · Apple Silicon" reads from the right in that order.
+  const at = (selector, needles) =>
+    page.locator(selector).first().evaluate((el, needles) => {
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const out = {};
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        for (const needle of needles) {
+          const i = node.data.indexOf(needle);
+          if (i < 0 || needle in out) continue;
+          const r = document.createRange();
+          r.setStart(node, i);
+          r.setEnd(node, i + needle.length);
+          out[needle] = r.getBoundingClientRect().x;
+        }
+      }
+      return out;
+    }, needles);
+  const meta = await at('.hero .fine', ['إصدار', `v${RELEASE.version}`, 'Apple Silicon']);
+  assert.ok(meta['إصدار'] > meta[`v${RELEASE.version}`] && meta[`v${RELEASE.version}`] > meta['Apple Silicon'], `in order from the right: ${JSON.stringify(meta)}`);
+  await page.locator('header [data-lang-menu] summary').click();
+  const item = await box(page, 'header [data-lang-menu] a[hreflang="ar"]');
+  const mark = await box(page, 'header [data-lang-menu] a[hreflang="ar"] .check');
+  assert.ok(mark.x < item.x + item.w / 2, 'the check mark at the end of the line, on the left');
+  await page.goto(`${base}ar/watch/`, { waitUntil: 'load' });
+  assert.equal(await page.locator('[data-watch-video]').evaluate((v) => getComputedStyle(v).direction), 'ltr', 'the video timeline runs left to right');
+  const [wide, tall, srt] = await Promise.all(['[data-mp4="wide"]', '[data-mp4="tall"]', '[data-srt]'].map((s) => box(page, s)));
+  assert.ok(wide.x > tall.x && tall.x > srt.x, 'the downloads from the right: landscape, portrait, subtitles');
+  const size = await at('[data-mp4="wide"] [data-meta]', ['MP4', '1920 × 1080', 'ميغابايت']);
+  assert.ok(size.MP4 > size['ميغابايت'] && size.MP4 < size['1920 × 1080'], `MP4 · 1920 × 1080 · 1:00 reads as one, before the size: ${JSON.stringify(size)}`);
+  await page.goto(`${base}ar/details/`, { waitUntil: 'load' });
+  const code = await page.locator('#agent-setup .steps code').first().evaluate((el) => {
+    const s = getComputedStyle(el);
+    return [s.direction, s.unicodeBidi, el.textContent];
+  });
+  assert.deepEqual(code, ['ltr', 'isolate', '$CODEX_HOME/skills'], 'code reads left to right');
+  const path = await at('#agent-setup .steps', ['$CODEX_HOME', '/skills']);
+  assert.ok(path['$CODEX_HOME'] < path['/skills'], 'inside it, left to right');
+  assert.equal(await page.locator('pre').evaluate((el) => getComputedStyle(el).direction), 'ltr', 'the command too');
+  assert.equal(await page.locator('#sha256').evaluate((el) => getComputedStyle(el).direction), 'ltr', 'and the checksum');
+  const name = await at('.details .head .fine', [RELEASE.fileName, 'ميغابايت']);
+  assert.ok(name[RELEASE.fileName] > name['ميغابايت'], 'the file name, then its size, from the right');
+  assert.equal(await page.locator('.links .more').first().evaluate((el) => getComputedStyle(el, '::after').content), '"‹"', 'the arrows point the way it reads');
+  if (SHOTS) {
+    await mkdir(SHOTS, { recursive: true });
+    await page.screenshot({ path: join(SHOTS, 'ar-details.png'), fullPage: true });
+  }
+  assert.deepEqual(errors, []);
   await context.close();
 });
 
@@ -1661,10 +2159,10 @@ await check('a refused or interrupted play() never undoes a pause or a choice', 
 
 // Classic scrollbars (desktop Chrome on Linux and Windows) take ~15 px from phone-width layouts.
 const scrollbars = await chromium.launch({ ignoreDefaultArgs: ['--hide-scrollbars'] });
-for (const locale of LOCALES) {
+for (const locale of SITE_LOCALES) {
   await check(`${locale.lang}: header stays on one line with a classic scrollbar at 320–430 px`, async () => {
-    for (const width of [320, 375, 390, 430]) {
-      const context = await scrollbars.newContext({ viewport: { width, height: 844 }, locale: 'en-US' });
+    for (const [width, height] of [[320, 568], [375, 667], [390, 844], [430, 932]]) {
+      const context = await scrollbars.newContext({ viewport: { width, height }, locale: 'en-US' });
       const page = await context.newPage();
       await page.goto(base + locale.path, { waitUntil: 'load' });
       await page.evaluate(() => document.fonts.ready);
@@ -1684,9 +2182,14 @@ for (const locale of LOCALES) {
       await page.locator('header [data-lang-menu] summary').click();
       const menu = await page.locator('header [data-lang-menu] .menu').evaluate((el) => {
         const r = el.getBoundingClientRect();
-        return { left: r.left, right: r.right, room: document.documentElement.clientWidth };
+        return { left: r.left, right: r.right, bottom: r.bottom, room: document.documentElement.clientWidth, height: innerHeight };
       });
       assert.ok(menu.left >= 0 && menu.right <= menu.room, `@${width}: the open menu leaves the screen (${Math.round(menu.left)}–${Math.round(menu.right)})`);
+      assert.ok(menu.bottom <= menu.height, `@${width}: the open menu runs below the screen (${Math.round(menu.bottom)} > ${menu.height})`);
+      // All 16 can be reached: the last one scrolls into the menu and is visible there.
+      const last = page.locator('header [data-lang-menu] a[data-lang-switch]').last();
+      await last.scrollIntoViewIfNeeded();
+      assert.ok(await last.isVisible(), `@${width}: the last language can be reached`);
       await context.close();
     }
   });
@@ -1698,10 +2201,14 @@ await check('404 page, sitemap and robots.txt', async () => {
   assert.match(await page.locator('h1').innerText(), /dark/);
   assert.equal(await page.getAttribute('meta[name=robots]', 'content'), 'noindex, nofollow');
   const sitemap = await (await page.request.get(`${base}sitemap.xml`)).text();
-  for (const loc of LOCALES.flatMap((l) => ROUTES.map((r) => `${SITE}${l.path}${r}`))) {
+  for (const loc of SITE_LOCALES.flatMap((l) => ROUTES.map((r) => `${SITE}${l.path}${r}`))) {
     assert.ok(sitemap.includes(`<loc>${loc}</loc>`), `sitemap ${loc}`);
   }
-  for (const l of LOCALES) assert.ok(sitemap.includes(`hreflang="${l.lang}"`), `sitemap hreflang ${l.lang}`);
+  assert.equal((sitemap.match(/<loc>/g) ?? []).length, SITE_LOCALES.length * ROUTES.length, '48 pages');
+  for (const l of SITE_LOCALES) assert.ok(sitemap.includes(`hreflang="${l.lang}"`), `sitemap hreflang ${l.lang}`);
+  // Every other language's way home, in its own words, on the 404 page.
+  const homes = await page.$$eval('.not-found a[hreflang]', (els) => els.map((e) => e.getAttribute('hreflang')));
+  assert.deepEqual(homes, SITE_LOCALES.filter((l) => l.key !== 'en').map((l) => l.lang));
   // An unknown hash is dropped on a language switch rather than carried to the other page.
   const stray = await open('#no-such-section');
   await stray.page.locator('header [data-lang-menu] summary').click();

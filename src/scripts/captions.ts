@@ -1,14 +1,20 @@
 // Subtitles for the film, shared by the hero (src/scripts/film.ts) and the watch page
-// (src/scripts/watch.ts). Which language a visit starts with: ?cc= in the address, else a choice
-// made in the subtitle menu before (kept in this browser), else the page's own language. On the
-// Chinese page a browser that prefers Traditional Chinese gets zh-TW; on the English page the
-// browser's first language picks when it is one of the 16 (a Chinese or Japanese browser on the
-// English page chose English). A language that follows the other narration brings its own film:
-// switching keeps the time, the speed, whether it was playing, and the sound as it was (filmSwitcher).
+// (src/scripts/watch.ts). They follow the website's language. Which subtitles a page starts with:
+//
+//   1. ?cc=<language or off> in the address (an explicit request; not remembered);
+//   2. else a choice made in a subtitle menu while on this same website language (remembered in
+//      this browser, together with that language);
+//   3. else the website language's own subtitles, which bring its film and narration.
+//
+// Picking a website language from the language menu or the footer is a new start: it forgets the
+// subtitle choice and leaves any ?cc= behind (src/scripts/page.ts), so the new language's own
+// subtitles, narration and downloads follow, also after a reload. A language that follows the
+// other narration brings its own film: switching keeps the time, the speed, whether it was
+// playing, and the sound as it was (filmSwitcher).
 import type { FilmConfig } from '../lib/captions';
+import { CAPTION_KEY } from '../lib/language';
 
 export type { FilmConfig };
-export const CAPTION_KEY = 'yomado.captions';
 
 export const readConfig = (root: ParentNode): FilmConfig | null => {
   const el = root.querySelector<HTMLScriptElement>('[data-film-config]');
@@ -19,53 +25,60 @@ export const readConfig = (root: ParentNode): FilmConfig | null => {
   }
 };
 
-/** A browser language tag as one of the 16 subtitle languages, if it is one. */
+/** A language tag (from ?cc=) as one of the 16 subtitle languages, if it is one. */
 export function captionFor(language: string, order: string[]): string | null {
   const l = language.toLowerCase();
-  if (/^zh-(tw|hk|mo)\b|^zh-hant/.test(l)) return 'zh-TW';
+  if (/^zh-(hant|tw|hk|mo)\b/.test(l)) return 'zh-TW';
   if (l.startsWith('zh')) return 'zh-CN';
   if (l.startsWith('pt')) return 'pt-BR';
   const primary = l.split('-')[0];
   return order.find((t) => t.toLowerCase() === primary) ?? null;
 }
 
-const valid = (config: FilmConfig, choice: string | null): choice is string => !!choice && (choice === 'off' || choice in config.captions);
+const valid = (config: FilmConfig, choice: unknown): choice is string => typeof choice === 'string' && (choice === 'off' || choice in config.captions);
 
+/** The choice made on this website language, if any. A choice kept by an older version of the site (no language with it) is dropped. */
 export function storedCaption(config: FilmConfig): string | null {
   try {
-    const value = localStorage.getItem(CAPTION_KEY);
-    return valid(config, value) ? value : null;
+    const raw = localStorage.getItem(CAPTION_KEY);
+    if (raw === null) return null;
+    let kept: { site?: unknown; cc?: unknown } | null = null;
+    try {
+      kept = JSON.parse(raw);
+    } catch {
+      // Not ours any more.
+    }
+    if (!kept || typeof kept !== 'object') {
+      localStorage.removeItem(CAPTION_KEY);
+      return null;
+    }
+    return kept.site === config.page && valid(config, kept.cc) ? kept.cc : null;
   } catch {
     return null;
   }
 }
 
-export function saveCaption(choice: string) {
+/**
+ * Remember a choice made in a subtitle menu for this website language, and take any ?cc= out of the
+ * address: from now on the page shows the choice, and a reload keeps it.
+ */
+export function saveCaption(config: FilmConfig, choice: string) {
   try {
-    localStorage.setItem(CAPTION_KEY, choice);
+    localStorage.setItem(CAPTION_KEY, JSON.stringify({ site: config.page, cc: choice }));
   } catch {
     // Private browsing or blocked storage: the choice lasts for this page.
   }
-}
-
-export function defaultCaption(config: FilmConfig): string {
-  const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
-  if (config.page === 'zh-cn') {
-    const zh = languages.map((l) => captionFor(l, config.order)).find((t) => t === 'zh-CN' || t === 'zh-TW');
-    return zh ?? 'zh-CN';
+  const url = new URL(location.href);
+  if (url.searchParams.has('cc')) {
+    url.searchParams.delete('cc');
+    history.replaceState(history.state, '', url);
   }
-  if (config.page === 'ja') return 'ja';
-  for (const language of languages) {
-    const tag = captionFor(language, config.order);
-    if (tag) return tag === 'zh-CN' || tag === 'zh-TW' || tag === 'ja' ? 'en' : tag;
-  }
-  return config.pageCaption;
 }
 
 export function initialCaption(config: FilmConfig): string {
   const asked = new URLSearchParams(location.search).get('cc');
-  const fromUrl = asked && (asked === 'off' ? 'off' : captionFor(asked, config.order));
-  return (valid(config, fromUrl) ? fromUrl : null) ?? storedCaption(config) ?? defaultCaption(config);
+  const fromUrl = asked && (asked.toLowerCase() === 'off' ? 'off' : captionFor(asked, config.order));
+  return (valid(config, fromUrl) ? fromUrl : null) ?? storedCaption(config) ?? config.pageCaption;
 }
 
 /** The film (by its supers) and narration a choice plays: a language's own, or for "off" the current one. */

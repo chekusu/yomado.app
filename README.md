@@ -11,20 +11,25 @@ as possible. yomado gives Codex and other visual agents a virtual display of the
 can work in desktop apps through screenshots, mouse and keyboard while your windows stay on your
 screen. It is not an agent, a remote desktop or an MCP replacement — it only supplies the display.
 
-- English at `/`, Simplified Chinese at `/zh-cn/`, Japanese at `/ja/`; install, checksum and
-  requirements at `/details/`, `/zh-cn/details/` and `/ja/details/`; the one-minute film with the
-  browser's own controls at `/watch/`, `/zh-cn/watch/` and `/ja/watch/`
+- 16 languages, the same as the film's subtitles: English at `/`; Simplified and Traditional
+  Chinese, Japanese, Korean, Spanish, French, German, Italian, Brazilian Portuguese, Dutch, Polish,
+  Turkish, Arabic (right to left), Hindi and Indonesian at `/zh-cn/`, `/zh-tw/`, `/ja/`, `/ko/`,
+  `/es/`, `/fr/`, `/de/`, `/it/`, `/pt-br/`, `/nl/`, `/pl/`, `/tr/`, `/ar/`, `/hi/` and `/id/`. Each
+  has the home page, install, checksum and requirements at `details/`, and the one-minute film with
+  the browser's own controls at `watch/`: 48 pages
 - A language menu in the header (and a list in the footer) links every page to the same page in
   the other languages and keeps the section in view
-- The bare home page (`/`, or the `SITE_BASE` root) follows the browser: a valid `?lang=` first,
-  then a language picked by hand from the menu or footer (remembered in `localStorage`), then the
-  first supported entry of `navigator.languages` (any `zh-*` is Simplified Chinese), then English.
-  It moves with `location.replace`, keeping the query and hash. `/zh-cn/`, `/ja/` and every
-  details page never redirect, detection itself stores nothing, links to the English home carry
-  `?lang=en` so the choice holds without storage, and canonical and `hreflang` URLs carry no query.
-  Without JavaScript the home page stays English and the menu still works
+- The bare home page (`/`, or the `SITE_BASE` root) follows the browser: a valid `?lang=` first
+  (read like a browser language: `?lang=pt-BR`, `?lang=zh-Hant`), then a language picked by hand
+  from the menu or footer (remembered in `localStorage`), then the first supported entry of
+  `navigator.languages`, then English. Chinese goes by script, then region: `zh-Hant`, `zh-TW`,
+  `zh-HK` and `zh-MO` to Traditional, any other `zh` to Simplified; any Portuguese (`pt-PT` too)
+  to Brazilian Portuguese. It moves with `location.replace`, keeping the query and hash. Every other
+  page, in any language, never redirects, detection itself stores nothing, links to the English
+  home carry `?lang=en` so the choice holds without storage, and canonical and `hreflang` URLs
+  carry no query. Without JavaScript the home page stays English and the menu still works
 - Every download button points at the configured GitHub Release archive
-- `sitemap.xml`, `robots.txt`, per-locale Open Graph cards, `hreflang` alternates, structured data
+- `sitemap.xml`, `robots.txt`, per-language Open Graph cards, `hreflang` alternates, structured data
 
 ## The page
 
@@ -52,10 +57,14 @@ film gets native controls, with its sound, and the story becomes stills.
 
 ### The film
 
-Sixty seconds, six shots, in each locale's language, labelled as a simulated demo throughout, and
-narrated: the approved River voice-over in English and Simplified Chinese. The Japanese film keeps
-its Japanese supers and has the English narration, and its caption and sound button say so
-(英語ナレーション); there is no Japanese narration.
+Sixty seconds, six shots, labelled as a simulated demo throughout, and narrated: the approved
+River voice-over in English and Simplified Chinese. There are three films, by the language of
+their supers: English, Simplified Chinese and Japanese. The Japanese film keeps its Japanese supers
+and has the English narration, and its caption and sound button say so (英語ナレーション); there is
+no Japanese narration. Every website language shows the film its subtitles go with: both Chinese
+the Chinese film with the Chinese narration, Japanese the Japanese film, every other language the
+English film with the English narration, and the note under the film names the narration that
+plays. Nothing is dubbed.
 
 1. **The need** — your display, its Dock and windows; Codex works in Blender there, by screenshot
    and click.
@@ -85,18 +94,36 @@ the controls, which on a phone covers the bottom of the picture until the contro
 each language has the film with its subtitles burned into that band, wide and tall, for sharing
 as a file (`media/captioned/yomado-film-<tag>-<wide|tall>-c1.mp4`), plus WebVTT and SRT files
 (`media/captions/`). Choosing a language that follows the other narration loads that narration's
-film where the current one was, playing or paused, with the sound as it was; the note under the
-film says which narration plays. The page starts with its own language (zh-TW where the browser
-prefers Traditional Chinese; on the English page the browser's language when it is one of the
-16), `?cc=<tag>` asks for one, and a choice made in a subtitle menu is kept in the browser and
-wins. The translations are machine-assisted and reviewed for timing and meaning, not proofread by
-native speakers.
+film where the current one was, playing or paused, at its speed, with the sound as it was; the
+note under the film says which narration plays.
+
+Subtitles follow the website's language. Which ones a page starts with:
+
+1. `?cc=<tag>` (or `?cc=off`) in the address asks for them; it is not remembered.
+2. Else a choice made in a subtitle menu (the hero's, the watch page's or the browser's own) while
+   on this same website language: it is kept in `localStorage` together with that language, so it
+   holds on that language's other pages and after a reload. One choice is kept, the latest.
+3. Else the website language's own subtitles, and with them its film, narration and downloads.
+
+Picking a website language from the menu or the footer is a fresh start: it forgets the subtitle
+choice, and the links carry no query, so a `?cc=` stays behind; the new page shows its own
+subtitles, film, narration and downloads, also after a reload. A choice made in a menu takes `?cc=`
+out of the address, so a reload keeps what is shown. A choice kept by an earlier version of the
+site, without its language, is dropped. The browser's language only decides the website language,
+on the bare home page. The translations, of the subtitles and of the website, are
+machine-assisted and reviewed for meaning, not proofread by native speakers.
 
 In the hero the film plays by itself only muted. Its sound button (named, keyboard-operable)
 turns the narration on, the first time from the beginning so it is heard whole; the play and
 replay buttons play it with sound too, unless it was muted by hand, and a mute holds. Leaving the
 view or the tab pauses it; only a muted film resumes by itself. The watch page waits for a click
-and plays with sound, with the browser's controls, and links the narrated MP4s.
+and plays with sound, with the browser's controls (their timeline runs left to right in Arabic
+too). Under it, the chosen language's captioned MP4s, landscape and portrait, and its SRT are
+offered as downloads: big buttons, one per line on phones, that link the file with `?download`.
+`functions/media/[[path]].js` answers those addresses with `Content-Disposition: attachment` and
+the file's name (`yomado-film-<tag>-<wide|tall>-c1.mp4`), so a phone saves the file instead of
+opening a player; ranges and media types are the file's own, and the same file without
+`?download` still plays inline. With subtitles off, the downloads are the films without them.
 
 ## Stack
 
@@ -108,8 +135,11 @@ cookies, forms or third-party requests at runtime. Macs render the system font; 
 ```
 site.config.json   canonical origin and the release the page offers (single source)
 PRODUCT.md         confirmed design context
-src/i18n/          all copy, per locale (en, zh-cn, ja), including the film's supers
-src/lib/site.ts    locales (paths, tags, Open Graph locales, names, dates) and release facts
+src/i18n/          all copy, per language (16 files), and the film's supers for en, zh-cn and ja
+src/lib/site.ts    languages (paths, tags, direction, Open Graph locales, names, dates, sizes) and
+                   release facts
+src/lib/captions.ts  subtitle languages, and the film and narration each website language shows
+src/pages/         English at the root; [locale]/ builds the same three pages for the other 15
 src/lib/scene.ts   the story timeline: poses for every moment, in two layouts (wide, tall)
 src/lib/film.ts    the film timeline: world, camera, pointer, panel, Blender, supers, end card
 src/lib/apps.ts    the apps shown and their icons; panel.ts the panel's layout; media.ts the films
@@ -124,8 +154,9 @@ public/media/      the film per locale (MP4 + WebM with narration, wide and tall
 narration/         the narration, English and Simplified Chinese (AAC), as approved
 captions/          subtitle text per language (<tag>.json), its timing per narration (timing.json,
                    from the approved script's character timings) and the language list (index.json)
-public/            favicons and Open Graph cards (generated, committed)
-functions/         a Pages Function that answers byte ranges for the films on Cloudflare
+public/            favicons and Open Graph cards, one per language (generated, committed)
+functions/         a Pages Function for /media/ on Cloudflare: byte ranges, and ?download as an
+                   attachment
 scripts/           verify-dist.mjs, media-info.mjs, render-film.mjs, narrate-film.mjs,
                    caption-cues.mjs, caption-film.mjs, render-assets.mjs, extract-icons.mjs
 tests/             smoke.mjs (browser), language.mjs, download.mjs (real download acceptance)
@@ -150,9 +181,22 @@ npm test             # serves dist/ and runs the Playwright smoke test
 npm run test:download
 ```
 
-The smoke test needs Playwright's Chromium (`npx playwright install chromium`). It covers all
-three locales at 1440, 945, 834, 390 and 320 px: metadata (hreflang, Open Graph locales), console
-errors, horizontal overflow, the download entry points, the film (its real length and size, muted
+The smoke test needs Playwright's Chromium (`npx playwright install chromium`). Locally it serves
+`dist/` and runs `/media/` through the site's own Pages Function, as Cloudflare does. All 16
+languages: home, details and watch in the language and its direction, metadata, `hreflang` for
+all 16, Open Graph card, menu and footer links to the same page in every language, no overflow at
+1440, 390 and 320 px with the download and the film in the first screen, a one-line header and a
+menu that reaches all 16 on phones, the hero's film with its subtitles and audible narration, the
+watch page's band master with its subtitles and sound, and its downloads (attachment, name, media
+type, ranges, the plain address inline). Then: switching the website language from Chinese to
+Korean, German and Arabic over an old subtitle choice, Off or `?cc=`, also after a reload; a choice
+held within its website language; `?cc=`; an old stored choice dropped; real delayed media on a
+German watch page (time, pause, speed, a seek to the start); the films saved as files by clicking
+and tapping (English, Simplified and Traditional Chinese, Arabic); Arabic right to left (the
+layout mirrored, the version and size lines, code and the video timeline in their own order). The
+three languages with a film of their own in depth at 1440, 945, 834, 390 and 320 px: metadata
+(hreflang, Open Graph locales), console errors, horizontal overflow, the download entry points,
+the film (its real length and size, muted
 inline autoplay, seeking into the middle and to the end, pause and replay, Tab, Enter and Space
 with a visible focus ring, the portrait version on phones, reduced motion, the poster when no
 source plays, and the media type and byte ranges of every film file), its narration (muted while
@@ -174,14 +218,16 @@ video file under 10 MB, posters and stills under 200 kB. It fails if an internal
 file of the old 16-second film or an earlier version of the film (such as the silent one) is
 published, or if an app icon differs from `public/apps/sources.json`.
 
-`npm test` then runs `tests/language.mjs` (also `npm run test:language`): first visits with
-Chinese, Japanese, English, mixed (`fr, ja, en`; `en, ja`) and unsupported browser languages,
-`navigator.language` only when the list is empty, `?lang=` (valid and not), query and hash kept,
-a remembered choice, the other languages' pages, details and watch deep links left alone, English
-surviving a reload with storage blocked, and the page without JavaScript. Each case runs in its
-own browser context with the languages replaced by an init script.
+`npm test` then runs `tests/language.mjs` (also `npm run test:language`): first visits in each
+of the 16 languages and their regional forms (`zh-HK`, `zh-Hant-HK`, `zh-Hans-HK`, `pt-PT`,
+`es-419`, …), mixed and unsupported browser languages, `navigator.language` only when the list is
+empty, `?lang=` (valid and not), query and hash kept, a remembered choice (over the browser's
+language, never over an explicit page), every language's pages left alone, a website-language
+switch leaving `?cc=` behind, English surviving a reload with storage blocked, and the page without
+JavaScript. Each case runs in its own browser context with the languages replaced by an init
+script.
 
-`npm run test:download` clicks the hero download button on each locale's home page in a real
+`npm run test:download` clicks the hero download button on each language's home page in a real
 browser and checks that the file is the configured app archive: SHA-256, size, bundle identifier,
 version, build, minimum macOS and an arm64 executable.
 
@@ -203,7 +249,7 @@ npm run film:narrate                       # add the narration to the last rende
 npm run film:captions                      # subtitle files, captioned exports and band masters
 npm run film:captions -- --proof <dir>     # proof frames of chosen cues, before rendering
 npm run assets                             # Open Graph cards and favicons (use the story still)
-npm run assets -- ja                       # just the named cards (en, zh-cn, ja)
+npm run assets -- ja ko                    # just the named cards (one per website language)
 npm run icons -- <folder>                  # the apps' icons from their .icns (see Assets)
 ```
 
@@ -274,11 +320,15 @@ forks and pull requests just build and test. `dist/` works on any static host; s
 
 ## Copy and claims
 
-All visible text lives in `src/i18n/{en,zh-cn,ja}.ts`; update all three together. In Chinese and
-Japanese titles, `|` marks where a line may break, so words are never split. The app's own
-interface is Simplified Chinese only, and every locale says so; the Japanese and English pages
-don't make the app multilingual. Locales are defined once in `src/lib/site.ts`; a new one also
-needs its copy, its two pages under `src/pages/`, an Open Graph card and a line in the tests.
+All visible text lives in `src/i18n/<locale>.ts`, one file per website language; update all 16
+together. In Chinese and Japanese titles, `|` marks where a line may break, so words are never
+split. The app's own interface is Simplified Chinese only, and every language says so; the website
+in 16 languages doesn't make the app multilingual. In Arabic, runs that read left to right on
+their own (versions, file names, the size line) are isolated, and code, commands and checksums
+read left to right. The website languages are the subtitle languages (`captions/index.json`) and
+are defined in `src/lib/site.ts`; a new one also needs its copy, its subtitles, an Open Graph card
+and a line in the tests. Only English, Simplified Chinese and Japanese have a film of their own
+(`filmScript`); the film a language shows comes from its subtitles' entry.
 
 Keep claims inside the app's README and release notes. Verified: the native Apple Silicon build;
 moving Calculator into virtual screens named Codex and GrokBot through the panel's app menu, a

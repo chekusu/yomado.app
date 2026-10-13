@@ -1,0 +1,161 @@
+import type { ReleaseFacts } from '../lib/site';
+import type { Copy } from './types';
+
+// Spanish. The film is the English one with the English narration, and the copy says so; the
+// app's own interface is Simplified Chinese only.
+export default (r: ReleaseFacts): Copy => ({
+  meta: {
+    title: 'yomado — una pantalla para tus agentes',
+    description:
+      'yomado da a Codex y a otros agentes visuales una pantalla virtual en tu Mac para que trabajen en apps como Blender y Marvelous Designer con capturas de pantalla, clics y pulsaciones de teclas, sin un MCP específico para cada app. Gratis, de código abierto y experimental.',
+    ogAlt: 'yomado — Una pantalla para tus agentes.',
+  },
+  skip: 'Saltar al contenido',
+  nav: {
+    label: 'Principal',
+    details: 'Detalles',
+    download: 'Descargar',
+    language: 'Idioma',
+    home: 'Inicio de yomado',
+  },
+  hero: {
+    title: 'Una pantalla para tus agentes.',
+    sub: 'Una pantalla virtual para Blender, Marvelous Designer y más. Codex y otros agentes trabajan con capturas de pantalla, clics y pulsaciones de teclas, sin un MCP específico para cada app.',
+    cta: 'Descargar para Mac',
+    meta: `Versión experimental · v${r.version} · Apple silicon`,
+    film: {
+      label:
+        'Vídeo del producto, de un minuto; una demostración simulada. {narration}. Codex trabaja en Blender en tu pantalla con capturas y clics. El icono de yomado en la barra de menús abre el panel de control, que añade una pantalla virtual a la derecha de tus dos pantallas; se le cambia el nombre a Codex. Blender y Marvelous Designer se arrastran a ella y sus ventanas se mueven, mientras las tuyas se quedan. En Codex, Codex hace una captura, añade un modificador Subdivision Surface, escribe 3, gira la vista y cambia al sombreado renderizado. Una segunda pantalla, GrokBot, recibe Google Chrome; Marvelous Designer vuelve arrastrado a su pantalla; al cerrar GrokBot desde la barra de menús, Chrome vuelve antes a su pantalla. Cae la noche y Codex se convierte en el símbolo de yomado.',
+      caption: 'Demostración simulada, no una grabación de un agente trabajando. El funcionamiento con las pantallas físicas apagadas aún no se ha verificado en hardware real.',
+      play: 'Reproducir el vídeo',
+      pause: 'Pausar el vídeo',
+      replay: 'Volver a reproducir el vídeo',
+      fallback: 'Tu navegador no puede reproducir este vídeo.',
+      watch: 'Ver el vídeo completo',
+      soundOn: { en: 'Activar el sonido', zh: 'Activar el sonido' },
+      soundOnText: { en: 'Sonido', zh: 'Sonido' },
+      mute: 'Silenciar',
+      captions: 'Subtítulos',
+      captionsOff: 'No',
+      narration: { en: 'Narración en inglés', zh: 'Narración en chino' },
+      narrationNote: { en: 'Narración en inglés.', zh: 'Narración en chino.' },
+    },
+  },
+  watch: {
+    meta: {
+      title: 'yomado en un minuto: el vídeo del producto',
+      description:
+        'Una demostración simulada de yomado en un minuto: una pantalla virtual con nombre para Codex, apps arrastradas a ella desde el panel de control y Codex trabajando en Blender con capturas de pantalla, clics y pulsaciones de teclas.',
+    },
+    title: 'yomado en un minuto.',
+    lede: 'Abre una pantalla, mueve a ella las apps de un agente, déjalo trabajar y recupera las ventanas.',
+    note: 'Una demostración simulada, no una grabación de un agente trabajando de verdad. Las ventanas de las apps son recreaciones simplificadas; los iconos son los de cada app. El funcionamiento con las pantallas físicas apagadas aún no se ha verificado.',
+    downloads: 'Descargar el vídeo',
+    withSubtitles: 'Con subtítulos ({language})',
+    withoutSubtitles: 'Sin subtítulos',
+    wide: 'Vídeo horizontal',
+    tall: 'Vídeo vertical',
+    mp4: 'MP4 · 1920 × 1080 · 1:00 · {size}',
+    mp4Tall: 'MP4 · 1080 × 1350 · 1:00 · {size}',
+    srt: 'Archivo de subtítulos',
+    back: 'Volver a yomado',
+  },
+  story: {
+    label: 'Cómo funciona',
+    acts: [
+      { title: 'Abre una pantalla. Ponle nombre.', text: 'Añade una pantalla virtual y ponle el nombre del agente que la va a usar.' },
+      { title: 'Sus apps se mueven. Las tuyas, no.', text: 'Envía una app a la pantalla del agente. Todo lo demás se queda donde lo dejaste.' },
+      { title: 'Una pantalla por agente.', text: 'Una para Codex y otra para GrokBot, cada una con sus propias apps.' },
+    ],
+  },
+  panel: {
+    title: 'Todas las pantallas. Un panel.',
+    text: 'Tus pantallas a escala, con cada app en la pantalla en la que está.',
+    imageAlt:
+      'El panel de control de yomado: Studio Display 1 con WeChat, Studio Display 2 con Google Chrome y una pantalla virtual llamada Codex, de 1920 × 1080, con Blender y Marvelous Designer. Cada tarjeta muestra los iconos de las apps de esa pantalla.',
+    caption: 'El panel de control, recreado a partir del diseño de la app con pantallas de ejemplo y los iconos de cada app. Su interfaz está en chino simplificado.',
+  },
+  agent: {
+    textHtml: '<strong>No tienes que preparar a mano la pantalla de tu agente.</strong> La skill de yomado guía al agente para que prepare su propia pantalla de trabajo en el panel de yomado.',
+    requestLabel: 'Prueba a pedir',
+    request: 'Usa yomado para preparar una pantalla virtual llamada Codex para esta tarea de Blender, mueve a ella solo las ventanas de esta tarea y devuélvelas a su sitio cuando termines.',
+    copyName: 'Copiar la petición',
+    skill: 'La skill de yomado en GitHub',
+    setup: 'Instalar la skill',
+  },
+  finale: {
+    title: 'Una ventana encendida para tus agentes.',
+    cta: 'Descargar para Mac',
+    meta: `Versión experimental ${r.version} · Apple silicon · macOS 14 o posterior · Gratis y de código abierto`,
+    details: 'Instalar y verificar',
+    source: 'Código en GitHub',
+  },
+  footer: {
+    navLabel: 'Pie de página',
+    tagline: 'Una pantalla de trabajo para agentes visuales.',
+    details: 'Detalles',
+    film: 'Vídeo',
+    releases: 'Versiones',
+    source: 'Código de la app',
+    site: 'Código del sitio web',
+    license: 'Licencia MIT',
+    fine: 'Software experimental que usa API privadas de macOS. Blender, Marvelous Designer, Google Chrome, WeChat, Codex, GrokBot y macOS pertenecen a sus respectivos propietarios; sus nombres e iconos solo identifican las apps y no implican ningún respaldo.',
+  },
+  details: {
+    meta: {
+      title: `yomado ${r.version}: instalación, suma de verificación y requisitos`,
+      description: `Descarga yomado ${r.version} para Mac con Apple silicon: qué necesitas, cómo instalarlo, cómo verificar el archivo y qué no se ha verificado todavía.`,
+    },
+    eyebrow: 'Detalles',
+    title: `yomado ${r.version}`,
+    lede: 'Una versión experimental para Mac con Apple silicon. Gratis y de código abierto, con licencia MIT.',
+    cta: 'Descargar para Mac',
+    ctaMeta: `${r.fileName} · ${r.size}`,
+    specsTitle: 'Requisitos',
+    specs: [
+      { term: 'Versión', value: `${r.version} (compilación ${r.build}) · versión preliminar · ${r.date}` },
+      { term: 'Mac', value: 'Apple silicon (arm64). No hay versión para Intel.' },
+      { term: 'macOS', value: 'Compilada para macOS 14 y posteriores; no se ha probado en todas las versiones.' },
+      { term: 'Firma', value: 'Firmada con Developer ID por CHEKUSU y notarizada por Apple.' },
+      { term: 'Interfaz', value: 'Chino simplificado' },
+    ],
+    installTitle: 'Instalación',
+    installHtml: [
+      'Descomprímelo y abre <strong>Yomado.app</strong>. Vive en la barra de menús; cerrar el panel no cierra la app.',
+      'La app incluye su ticket de notarización de Apple. Aun así, macOS puede pedirte que confirmes la primera vez que abras una app descargada.',
+      'Para mover ventanas hace falta el permiso de Accesibilidad. El icono del candado del panel abre la página correspondiente de Ajustes del Sistema; el permiso lo activas tú.',
+    ],
+    agent: {
+      title: 'Deja que tu agente lo prepare',
+      lede: 'La skill de yomado guía a un agente por el propio panel de yomado: crear una pantalla de trabajo y ponerle nombre, mover a ella solo las ventanas de la tarea, comprobar que puede verlas y manejarlas, y devolverlas cuando termine. No añade ninguna API ni ninguna entrada propia.',
+      stepsHtml: [
+        'Instala yomado y activa Accesibilidad, como se indica arriba.',
+        'Dale a tu agente herramientas de uso del equipo que puedan capturar la pantalla virtual y manejar el puntero y el teclado. Sus permisos de macOS los concedes tú la primera vez.',
+        'En Codex, pon la carpeta {skill} del repositorio de yomado en <code>$CODEX_HOME/skills</code> (por defecto, <code>~/.codex/skills</code>). Está disponible desde el siguiente turno; no hay que reiniciar nada. Otros agentes pueden leer el mismo <code>SKILL.md</code> con su propio mecanismo de skills.',
+        'Luego pídele, por ejemplo:',
+      ],
+      note: 'Mientras trabaja, tu Mac sigue con la sesión iniciada y desbloqueado, y el puntero, el teclado y el foco son los mismos para ti y para el agente. Las apps que puede manejar dependen de sus herramientas.',
+    },
+    verifyTitle: 'Verifica la descarga',
+    verifyText: 'Compara el SHA-256 del archivo con este valor:',
+    hashLabel: 'SHA-256',
+    copy: 'Copiar',
+    copied: 'Copiado',
+    copyFallback: 'Seleccionado: pulsa ⌘C',
+    knowTitle: 'Conviene saber',
+    know: [
+      'yomado pone las pantallas. Tu agente ve y actúa con sus propias herramientas de captura y de entrada.',
+      'Las pantallas virtuales forman parte de tu sesión, así que el teclado, el puntero y el foco son los mismos para ti y para el agente.',
+      'Al salir de yomado se cierran sus pantallas, y no se vuelven a crear tras reiniciar.',
+      'Aún no verificado: el trabajo del agente con las pantallas físicas apagadas, el ahorro de energía y las sesiones largas sin supervisión.',
+    ],
+    links: { notes: 'Notas de la versión', checksums: 'Archivo de sumas de verificación', source: 'Código de la app', site: 'Código del sitio web' },
+    back: 'Volver a yomado',
+  },
+  notFound: {
+    meta: 'Página no encontrada — yomado',
+    title: 'Esta ventana está a oscuras.',
+    text: 'No hay nada en esta dirección. La descarga está en la página de inicio.',
+    home: 'Volver a yomado',
+  },
+});

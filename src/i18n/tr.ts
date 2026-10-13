@@ -1,0 +1,161 @@
+import type { ReleaseFacts } from '../lib/site';
+import type { Copy } from './types';
+
+// Turkish. The film is the English one with the English narration, and the copy says so; the
+// app's own interface is Simplified Chinese only.
+export default (r: ReleaseFacts): Copy => ({
+  meta: {
+    title: 'yomado — ajanlarınız için bir ekran',
+    description:
+      'yomado, Codex ve diğer görsel ajanlara Mac’inizde sanal bir ekran verir; böylece Blender ve Marvelous Designer gibi uygulamalarda ekran görüntüleri, tıklamalar ve tuş vuruşlarıyla çalışabilirler, uygulamaya özel MCP gerekmez. Ücretsiz, açık kaynak, deneysel.',
+    ogAlt: 'yomado — Ajanlarınız için bir ekran.',
+  },
+  skip: 'İçeriğe geç',
+  nav: {
+    label: 'Ana gezinme',
+    details: 'Ayrıntılar',
+    download: 'İndir',
+    language: 'Dil',
+    home: 'yomado ana sayfası',
+  },
+  hero: {
+    title: 'Ajanlarınız için bir ekran.',
+    sub: 'Blender, Marvelous Designer ve diğer uygulamalar için sanal bir ekran. Codex ve diğer ajanlar ekran görüntüleri, tıklamalar ve tuş vuruşlarıyla çalışır; uygulamaya özel MCP gerekmez.',
+    cta: 'Mac için indirin',
+    meta: `Deneysel sürüm · v${r.version} · Apple silicon`,
+    film: {
+      label:
+        'Ürün filmi, bir dakika, {narration}; simüle edilmiş bir demo. Codex, ekranınızda Blender’da ekran görüntüsü ve tıklamayla çalışıyor. Menü çubuğundaki yomado simgesi kontrol panelini açar; panel, iki ekranınızın sağına sanal bir ekran ekler ve bu ekranın adı Codex olarak değiştirilir. Blender ve Marvelous Designer bu ekrana sürüklenir; onların pencereleri taşınır, sizinkiler yerinde kalır. Codex ekranında Codex bir ekran görüntüsü alır, Subdivision Surface değiştiricisi ekler, 3 yazar, görünümü döndürür ve işlenmiş gölgelendirmeye geçer. İkinci ekran GrokBot’a Google Chrome verilir; Marvelous Designer geri sürüklenir; GrokBot menü çubuğundan kapatıldığında Chrome önce kendi ekranına döner. Gece olur ve Codex, yomado simgesine dönüşür.',
+      caption: 'Simüle edilmiş bir demodur; çalışan bir ajanın kaydı değildir. Fiziksel ekranlar kapalıyken çalışma, gerçek donanımda henüz doğrulanmadı.',
+      play: 'Filmi oynat',
+      pause: 'Filmi duraklat',
+      replay: 'Filmi yeniden oynat',
+      fallback: 'Tarayıcınız bu videoyu oynatamıyor.',
+      watch: 'Filmin tamamını izleyin',
+      soundOn: { en: 'Sesi aç', zh: 'Sesi aç' },
+      soundOnText: { en: 'Ses', zh: 'Ses' },
+      mute: 'Sessiz',
+      captions: 'Altyazı',
+      captionsOff: 'Kapalı',
+      narration: { en: 'İngilizce anlatım', zh: 'Çince anlatım' },
+      narrationNote: { en: 'İngilizce anlatım.', zh: 'Çince anlatım.' },
+    },
+  },
+  watch: {
+    meta: {
+      title: 'Bir dakikada yomado — ürün filmi',
+      description:
+        'yomado’nun bir dakikalık simüle edilmiş demosu: Codex için adlandırılmış sanal bir ekran, kontrol panelinden bu ekrana sürüklenen uygulamalar ve Blender’da ekran görüntüleri, tıklamalar ve tuş vuruşlarıyla çalışan Codex.',
+    },
+    title: 'Bir dakikada yomado.',
+    lede: 'Bir ekran açın, bir ajanın uygulamalarını oraya taşıyın, çalışmasına izin verin, sonra pencereleri geri alın.',
+    note: 'Simüle edilmiş bir demodur; gerçek bir ajan çalışmasının kaydı değildir. Uygulama pencereleri sadeleştirilmiş yeniden yapımlardır; simgeler uygulamaların kendi simgeleridir. Fiziksel ekranlar kapalıyken çalışma henüz doğrulanmadı.',
+    downloads: 'Filmi indirin',
+    withSubtitles: 'Altyazılı ({language})',
+    withoutSubtitles: 'Altyazısız',
+    wide: 'Yatay video',
+    tall: 'Dikey video',
+    mp4: 'MP4 · 1920 × 1080 · 1:00 · {size}',
+    mp4Tall: 'MP4 · 1080 × 1350 · 1:00 · {size}',
+    srt: 'Altyazı dosyası',
+    back: 'yomado’ya dön',
+  },
+  story: {
+    label: 'Nasıl çalışır',
+    acts: [
+      { title: 'Bir ekran açın. Ona bir ad verin.', text: 'Sanal bir ekran ekleyin ve onu kullanacak ajanın adını verin.' },
+      { title: 'Onun uygulamaları taşınır. Sizinkiler kalır.', text: 'Bir uygulamayı ajanın ekranına gönderin. Geri kalan her şey bıraktığınız yerde kalır.' },
+      { title: 'Her ajana bir ekran.', text: 'Codex’e bir tane, GrokBot’a bir tane; her biri kendi uygulamalarıyla.' },
+    ],
+  },
+  panel: {
+    title: 'Tüm ekranlar. Tek panel.',
+    text: 'Ekranlarınız ölçekli olarak gösterilir; her uygulama bulunduğu ekranda görünür.',
+    imageAlt:
+      'yomado kontrol paneli: WeChat’in bulunduğu Studio Display 1, Google Chrome’un bulunduğu Studio Display 2 ve Blender ile Marvelous Designer’ın bulunduğu, 1920 × 1080 boyutunda, Codex adlı sanal ekran. Her kart o ekrandaki uygulamaların simgelerini gösterir.',
+    caption: 'Uygulamanın düzenine göre örnek ekranlar ve uygulamaların kendi simgeleriyle yeniden oluşturulmuş kontrol paneli. Arayüzü basitleştirilmiş Çincedir.',
+  },
+  agent: {
+    textHtml: '<strong>Ajanınızın ekranını elle hazırlamanız gerekmez.</strong> yomado becerisi, ajanın kendi çalışma ekranını yomado panelinde hazırlamasına yol gösterir.',
+    requestLabel: 'Şöyle isteyebilirsiniz',
+    request: 'yomado ile bu Blender görevi için Codex adlı bir sanal ekran hazırla, bu ekrana yalnızca bu görevin pencerelerini taşı ve işin bitince onları eski yerlerine geri getir.',
+    copyName: 'İsteği kopyala',
+    skill: 'GitHub’daki yomado becerisi',
+    setup: 'Beceriyi kurun',
+  },
+  finale: {
+    title: 'Ajanlarınız için ışığı yanan bir pencere.',
+    cta: 'Mac için indirin',
+    meta: `Deneysel sürüm ${r.version} · Apple silicon · macOS 14 veya üstü · Ücretsiz ve açık kaynak`,
+    details: 'Kurulum ve doğrulama',
+    source: 'GitHub’daki kaynak kodu',
+  },
+  footer: {
+    navLabel: 'Alt bilgi',
+    tagline: 'Görsel ajanlar için bir çalışma ekranı.',
+    details: 'Ayrıntılar',
+    film: 'Film',
+    releases: 'Sürümler',
+    source: 'Uygulama kaynak kodu',
+    site: 'Web sitesi kaynak kodu',
+    license: 'MIT lisansı',
+    fine: 'macOS’in özel API’lerini kullanan deneysel bir yazılımdır. Blender, Marvelous Designer, Google Chrome, WeChat, Codex, GrokBot ve macOS ilgili sahiplerine aittir; adları ve simgeleri yalnızca uygulamaları tanımlar ve herhangi bir onay anlamına gelmez.',
+  },
+  details: {
+    meta: {
+      title: `yomado ${r.version} — kurulum, sağlama toplamı ve gereksinimler`,
+      description: `Apple silicon’lu Mac’ler için yomado ${r.version}’ü indirin: neye ihtiyacınız olduğu, nasıl kuracağınız, arşivi nasıl doğrulayacağınız ve henüz neyin doğrulanmadığı.`,
+    },
+    eyebrow: 'Ayrıntılar',
+    title: `yomado ${r.version}`,
+    lede: 'Apple silicon’lu Mac’ler için deneysel bir sürüm. MIT lisansıyla ücretsiz ve açık kaynak.',
+    cta: 'Mac için indirin',
+    ctaMeta: `${r.fileName} · ${r.size}`,
+    specsTitle: 'Gereksinimler',
+    specs: [
+      { term: 'Sürüm', value: `${r.version} (derleme ${r.build}) · ön sürüm · ${r.date}` },
+      { term: 'Mac', value: 'Apple silicon (arm64). Intel sürümü yoktur.' },
+      { term: 'macOS', value: 'macOS 14 ve sonrası için derlendi; her sürüm test edilmedi.' },
+      { term: 'İmza', value: 'CHEKUSU tarafından Developer ID ile imzalandı ve Apple tarafından onaylandı (notarized).' },
+      { term: 'Arayüz', value: 'Basitleştirilmiş Çince' },
+    ],
+    installTitle: 'Kurulum',
+    installHtml: [
+      'Arşivi açın ve <strong>Yomado.app</strong>’i açın. Uygulama menü çubuğunda çalışır; paneli kapatmak uygulamadan çıkmaz.',
+      'Uygulama, Apple onay (notarization) biletini içerir. Yine de indirilen bir uygulamayı ilk kez açtığınızda macOS onay isteyebilir.',
+      'Pencereleri taşımak için Erişilebilirlik izni gerekir. Paneldeki kilit simgesi Sistem Ayarları’nda ilgili sayfayı açar; izni kendiniz açarsınız.',
+    ],
+    agent: {
+      title: 'Hazırlığı ajanınıza bırakın',
+      lede: 'yomado becerisi, bir ajana yomado’nun kendi panelinde yol gösterir: bir çalışma ekranı oluşturup adlandırmak, yalnızca görevin pencerelerini oraya taşımak, onları görüp kullanabildiğini kontrol etmek ve iş bitince geri götürmek. Herhangi bir API ya da kendine ait bir giriş yöntemi eklemez.',
+      stepsHtml: [
+        'Yukarıdaki gibi yomado’yu kurun ve Erişilebilirlik’i açın.',
+        'Ajanınıza sanal ekranın görüntüsünü alabilen, işaretçiyi ve klavyeyi kullanabilen bilgisayar kullanım araçları verin. Bu araçların macOS izinlerini ilk seferde siz verirsiniz.',
+        'Codex için yomado deposundaki {skill} klasörünü <code>$CODEX_HOME/skills</code> içine koyun (varsayılan olarak <code>~/.codex/skills</code>). Bir sonraki turdan itibaren kullanılabilir; hiçbir şeyi yeniden başlatmanız gerekmez. Diğer ajanlar aynı <code>SKILL.md</code> dosyasını kendi beceri mekanizmalarıyla okuyabilir.',
+        'Ardından örneğin şöyle isteyin:',
+      ],
+      note: 'Ajan çalışırken Mac’iniz oturumu açık ve kilitsiz kalır; siz ve ajan aynı işaretçiyi, klavyeyi ve odağı paylaşırsınız. Hangi uygulamalarda çalışabileceği, ajanın araçlarına bağlıdır.',
+    },
+    verifyTitle: 'İndirmeyi doğrulayın',
+    verifyText: 'Arşivin SHA-256 değerini bu değerle karşılaştırın:',
+    hashLabel: 'SHA-256',
+    copy: 'Kopyala',
+    copied: 'Kopyalandı',
+    copyFallback: 'Seçildi — ⌘C’ye basın',
+    knowTitle: 'Bilmeniz gerekenler',
+    know: [
+      'yomado ekranları sağlar. Ajanınız kendi ekran görüntüsü ve giriş araçlarıyla görür ve işlem yapar.',
+      'Sanal ekranlar oturumunuzun bir parçasıdır; bu yüzden siz ve ajan aynı klavyeyi, işaretçiyi ve odağı paylaşırsınız.',
+      'yomado’dan çıkmak ekranlarını kapatır ve yeniden başlattıktan sonra bu ekranlar yeniden oluşturulmaz.',
+      'Henüz doğrulanmadı: fiziksel ekranlar kapalıyken ajan çalışması, güç tasarrufu ve uzun süreli gözetimsiz çalışmalar.',
+    ],
+    links: { notes: 'Sürüm notları', checksums: 'Sağlama toplamı dosyası', source: 'Uygulama kaynak kodu', site: 'Web sitesi kaynak kodu' },
+    back: 'yomado’ya dön',
+  },
+  notFound: {
+    meta: 'Sayfa bulunamadı — yomado',
+    title: 'Bu pencere karanlık.',
+    text: 'Bu adreste hiçbir şey yok. İndirme bağlantısı ana sayfada.',
+    home: 'yomado’ya dön',
+  },
+});

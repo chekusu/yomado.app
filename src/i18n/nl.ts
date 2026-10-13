@@ -1,0 +1,161 @@
+import type { ReleaseFacts } from '../lib/site';
+import type { Copy } from './types';
+
+// Dutch. The film is the English one with the English narration, and the copy says so; the app's
+// own interface is Simplified Chinese only.
+export default (r: ReleaseFacts): Copy => ({
+  meta: {
+    title: 'yomado — een scherm voor je agents',
+    description:
+      'yomado geeft Codex en andere visuele agents een virtueel scherm op je Mac, zodat ze in apps als Blender en Marvelous Designer kunnen werken met screenshots, klikken en toetsaanslagen, zonder app-specifieke MCP. Gratis, open source, experimenteel.',
+    ogAlt: 'yomado — Een scherm voor je agents.',
+  },
+  skip: 'Naar de inhoud',
+  nav: {
+    label: 'Hoofdnavigatie',
+    details: 'Details',
+    download: 'Download',
+    language: 'Taal',
+    home: 'yomado-startpagina',
+  },
+  hero: {
+    title: 'Een scherm voor je agents.',
+    sub: 'Een virtueel scherm voor Blender, Marvelous Designer en meer. Codex en andere agents werken met screenshots, klikken en toetsaanslagen, zonder app-specifieke MCP.',
+    cta: 'Download voor Mac',
+    meta: `Experimentele build · v${r.version} · Apple silicon`,
+    film: {
+      label:
+        'Productfilm van één minuut; een gesimuleerde demo. {narration}. Codex werkt in Blender op je scherm met screenshots en klikken. Het yomado-symbool in de menubalk opent het paneel, dat rechts van je twee schermen een virtueel scherm toevoegt; het krijgt de naam Codex. Blender en Marvelous Designer worden ernaartoe gesleept en hun vensters verhuizen mee, terwijl die van jou blijven staan. Op Codex maakt Codex een screenshot, voegt een Subdivision Surface-modifier toe, typt 3, draait het beeld en schakelt over op gerenderde weergave. Een tweede scherm, GrokBot, krijgt Google Chrome; Marvelous Designer wordt teruggesleept; als GrokBot via de menubalk wordt gesloten, gaat Chrome eerst terug naar zijn scherm. Het wordt nacht en Codex verandert in het yomado-logo.',
+      caption: 'Gesimuleerde demo, geen opname van een agent aan het werk. Werken met uitgeschakelde fysieke schermen is nog niet op echte hardware gecontroleerd.',
+      play: 'Film afspelen',
+      pause: 'Film pauzeren',
+      replay: 'Film opnieuw afspelen',
+      fallback: 'Je browser kan deze video niet afspelen.',
+      watch: 'Bekijk de hele film',
+      soundOn: { en: 'Geluid aanzetten', zh: 'Geluid aanzetten' },
+      soundOnText: { en: 'Geluid', zh: 'Geluid' },
+      mute: 'Dempen',
+      captions: 'Ondertiteling',
+      captionsOff: 'Uit',
+      narration: { en: 'Engelse voice-over', zh: 'Chinese voice-over' },
+      narrationNote: { en: 'Engelse voice-over.', zh: 'Chinese voice-over.' },
+    },
+  },
+  watch: {
+    meta: {
+      title: 'yomado in één minuut — de productfilm',
+      description:
+        'Een gesimuleerde demo van één minuut: een virtueel scherm met een naam voor Codex, apps die er vanuit het paneel naartoe worden gesleept, en Codex die in Blender werkt met screenshots, klikken en toetsaanslagen.',
+    },
+    title: 'yomado in één minuut.',
+    lede: 'Open een scherm, verplaats de apps van een agent ernaartoe, laat hem werken en haal de vensters terug.',
+    note: 'Een gesimuleerde demo, geen opname van echt werk door een agent. De appvensters zijn vereenvoudigde nabootsingen; de symbolen zijn die van de apps zelf. Werken met uitgeschakelde fysieke schermen is nog niet gecontroleerd.',
+    downloads: 'Film downloaden',
+    withSubtitles: 'Met ondertiteling ({language})',
+    withoutSubtitles: 'Zonder ondertiteling',
+    wide: 'Liggende video',
+    tall: 'Staande video',
+    mp4: 'MP4 · 1920 × 1080 · 1:00 · {size}',
+    mp4Tall: 'MP4 · 1080 × 1350 · 1:00 · {size}',
+    srt: 'Ondertitelbestand',
+    back: 'Terug naar yomado',
+  },
+  story: {
+    label: 'Zo werkt het',
+    acts: [
+      { title: 'Open een scherm. Geef het een naam.', text: 'Voeg een virtueel scherm toe en noem het naar de agent die het gaat gebruiken.' },
+      { title: 'Zijn apps verhuizen. De jouwe blijven.', text: 'Stuur een app naar het scherm van de agent. Al het andere blijft waar je het liet.' },
+      { title: 'Eén scherm per agent.', text: 'Codex krijgt er een, GrokBot nog een, elk met zijn eigen apps.' },
+    ],
+  },
+  panel: {
+    title: 'Alle schermen. Eén paneel.',
+    text: 'Je schermen op schaal, elke app op het scherm waar hij staat.',
+    imageAlt:
+      'Het bedieningspaneel van yomado: Studio Display 1 met WeChat, Studio Display 2 met Google Chrome en een virtueel scherm met de naam Codex, 1920 × 1080, met Blender en Marvelous Designer. Elke kaart toont de symbolen van de apps op dat scherm.',
+    caption: 'Het bedieningspaneel, nagebouwd naar de lay-out van de app met voorbeeldschermen en de eigen symbolen van de apps. De interface is in vereenvoudigd Chinees.',
+  },
+  agent: {
+    textHtml: '<strong>Je hoeft het scherm van je agent niet zelf in te richten.</strong> De yomado-skill begeleidt de agent bij het voorbereiden van zijn eigen werkscherm in het paneel van yomado.',
+    requestLabel: 'Vraag bijvoorbeeld',
+    request: 'Richt met yomado voor deze Blender-taak een virtueel scherm met de naam Codex in, verplaats alleen de vensters van deze taak ernaartoe en zet ze terug als je klaar bent.',
+    copyName: 'Verzoek kopiëren',
+    skill: 'yomado-skill op GitHub',
+    setup: 'Skill installeren',
+  },
+  finale: {
+    title: 'Een verlicht venster voor je agents.',
+    cta: 'Download voor Mac',
+    meta: `Experimentele build ${r.version} · Apple silicon · macOS 14 of later · Gratis en open source`,
+    details: 'Installeren en controleren',
+    source: 'Broncode op GitHub',
+  },
+  footer: {
+    navLabel: 'Voettekst',
+    tagline: 'Een werkscherm voor visuele agents.',
+    details: 'Details',
+    film: 'Film',
+    releases: 'Releases',
+    source: 'Broncode van de app',
+    site: 'Broncode van de website',
+    license: 'MIT-licentie',
+    fine: 'Experimentele software die privé-API’s van macOS gebruikt. Blender, Marvelous Designer, Google Chrome, WeChat, Codex, GrokBot en macOS zijn van hun respectieve eigenaren; hun namen en symbolen dienen alleen om de apps aan te duiden en houden geen goedkeuring in.',
+  },
+  details: {
+    meta: {
+      title: `yomado ${r.version} — installatie, checksum en systeemvereisten`,
+      description: `Download yomado ${r.version} voor Macs met Apple silicon: wat je nodig hebt, hoe je het installeert, hoe je het archief controleert en wat nog niet gecontroleerd is.`,
+    },
+    eyebrow: 'Details',
+    title: `yomado ${r.version}`,
+    lede: 'Een experimentele build voor Macs met Apple silicon. Gratis en open source onder de MIT-licentie.',
+    cta: 'Download voor Mac',
+    ctaMeta: `${r.fileName} · ${r.size}`,
+    specsTitle: 'Systeemvereisten',
+    specs: [
+      { term: 'Versie', value: `${r.version} (build ${r.build}) · pre-release · ${r.date}` },
+      { term: 'Mac', value: 'Apple silicon (arm64). Er is geen Intel-versie.' },
+      { term: 'macOS', value: 'Gebouwd voor macOS 14 en later; niet elke versie is getest.' },
+      { term: 'Handtekening', value: 'Met een Developer ID ondertekend door CHEKUSU en genotariseerd door Apple.' },
+      { term: 'Interface', value: 'Vereenvoudigd Chinees' },
+    ],
+    installTitle: 'Installeren',
+    installHtml: [
+      'Pak het archief uit en open <strong>Yomado.app</strong>. Het staat in de menubalk; het paneel sluiten stopt de app niet.',
+      'De app bevat zijn notarisatieticket van Apple. Toch kan macOS de eerste keer dat je een gedownloade app opent om bevestiging vragen.',
+      'Voor het verplaatsen van vensters is toestemming voor Toegankelijkheid nodig. Het slotje in het paneel opent de juiste pagina in Systeeminstellingen; aanzetten doe je zelf.',
+    ],
+    agent: {
+      title: 'Laat je agent het voorbereiden',
+      lede: 'De yomado-skill leidt een agent door het paneel van yomado zelf: een werkscherm maken en een naam geven, alleen de vensters van de taak verplaatsen, nagaan of hij ze kan zien en bedienen, en ze na afloop terugzetten. Hij voegt geen API en geen eigen invoer toe.',
+      stepsHtml: [
+        'Installeer yomado en zet Toegankelijkheid aan, zoals hierboven.',
+        'Geef je agent tools voor computergebruik die het virtuele scherm kunnen vastleggen en aanwijzer en toetsenbord kunnen bedienen. Hun macOS-toestemmingen geef je de eerste keer zelf.',
+        'Zet voor Codex de map {skill} uit de yomado-repository in <code>$CODEX_HOME/skills</code> (standaard <code>~/.codex/skills</code>). Hij is vanaf de volgende beurt beschikbaar; je hoeft niets opnieuw te starten. Andere agents kunnen dezelfde <code>SKILL.md</code> lezen met hun eigen skillmechanisme.',
+        'Vraag dan bijvoorbeeld:',
+      ],
+      note: 'Terwijl hij werkt, blijft je Mac ingelogd en ontgrendeld, en jij en de agent delen één aanwijzer, één toetsenbord en één focus. In welke apps hij kan werken, hangt af van zijn tools.',
+    },
+    verifyTitle: 'Controleer de download',
+    verifyText: 'Vergelijk de SHA-256 van het archief met deze waarde:',
+    hashLabel: 'SHA-256',
+    copy: 'Kopiëren',
+    copied: 'Gekopieerd',
+    copyFallback: 'Geselecteerd — druk op ⌘C',
+    knowTitle: 'Goed om te weten',
+    know: [
+      'yomado levert de schermen. Je agent kijkt en handelt met zijn eigen tools voor screenshots en invoer.',
+      'Virtuele schermen horen bij je inlogsessie, dus jij en de agent delen één toetsenbord, één aanwijzer en één focus.',
+      'Als je yomado stopt, sluiten zijn schermen, en na een herstart worden ze niet opnieuw gemaakt.',
+      'Nog niet gecontroleerd: werk van de agent met uitgeschakelde fysieke schermen, energiebesparing en lange onbewaakte sessies.',
+    ],
+    links: { notes: 'Releaseopmerkingen', checksums: 'Checksumbestand', source: 'Broncode van de app', site: 'Broncode van de website' },
+    back: 'Terug naar yomado',
+  },
+  notFound: {
+    meta: 'Pagina niet gevonden — yomado',
+    title: 'Dit venster is donker.',
+    text: 'Op dit adres staat niets. De download staat op de startpagina.',
+    home: 'Terug naar yomado',
+  },
+});

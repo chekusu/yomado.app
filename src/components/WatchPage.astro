@@ -1,19 +1,21 @@
 ---
-// The one-minute film on its own page, in this page's language, with the browser's own controls
-// (play, seek, full screen, keyboard) and subtitles in 16 languages (src/scripts/watch.ts). With
+// The one-minute film on its own page, with the browser's own controls (play, seek, full screen,
+// keyboard) and subtitles in 16 languages (src/scripts/watch.ts), starting with this page's
+// language: its subtitles, and the film and narration they go with (src/lib/captions.ts). With
 // subtitles on it plays the band master: the picture a little smaller above a night-blue band that
 // the browser's own subtitle tracks are placed in, so they never cover the film, in full screen
 // too. Subtitles off plays the film full size. Under the player: the subtitle menu, and that
-// language's captioned MP4s and subtitle file to download. Phones get the portrait composition.
-// Nothing plays until it is asked to.
+// language's captioned MP4s, landscape and portrait, and subtitle file, as downloads that save the
+// file (also on phones) rather than open it. Phones get the portrait composition. Nothing plays
+// until it is asked to.
 import Base from '../layouts/Base.astro';
 import Icon from './Icon.astro';
 import SiteFooter from './SiteFooter.astro';
 import SiteHeader from './SiteHeader.astro';
 import { copyFor } from '../i18n';
-import { CAPTION_LOCALES, PAGE_CAPTION, PAGE_NARRATION, captionGroups, filmConfig, tagsFor } from '../lib/captions';
-import { MP4_TYPE, NARROW, WEBM_TYPE, bandFile, bandPosterFile, captionFile, captionedFile, mediaSize, mediaUrl } from '../lib/media';
-import { LOCALE_PATH, RELEASE, localeHref, type Locale } from '../lib/site';
+import { CAPTION_LOCALES, PAGE_CAPTION, PAGE_NARRATION, PAGE_VISUAL, captionGroups, filmConfig, tagsFor } from '../lib/captions';
+import { MP4_TYPE, NARROW, WEBM_TYPE, bandFile, bandPosterFile, captionFile, captionedFile, downloadUrl, mediaSize, mediaUrl } from '../lib/media';
+import { LOCALE_PATH, RELEASE, SENTENCE_GAP, localeHref, type Locale } from '../lib/site';
 import { phrased } from '../lib/text';
 
 interface Props {
@@ -25,8 +27,13 @@ const copy = copyFor(locale);
 const w = copy.watch;
 const film = copy.hero.film;
 const caption = PAGE_CAPTION[locale];
+const visual = PAGE_VISUAL[locale];
 const narration = PAGE_NARRATION[locale];
-const exportLink = (layout: 'wide' | 'tall') => ({ href: mediaUrl(captionedFile(caption, layout)), size: mediaSize(captionedFile(caption, layout)) });
+const exportLink = (layout: 'wide' | 'tall') => ({ href: downloadUrl(captionedFile(caption, layout)), size: mediaSize(captionedFile(caption, layout), locale) });
+const files = [
+  { layout: 'wide', name: w.wide, meta: w.mp4 },
+  { layout: 'tall', name: w.tall, meta: w.mp4Tall },
+] as const;
 ---
 
 <Base locale={locale} title={w.meta.title} description={w.meta.description} path={`${LOCALE_PATH[locale]}watch/`} route="watch/" ogAlt={copy.meta.ogAlt}>
@@ -40,25 +47,27 @@ const exportLink = (layout: 'wide' | 'tall') => ({ href: mediaUrl(captionedFile(
 
     <figure class="player">
       <div class="frame">
+        <!-- The timeline runs left to right in every language, as time on a tape does. -->
         <video
           controls
           playsinline
           preload="metadata"
-          poster={mediaUrl(bandPosterFile(locale, 'wide'))}
-          data-poster-narrow={mediaUrl(bandPosterFile(locale, 'tall'))}
+          dir="ltr"
+          poster={mediaUrl(bandPosterFile(visual, 'wide'))}
+          data-poster-narrow={mediaUrl(bandPosterFile(visual, 'tall'))}
           data-narrow={NARROW}
           data-watch-video
           aria-label={film.label.replace('{narration}', film.narration[narration])}
         >
-          <source src={mediaUrl(bandFile(locale, 'tall', 'mp4'))} type={MP4_TYPE} media={NARROW} />
-          <source src={mediaUrl(bandFile(locale, 'tall', 'webm'))} type={WEBM_TYPE} media={NARROW} />
-          <source src={mediaUrl(bandFile(locale, 'wide', 'mp4'))} type={MP4_TYPE} />
-          <source src={mediaUrl(bandFile(locale, 'wide', 'webm'))} type={WEBM_TYPE} />
-          {tagsFor(locale).map((tag) => <track kind="subtitles" srclang={tag} label={CAPTION_LOCALES[tag].name} src={mediaUrl(captionFile(tag, 'vtt'))} default={tag === caption} />)}
-          <p>{film.fallback} <a href={mediaUrl(captionedFile(caption, 'wide'))}>MP4</a></p>
+          <source src={mediaUrl(bandFile(visual, 'tall', 'mp4'))} type={MP4_TYPE} media={NARROW} />
+          <source src={mediaUrl(bandFile(visual, 'tall', 'webm'))} type={WEBM_TYPE} media={NARROW} />
+          <source src={mediaUrl(bandFile(visual, 'wide', 'mp4'))} type={MP4_TYPE} />
+          <source src={mediaUrl(bandFile(visual, 'wide', 'webm'))} type={WEBM_TYPE} />
+          {tagsFor(visual).map((tag) => <track kind="subtitles" srclang={tag} label={CAPTION_LOCALES[tag].name} src={mediaUrl(captionFile(tag, 'vtt'))} default={tag === caption} />)}
+          <p dir="auto">{film.fallback} <a href={exportLink('wide').href} download>MP4</a></p>
         </video>
       </div>
-      <figcaption class="fine"><span data-watch-narration>{film.narrationNote[narration]}</span>{locale === 'en' ? ' ' : ''}{w.note}</figcaption>
+      <figcaption class="fine"><span data-watch-narration>{film.narrationNote[narration]}</span>{SENTENCE_GAP(locale)}{w.note}</figcaption>
     </figure>
 
     <div class="after wrap">
@@ -71,7 +80,7 @@ const exportLink = (layout: 'wide' | 'tall') => ({ href: mediaUrl(captionedFile(
             captionGroups(locale).map((group) => (
               <optgroup label={film.narration[group.narration]}>
                 {group.tags.map((tag) => (
-                  <option value={tag} lang={tag}>
+                  <option value={tag} lang={tag} dir={CAPTION_LOCALES[tag].dir}>
                     {CAPTION_LOCALES[tag].name}
                   </option>
                 ))}
@@ -80,14 +89,34 @@ const exportLink = (layout: 'wide' | 'tall') => ({ href: mediaUrl(captionedFile(
           }
         </select>
       </label>
-      <p class="files" data-watch-files>
-        <span class="files-label" data-with={w.withSubtitles} data-without={w.withoutSubtitles} data-watch-files-label>
+      <section class="files" aria-labelledby="files-title" data-watch-files>
+        <h2 id="files-title" class="files-title">{w.downloads}</h2>
+        <p class="files-label" data-with={w.withSubtitles} data-without={w.withoutSubtitles} data-watch-files-label>
           {w.withSubtitles.replace('{language}', CAPTION_LOCALES[caption].name)}
-        </span>
-        <a class="more" href={exportLink('wide').href} data-mp4="wide" data-template={w.mp4} download>{w.mp4.replace('{size}', exportLink('wide').size)}</a>
-        <a class="more" href={exportLink('tall').href} data-mp4="tall" data-template={w.mp4Tall} download>{w.mp4Tall.replace('{size}', exportLink('tall').size)}</a>
-        <a class="more" href={mediaUrl(captionFile(caption, 'srt'))} data-srt download>{w.srt}</a>
-      </p>
+        </p>
+        <ul class="file-list">
+          {
+            files.map((file) => (
+              <li>
+                <a class="file" href={exportLink(file.layout).href} type="video/mp4" data-mp4={file.layout} download>
+                  <Icon name="download" size={18} />
+                  <span class="file-name">{file.name}</span>
+                  <span class="file-meta" data-meta data-template={file.meta}>
+                    {file.meta.replace('{size}', exportLink(file.layout).size)}
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+          <li>
+            <a class="file file-srt" href={downloadUrl(captionFile(caption, 'srt'))} data-srt download>
+              <Icon name="captions" size={18} />
+              <span class="file-name">{w.srt}</span>
+              <span class="file-meta">SRT</span>
+            </a>
+          </li>
+        </ul>
+      </section>
       <div class="actions">
         <a class="btn btn-night" href={RELEASE.url} data-download="watch"><Icon name="download" size={18} />{copy.hero.cta}</a>
       </div>
@@ -160,22 +189,83 @@ const exportLink = (layout: 'wide' | 'tall') => ({ href: mediaUrl(captionedFile(
     text-align: center;
   }
 
+  /* The film to keep: the chosen language's landscape and portrait MP4s and its subtitle file, as
+     buttons big enough to tap, one per line on phones. */
   .files {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px 28px;
-    margin: 0;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 6px;
   }
 
-  .files [hidden] {
-    display: none;
+  .files-title {
+    margin: 0;
+    font-size: 1.3125rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
   }
 
   .files-label {
-    flex-basis: 100%;
+    margin: 0;
     color: var(--ink-2);
     font-size: 0.9375rem;
+  }
+
+  .file-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .file-list li:has([hidden]) {
+    display: none;
+  }
+
+  .file {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-areas: 'icon name' 'icon meta';
+    align-items: center;
+    column-gap: 10px;
+    min-height: 56px;
+    padding: 8px 18px 8px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    background: var(--white);
+    color: var(--ink);
+    text-align: start;
+    text-decoration: none;
+    transition: background-color 200ms var(--ease);
+  }
+
+  .file:hover {
+    background: var(--paper);
+    text-decoration: none;
+  }
+
+  .file[hidden] {
+    display: none;
+  }
+
+  .file :global(svg) {
+    grid-area: icon;
+    color: var(--link);
+  }
+
+  .file-name {
+    grid-area: name;
+    font-weight: 600;
+  }
+
+  .file-meta {
+    grid-area: meta;
+    color: var(--ink-2);
+    font-size: 0.8125rem;
   }
 
   /* The subtitle menu: the browser's own select, labelled. */
@@ -221,6 +311,15 @@ const exportLink = (layout: 'wide' | 'tall') => ({ href: mediaUrl(captionedFile(
   @media (max-width: 640px) {
     .frame {
       aspect-ratio: 4 / 5;
+    }
+
+    .file-list {
+      display: grid;
+      width: 100%;
+    }
+
+    .file {
+      grid-template-columns: auto minmax(0, 1fr);
     }
   }
 </style>

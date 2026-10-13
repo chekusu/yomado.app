@@ -6,8 +6,10 @@
 //
 // Each case runs in its own browser context with navigator.languages (and, where needed,
 // localStorage) replaced by an init script, so no real browser or system setting changes. The
-// home page should pick: a valid ?lang=, else a language chosen by hand, else the first supported
-// browser language, else English; other pages and deep links never change language.
+// home page should pick one of the 16 website languages: a valid ?lang=, else a language chosen by
+// hand, else the first supported browser language (Chinese by script, then region: zh-Hant, zh-TW,
+// zh-HK and zh-MO to Traditional; any Portuguese to Brazilian), else English; every other page, in
+// any language, never changes language.
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { mkdir, readFile, stat } from 'node:fs/promises';
@@ -103,17 +105,41 @@ const expectVisit = async (languages, path, expected, options) => {
 // 1. First visits by browser language.
 for (const [languages, expected, lang] of [
   [['zh-CN', 'zh'], 'zh-cn/', 'zh-CN'],
-  [['zh-TW'], 'zh-cn/', 'zh-CN'],
+  [['zh-TW'], 'zh-tw/', 'zh-TW'],
+  [['zh-HK'], 'zh-tw/', 'zh-TW'],
+  [['zh-MO'], 'zh-tw/', 'zh-TW'],
+  [['zh-Hant-HK'], 'zh-tw/', 'zh-TW'],
+  [['zh-Hans-HK'], 'zh-cn/', 'zh-CN'],
+  [['zh-Hans'], 'zh-cn/', 'zh-CN'],
+  [['zh-SG'], 'zh-cn/', 'zh-CN'],
   [['ja-JP', 'ja'], 'ja/', 'ja'],
+  [['ko-KR', 'ko'], 'ko/', 'ko'],
+  [['es-ES'], 'es/', 'es'],
+  [['es-419', 'es'], 'es/', 'es'],
+  [['fr-FR', 'ja', 'en'], 'fr/', 'fr'],
+  [['fr-CA'], 'fr/', 'fr'],
+  [['de-DE', 'de'], 'de/', 'de'],
+  [['de-AT'], 'de/', 'de'],
+  [['it-IT'], 'it/', 'it'],
+  [['pt-BR', 'pt'], 'pt-br/', 'pt-BR'],
+  [['pt-PT', 'pt'], 'pt-br/', 'pt-BR'],
+  [['nl-NL'], 'nl/', 'nl'],
+  [['nl-BE'], 'nl/', 'nl'],
+  [['pl-PL'], 'pl/', 'pl'],
+  [['tr-TR'], 'tr/', 'tr'],
+  [['ar-EG', 'ar'], 'ar/', 'ar'],
+  [['ar-SA'], 'ar/', 'ar'],
+  [['hi-IN'], 'hi/', 'hi'],
+  [['id-ID'], 'id/', 'id'],
   [['en-US', 'en'], '', 'en'],
-  [['fr-FR', 'ja', 'en'], 'ja/', 'ja'],
   [['en-GB', 'ja'], '', 'en'],
-  [['fr-FR', 'de'], '', 'en'],
+  [['sv-SE', 'nb-NO'], '', 'en'],
+  [['sv-SE', 'de-DE'], 'de/', 'de'],
 ]) {
   await check(`first visit with ${JSON.stringify(languages)} lands on /${expected}`, async () => {
     const v = await expectVisit(languages, '', expected);
     assert.equal(v.lang, lang);
-    if (SHOTS && expected && languages.length === 2) {
+    if (SHOTS && expected && languages.length === 2 && ['zh-CN', 'ja-JP', 'ar-EG'].includes(languages[0])) {
       await mkdir(SHOTS, { recursive: true });
       await v.page.screenshot({ path: join(SHOTS, `first-visit-${languages[0]}.png`) });
     }
@@ -127,7 +153,8 @@ for (const [languages, expected, lang] of [
 
 await check('navigator.language counts only when navigator.languages is empty', async () => {
   (await expectVisit([], '', 'ja/', { language: 'ja-JP' })).context.close();
-  (await expectVisit(['fr-FR'], '', '', { language: 'ja-JP' })).context.close();
+  (await expectVisit([], '', 'ar/', { language: 'ar' })).context.close();
+  (await expectVisit(['sv-SE'], '', '', { language: 'ja-JP' })).context.close();
 });
 
 // 2. Explicit ?lang= wins; an invalid one is ignored. Query and hash survive the move.
@@ -136,6 +163,10 @@ await check('?lang= picks the language, invalid values are ignored, query and ha
   (await expectVisit(['ja-JP'], '?lang=en', '?lang=en')).context.close();
   (await expectVisit(['ja-JP'], '?lang=zh-CN', 'zh-cn/?lang=zh-CN')).context.close();
   (await expectVisit(['ja-JP'], '?lang=xx', 'ja/?lang=xx')).context.close();
+  (await expectVisit(['en-US'], '?lang=pt-BR', 'pt-br/?lang=pt-BR')).context.close();
+  (await expectVisit(['en-US'], '?lang=zh-Hant', 'zh-tw/?lang=zh-Hant')).context.close();
+  (await expectVisit(['ja-JP'], '?lang=AR', 'ar/?lang=AR')).context.close();
+  (await expectVisit(['de-DE'], '?lang=ko&cc=fr', 'ko/?lang=ko&cc=fr')).context.close();
   (await expectVisit(['ja-JP'], '?utm_source=test&x=1#download', 'ja/?utm_source=test&x=1#download')).context.close();
 });
 
@@ -157,6 +188,16 @@ await check('a language picked from the menu or footer is remembered for the hom
   await home.page.waitForURL(`${base}zh-cn/`);
   assert.equal((await visit(en, '')).url, `${base}zh-cn/`, 'Chinese is remembered');
   await en.close();
+
+  // A newer language the same way, and it wins over the browser's.
+  const ko = await browserWith(['ko-KR']);
+  const korean = await visit(ko, '');
+  assert.equal(korean.url, `${base}ko/`);
+  await korean.page.locator('footer [data-lang-switch][hreflang="de"]').click();
+  await korean.page.waitForURL(`${base}de/`);
+  assert.equal(await korean.page.getAttribute('html', 'lang'), 'de');
+  assert.equal((await visit(ko, '')).url, `${base}de/`, 'German is remembered over the Korean browser');
+  await ko.close();
 });
 
 // 3b. The watch page's menu remembers a choice the same way, and closes with Escape.
@@ -177,7 +218,8 @@ await check('a language picked on the watch page is remembered for the home page
   await zh.close();
 });
 
-// 4. The other languages' pages and every details page keep their language.
+// 4. Every language's pages and every details and watch page keep their language, whatever the
+// browser's language or a language remembered before.
 await check('explicit pages and deep links never change language', async () => {
   for (const [languages, path] of [
     [['ja-JP'], 'zh-cn/'],
@@ -189,11 +231,40 @@ await check('explicit pages and deep links never change language', async () => {
     [['ja-JP'], 'watch/'],
     [['en-US'], 'ja/watch/'],
     [['ja-JP'], 'zh-cn/watch/'],
+    [['ko-KR'], 'de/'],
+    [['ar-EG'], 'ko/watch/'],
+    [['zh-TW'], 'zh-cn/'],
+    [['zh-CN'], 'zh-tw/details/'],
+    [['pt-PT'], 'es/watch/?cc=fr'],
+    [['de-DE'], 'ar/'],
+    [['fr-FR'], 'watch/'],
   ]) {
     const v = await expectVisit(languages, path, path);
     assert.equal(v.navigations, 1, `${path} navigated ${v.navigations} times`);
     await v.context.close();
   }
+  // A language remembered from the menu decides only the bare home page.
+  const context = await browserWith(['en-US']);
+  await context.addInitScript(() => localStorage.setItem('yomado.lang', 'de'));
+  for (const path of ['ko/', 'hi/watch/', 'details/']) {
+    const v = await visit(context, path);
+    assert.equal(v.url, base + path, `${path} stays`);
+  }
+  assert.equal((await visit(context, '')).url, `${base}de/`, 'the bare home page follows it');
+  await context.close();
+});
+
+// 4b. An explicit website-language switch leaves a ?cc= behind: the new page has its own subtitles.
+await check('switching language from a page asked for other subtitles leaves ?cc= behind', async () => {
+  const context = await browserWith(['zh-CN']);
+  const v = await visit(context, 'zh-cn/watch/?cc=fr');
+  assert.equal(await v.page.locator('[data-watch-cc] select').inputValue(), 'fr');
+  await v.page.locator('header [data-lang-menu] summary').click();
+  await v.page.locator('header [data-lang-menu] a[hreflang="ko"]').click();
+  await v.page.waitForURL(`${base}ko/watch/`);
+  assert.equal(await v.page.locator('[data-watch-cc] select').inputValue(), 'ko');
+  assert.deepEqual(v.errors, []);
+  await context.close();
 });
 
 // 5. With storage blocked, choosing English sticks through a reload via ?lang=en.

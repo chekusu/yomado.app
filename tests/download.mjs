@@ -7,10 +7,7 @@
 //
 // Verifies the SHA-256 and size, that the archive contains Yomado.app with the expected bundle
 // identifier and version, and that the app executable is an arm64 Mach-O binary. The English page's
-// archive is inspected in full; the Chinese and Japanese pages must deliver the identical file.
-
-// Each locale's home below the site root (src/lib/site.ts).
-const PAGES = ['', 'zh-cn/', 'ja/'];
+// archive is inspected in full; the other 15 languages' pages must deliver the identical file.
 import { chromium } from 'playwright';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
@@ -22,6 +19,9 @@ import assert from 'node:assert/strict';
 
 const config = JSON.parse(await readFile(new URL('../site.config.json', import.meta.url), 'utf8'));
 const RELEASE = config.release;
+// Each website language's home below the site root (src/lib/site.ts): the 16 subtitle languages.
+const { order } = JSON.parse(await readFile(new URL('../captions/index.json', import.meta.url), 'utf8'));
+const PAGES = order.map((tag) => (tag === 'en' ? '' : `${tag.toLowerCase()}/`));
 
 let server;
 let base = process.env.BASE_URL;

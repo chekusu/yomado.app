@@ -1,0 +1,11 @@
+---
+// The details page in every language but English (src/pages/details/index.astro).
+import DetailsPage from '../../../components/DetailsPage.astro';
+import { LOCALES, type Locale } from '../../../lib/site';
+
+export const getStaticPaths = () => LOCALES.filter((locale) => locale !== 'en').map((locale) => ({ params: { locale } }));
+
+const locale = Astro.params.locale as Locale;
+---
+
+<DetailsPage locale={locale} />

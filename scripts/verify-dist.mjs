@@ -3,11 +3,14 @@
 //   npm run build && npm run verify
 //
 // - every page has lang, title, description, a canonical URL on the configured origin and an OG image
+//   that is in the build; every page of the 16 languages (home, details, watch) has its language and
+//   direction, hreflang alternates for all 16 plus x-default, and links to the same page in each
 // - every internal link and asset resolves to a file in the build
 // - the only archive linked anywhere is the configured release download
-// - each locale's one-minute film, in both compositions and both formats, is what the pages say:
-//   55–65 s, 1920 × 1080 or 1080 × 1350, at least 30 fps, H.264 High 4.0 yuv420p with moov before
-//   mdat (the codec string the pages declare) or VP9; within a size budget, with its poster
+// - each film's one-minute film (en, zh-cn, ja), in both compositions and both formats, is what the
+//   pages say: 55–65 s, 1920 × 1080 or 1080 × 1350, at least 30 fps, H.264 High 4.0 yuv420p with moov
+//   before mdat (the codec string the pages declare) or VP9; within a size budget, with its poster
+// - each watch page plays its language's film and offers that language's captioned MP4s as downloads
 // - no internal film render page and no file of the old 16-second film is published
 // - the app icons are byte for byte the PNGs recorded in apps/sources.json
 // - neither the build nor the tracked sources contain machine paths, private hosts or credentials
@@ -28,8 +31,12 @@ const dist = join(root, process.env.SITE_OUT_DIR ?? 'dist');
 const problems = [];
 const fail = (where, message) => problems.push(`${where}: ${message}`);
 
-// Each locale's root below the site base (src/lib/site.ts), and its Open Graph card.
-const LOCALES = { en: '', 'zh-cn': 'zh-cn/', ja: 'ja/' };
+// The website's languages are the 16 subtitle languages (captions/index.json); each one's root below
+// the site base (src/lib/site.ts), and its Open Graph card. The films are the three there are.
+const captionIndex = JSON.parse(await readFile(join(root, 'captions/index.json'), 'utf8'));
+const LOCALES = Object.fromEntries(captionIndex.order.map((tag) => [tag.toLowerCase(), tag === 'en' ? '' : `${tag.toLowerCase()}/`]));
+const TAG = Object.fromEntries(captionIndex.order.map((tag) => [tag.toLowerCase(), tag]));
+const FILMS = ['en', 'zh-cn', 'ja'];
 const ROUTES = ['', 'details/', 'watch/'];
 // Links to the English home say ?lang=en, because the bare home page follows the browser.
 const localeHref = (prefix, route) => `${base}${prefix}${route}${prefix === '' && route === '' ? '?lang=en' : ''}`;
@@ -84,6 +91,7 @@ for (const file of pages) {
   if (html.includes('location.replace') !== (where === 'index.html')) fail(where, 'language redirect script on the wrong page');
   const og = attr(html, /<meta property="og:image" content="([^"]+)"/g)[0];
   if (!og?.startsWith(`${site}og/`)) fail(where, `og:image ${og} is not on ${site}`);
+  else if (!existsSync(join(dist, og.slice(site.length)))) fail(where, `og:image ${og} is not in the build`);
 
   const refs = [...attr(html, /\shref="([^"]+)"/g), ...attr(html, /\ssrc="([^"]+)"/g), ...attr(html, /\ssrcset="([^"]+)"/g).flatMap((s) => s.split(',').map((p) => p.trim().split(/\s+/)[0]))];
   for (const ref of refs) {
@@ -106,9 +114,20 @@ for (const [locale, prefix] of Object.entries(LOCALES)) {
   if (downloads !== 3) fail(page, `expected download links in header, hero and finale, found ${downloads}`);
   if (!existsSync(join(dist, 'og', `${locale}.png`))) fail(`og/${locale}.png`, 'missing');
   for (const route of ROUTES) {
+    const where = `${prefix}${route}index.html`;
     const other = await readFile(join(dist, prefix, route, 'index.html'), 'utf8').catch(() => '');
+    if (!other) {
+      fail(where, 'missing');
+      continue;
+    }
+    const dir = TAG[locale] === 'ar' ? 'rtl' : 'ltr';
+    if (!other.includes(`<html lang="${TAG[locale]}" dir="${dir}"`)) fail(where, `not <html lang="${TAG[locale]}" dir="${dir}">`);
+    if (attr(other, /<link rel="canonical" href="([^"]+)"/g)[0] !== `${site}${prefix}${route}`) fail(where, 'canonical is not the page itself');
+    const alternates = attr(other, /<link rel="alternate" hreflang="([^"]+)"/g);
+    if (alternates.length !== captionIndex.order.length + 1 || !alternates.includes('x-default')) fail(where, `${alternates.length} hreflang alternates`);
+    if (!other.includes(`content="${site}og/${locale}.png"`)) fail(where, `og:image is not og/${locale}.png`);
     for (const [l, p] of Object.entries(LOCALES)) {
-      if (!other.includes(`href="${localeHref(p, route)}"`)) fail(`${prefix}${route}index.html`, `no link to the ${l} version`);
+      if (!other.includes(`href="${localeHref(p, route)}"`)) fail(where, `no link to the ${l} version`);
     }
   }
 }
@@ -128,7 +147,7 @@ for (const file of pages) {
   for (const t of attr(await readFile(file, 'utf8'), /<source[^>]*type="(video\/(?:mp4|webm)[^"]*)"/g)) declared[t.startsWith('video/mp4') ? 'mp4' : 'webm'].add(unescape(t));
 }
 if (![...declared.webm].every((t) => /codecs="vp9, opus"/.test(t))) fail('pages', `declare WebM as ${[...declared.webm].join(' | ')}, not VP9 with Opus`);
-for (const locale of Object.keys(LOCALES)) {
+for (const locale of FILMS) {
   const language = filmMedia.language[filmMedia.narration[locale]];
   for (const [layout, [w, h]] of Object.entries(SIZE)) {
     const name = `film-${locale}-${layout}`;
@@ -175,7 +194,6 @@ for (const locale of Object.keys(LOCALES)) {
 // Captions: per locale a WebVTT and an SRT with exactly the cues of captions/<tag>.json on its
 // narration's timing (captions/timing.json); the film with those captions in its pixels, wide and
 // tall, with that narration; and per film the band masters the watch page plays with tracks.
-const captionIndex = JSON.parse(await readFile(join(root, 'captions/index.json'), 'utf8'));
 const captionTiming = JSON.parse(await readFile(join(root, 'captions/timing.json'), 'utf8'));
 const CV = filmMedia.captions;
 const toSeconds = (stamp) => {
@@ -229,7 +247,7 @@ for (const tag of captionIndex.order) {
     }
   }
 }
-for (const visual of Object.keys(LOCALES)) {
+for (const visual of FILMS) {
   const language = filmMedia.language[filmMedia.narration[visual]];
   for (const [layout, [w, h]] of Object.entries(SIZE)) {
     const where = `media/film-${visual}-${layout}-band-${CV}`;
@@ -245,15 +263,25 @@ for (const visual of Object.keys(LOCALES)) {
     if (!poster || poster > 2e5) fail(`${where}-poster`, poster ? `${poster} bytes` : 'missing');
   }
 }
-// The watch pages play the band masters with their film's tracks; the hero gets every language.
+// Each language shows the film its own subtitles go with (zh-CN and zh-TW the Chinese one, ja the
+// Japanese one, the rest the English one): the hero plays it, the watch page its band masters with
+// that film's tracks and, as downloads (?download), that language's captioned MP4s and SRT. The
+// hero gets every language's subtitles.
 for (const [locale, prefix] of Object.entries(LOCALES)) {
+  const tag = TAG[locale];
+  const visual = captionIndex.locales[tag].visual;
   const watch = await readFile(join(dist, prefix, 'watch/index.html'), 'utf8');
-  if (!watch.includes(`film-${locale}-wide-band-${CV}.mp4`)) fail(`${prefix}watch/index.html`, 'does not play the band master');
+  if (!watch.includes(`film-${visual}-wide-band-${CV}.mp4`)) fail(`${prefix}watch/index.html`, `does not play the ${visual} band master`);
   const tracks = attr(watch, /<track[^>]*srclang="([^"]+)"/g);
-  const own = captionIndex.order.filter((t) => captionIndex.locales[t].visual === locale);
+  const own = captionIndex.order.filter((t) => captionIndex.locales[t].visual === visual);
   if (tracks.join() !== own.join()) fail(`${prefix}watch/index.html`, `tracks ${tracks.join(', ')}, expected ${own.join(', ')}`);
+  for (const layout of ['wide', 'tall']) {
+    if (!watch.includes(`href="${base}media/captioned/yomado-film-${tag}-${layout}-${CV}.mp4?download"`)) fail(`${prefix}watch/index.html`, `no ${layout} ${tag} download`);
+  }
+  if (!watch.includes(`href="${base}media/captions/yomado-film-${tag}-${CV}.srt?download"`)) fail(`${prefix}watch/index.html`, `no ${tag} SRT download`);
   const home = await readFile(join(dist, prefix, 'index.html'), 'utf8');
-  for (const tag of captionIndex.order) if (!home.includes(`captions/yomado-film-${tag}-${CV}.vtt`)) fail(`${prefix}index.html`, `no ${tag} subtitles`);
+  if (!home.includes(`film-${visual}-wide-${filmMedia.version}.mp4`)) fail(`${prefix}index.html`, `does not play the ${visual} film`);
+  for (const t of captionIndex.order) if (!home.includes(`captions/yomado-film-${t}-${CV}.vtt`)) fail(`${prefix}index.html`, `no ${t} subtitles`);
 }
 for (const file of ['story-wide.webp', 'story-tall.webp']) {
   const size = await stat(join(dist, 'media', file)).then((st) => st.size).catch(() => 0);

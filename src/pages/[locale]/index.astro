@@ -1,0 +1,11 @@
+---
+// The home page in every language but English, which has the root (src/pages/index.astro).
+import Landing from '../../components/Landing.astro';
+import { LOCALES, type Locale } from '../../lib/site';
+
+export const getStaticPaths = () => LOCALES.filter((locale) => locale !== 'en').map((locale) => ({ params: { locale } }));
+
+const locale = Astro.params.locale as Locale;
+---
+
+<Landing locale={locale} />

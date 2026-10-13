@@ -30,8 +30,9 @@ for (const figure of document.querySelectorAll<HTMLElement>('[data-film]')) {
   const narrationNote = figure.querySelector<HTMLElement>('[data-film-narration]');
   const soundLabelOn = sound.getAttribute('aria-label') ?? '';
   const soundTextOn = soundText?.textContent ?? '';
-  // The narration that plays: the page's own film, until a subtitle language brings the other one.
-  let narration: 'en' | 'zh' = config ? (config.visuals[config.page].narration as 'en' | 'zh') : 'en';
+  // The narration that plays: the page's own film (the one its language shows), until a subtitle
+  // language brings the other one.
+  let narration: 'en' | 'zh' = config ? (config.visuals[config.visual].narration as 'en' | 'zh') : 'en';
 
   // Our buttons replace the browser's controls, and a film that starts by itself is muted.
   video.controls = false;
@@ -155,7 +156,7 @@ for (const figure of document.querySelectorAll<HTMLElement>('[data-film]')) {
     cc.hidden = false;
     const tracks = new Map<string, HTMLTrackElement>();
     let current = initialCaption(config);
-    let visual = config.page;
+    let visual = config.visual;
     const show = () => {
       const track = current === 'off' ? null : tracks.get(current)?.track;
       const cues = track?.activeCues ? [...track.activeCues] : [];
@@ -213,7 +214,7 @@ for (const figure of document.querySelectorAll<HTMLElement>('[data-film]')) {
     };
     ccSelect.addEventListener('change', () => {
       current = ccSelect.value;
-      saveCaption(current);
+      saveCaption(config, current);
       applyCaption();
       if (current !== 'off') void showFilm(config.captions[current].visual);
     });

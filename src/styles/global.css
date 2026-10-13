@@ -28,6 +28,14 @@
   --font-sans-ja: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter Variable', 'Helvetica Neue',
     'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Noto Sans CJK JP', 'Source Han Sans JP', 'Yu Gothic UI',
     'Yu Gothic', Meiryo, sans-serif;
+  --font-sans-tc: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter Variable', 'Helvetica Neue',
+    'PingFang TC', 'Noto Sans TC', 'Noto Sans CJK TC', 'Source Han Sans TC', 'Microsoft JhengHei', sans-serif;
+  --font-sans-ko: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter Variable', 'Helvetica Neue',
+    'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Source Han Sans KR', 'Malgun Gothic', sans-serif;
+  --font-sans-ar: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter Variable', 'Helvetica Neue',
+    'SF Arabic', 'Geeza Pro', 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
+  --font-sans-hi: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter Variable', 'Helvetica Neue',
+    'Kohinoor Devanagari', 'Devanagari Sangam MN', 'Noto Sans Devanagari', 'Nirmala UI', Mangal, sans-serif;
   --font-sans: var(--font-sans-sc);
   --font-mono: ui-monospace, 'SF Mono', 'Fragment Mono', Menlo, Consolas, monospace;
 
@@ -64,7 +72,8 @@ body {
 }
 
 /* Japanese text takes Japanese fonts, so kanji get their Japanese forms. Inside a Japanese page
-   the brand's 夜窗 and the 简体中文 menu entry stay Chinese, and vice versa. */
+   the brand's 夜窗 and the 简体中文 menu entry stay Chinese, and vice versa; Traditional Chinese,
+   Korean, Arabic and Hindi take fonts made for their scripts the same way. */
 :lang(ja) {
   --font-sans: var(--font-sans-ja);
 }
@@ -73,15 +82,46 @@ body {
   --font-sans: var(--font-sans-sc);
 }
 
+:lang(zh-TW) {
+  --font-sans: var(--font-sans-tc);
+}
+
+:lang(ko) {
+  --font-sans: var(--font-sans-ko);
+}
+
+:lang(ar) {
+  --font-sans: var(--font-sans-ar);
+}
+
+:lang(hi) {
+  --font-sans: var(--font-sans-hi);
+}
+
 [lang]:not(html) {
   font-family: var(--font-sans);
 }
 
-:lang(zh-CN) body,
-body:lang(zh-CN),
+:lang(zh) body,
+body:lang(zh),
 :lang(ja) body,
 body:lang(ja) {
   letter-spacing: 0;
+}
+
+/* Arabic letters join and Devanagari hangs from one line: tracking would pull them apart, and their
+   marks need more room between lines. */
+:lang(ar),
+:lang(hi) {
+  letter-spacing: 0 !important;
+}
+
+/* Code, commands and checksums read left to right inside right-to-left text. */
+code,
+kbd,
+samp {
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 img,
@@ -127,7 +167,7 @@ a:hover {
 .skip {
   position: fixed;
   top: 8px;
-  left: 8px;
+  inset-inline-start: 8px;
   z-index: 100;
   padding: 10px 16px;
   border-radius: 999px;
@@ -184,27 +224,63 @@ a:hover {
   font-weight: 600;
 }
 
-:lang(zh-CN) .headline,
-:lang(zh-CN) .headline-2,
-.headline:lang(zh-CN),
-.headline-2:lang(zh-CN) {
+:lang(zh) .headline,
+:lang(zh) .headline-2,
+.headline:lang(zh),
+.headline-2:lang(zh) {
   font-weight: 600;
   line-height: 1.16;
   letter-spacing: 0.01em;
   word-break: keep-all;
 }
 
-:lang(zh-CN) .sub,
-.sub:lang(zh-CN) {
+:lang(zh) .sub,
+.sub:lang(zh) {
   letter-spacing: 0.01em;
   line-height: 1.5;
   word-break: keep-all;
 }
 
 /* Short Chinese lines break only at spaces and punctuation, never inside a word such as 开源. */
-:lang(zh-CN) .fine,
-.fine:lang(zh-CN) {
+:lang(zh) .fine,
+.fine:lang(zh) {
   word-break: keep-all;
+}
+
+/* Korean keeps its words whole (it breaks at spaces), in titles and running text. */
+:lang(ko) .headline,
+:lang(ko) .headline-2,
+:lang(ko) .sub,
+:lang(ko) .fine {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* Arabic and Devanagari titles and lines get the height their marks need. */
+:lang(ar) .headline,
+:lang(ar) .headline-2,
+:lang(hi) .headline,
+:lang(hi) .headline-2 {
+  line-height: 1.3;
+}
+
+:lang(ar) .sub,
+:lang(hi) .sub {
+  line-height: 1.55;
+}
+
+/* A word too long for a narrow screen breaks rather than overflows; languages that build long
+   words (Bildschirm, beeldschermen) may hyphenate them. */
+.headline,
+.headline-2 {
+  overflow-wrap: break-word;
+}
+
+:lang(de) :is(.headline, .headline-2),
+:lang(nl) :is(.headline, .headline-2),
+:lang(pl) :is(.headline, .headline-2),
+:lang(tr) :is(.headline, .headline-2) {
+  hyphens: auto;
 }
 
 /* Japanese titles break only at their marked phrases and punctuation, and run a little smaller
@@ -313,6 +389,16 @@ a:hover {
   font-size: 1.25em;
   line-height: 0.8;
   transform: translateY(-0.02em);
+}
+
+/* The arrow points the way the text reads; set left to right itself, so no browser mirrors it again. */
+.more::after {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+:root[dir='rtl'] .more::after {
+  content: '‹';
 }
 
 .actions {

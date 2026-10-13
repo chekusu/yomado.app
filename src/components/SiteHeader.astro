@@ -42,7 +42,7 @@ const onDetails = route === 'details/';
                   data-lang-switch
                   data-locale={l}
                 >
-                  {LOCALE_NAME[l].full}
+                  <bdi>{LOCALE_NAME[l].full}</bdi>
                   {l === locale && (
                     <svg class="check" viewBox="0 0 12 9" width="12" height="9" aria-hidden="true">
                       <path d="M1 4.5l3.4 3.4L11 1.2" />
@@ -121,7 +121,8 @@ const onDetails = route === 'details/';
     opacity: 1;
   }
 
-  /* Language menu: the current language in the bar, all three by their own names below it. */
+  /* Language menu: the current language in the bar, all 16 by their own names below it: two
+     columns where there is room, one on phones, scrolling when the screen is shorter than the list. */
   .langs {
     position: relative;
   }
@@ -160,12 +161,17 @@ const onDetails = route === 'details/';
   .menu {
     position: absolute;
     top: calc(100% + 14px);
-    right: -10px;
+    inset-inline-end: -10px;
     z-index: 60;
     display: grid;
+    grid-template-columns: repeat(2, minmax(10rem, 1fr));
     min-width: 10rem;
+    max-height: calc(100vh - var(--header) - 24px);
+    max-height: calc(100dvh - var(--header) - 24px);
     margin: 0;
     padding: 6px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     list-style: none;
     border-radius: 12px;
     background: rgb(255 255 255 / 0.98);
@@ -244,6 +250,10 @@ const onDetails = route === 'details/';
   @media (max-width: 520px) {
     .details {
       display: none;
+    }
+
+    .menu {
+      grid-template-columns: minmax(10rem, 1fr);
     }
   }
 

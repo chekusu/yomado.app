@@ -1,0 +1,161 @@
+import type { ReleaseFacts } from '../lib/site';
+import type { Copy } from './types';
+
+// Korean. The film is the English one with the English narration, and the copy says so; the app's
+// own interface is Simplified Chinese only.
+export default (r: ReleaseFacts): Copy => ({
+  meta: {
+    title: 'yomado 夜窗 — 에이전트에게 전용 화면을',
+    description:
+      'yomado는 Mac에 가상 화면을 더해 Codex 같은 시각 에이전트가 스크린샷과 클릭, 키 입력으로 Blender, Marvelous Designer 같은 앱에서 작업하게 합니다. 앱 전용 MCP는 필요 없습니다. 무료 오픈 소스이며 실험 단계입니다.',
+    ogAlt: 'yomado 夜窗 — 에이전트에게, 전용 화면을.',
+  },
+  skip: '본문으로 건너뛰기',
+  nav: {
+    label: '주 메뉴',
+    details: '자세히',
+    download: '다운로드',
+    language: '언어',
+    home: 'yomado 홈',
+  },
+  hero: {
+    title: '에이전트에게, 전용 화면을.',
+    sub: 'Blender, Marvelous Designer 등을 위한 가상 화면. Codex 같은 에이전트가 스크린샷과 클릭, 키 입력으로 작업합니다. 앱 전용 MCP는 필요 없습니다.',
+    cta: 'Mac용 다운로드',
+    meta: `실험 버전 · v${r.version} · Apple 실리콘`,
+    film: {
+      label:
+        '제품 영상, 1분, {narration}, 시뮬레이션 데모. Codex가 사용자의 디스플레이에서 스크린샷과 클릭으로 Blender를 다룹니다. 메뉴 막대의 yomado 아이콘으로 제어판을 열고, 두 디스플레이의 오른쪽에 가상 화면을 추가해 이름을 Codex로 바꿉니다. Blender와 Marvelous Designer를 그 화면으로 끌어 놓으면 두 앱의 창만 옮겨 가고 사용자의 창은 그대로 있습니다. Codex 화면에서 Codex가 스크린샷을 찍고, Subdivision Surface 모디파이어를 추가하고, 3을 입력하고, 뷰를 돌린 뒤 렌더 셰이딩으로 바꿉니다. 두 번째 화면 GrokBot에는 Google Chrome이 놓이고, Marvelous Designer는 원래 화면으로 다시 끌려옵니다. 메뉴 막대에서 GrokBot을 닫으면 Chrome이 먼저 원래 디스플레이로 돌아갑니다. 밤이 되고, Codex는 yomado 마크가 됩니다.',
+      caption: '시뮬레이션 데모이며, 에이전트가 실제로 작업한 녹화가 아닙니다. 실제 디스플레이를 끈 상태의 동작은 아직 실제 하드웨어에서 검증하지 않았습니다.',
+      play: '영상 재생',
+      pause: '영상 일시정지',
+      replay: '영상 다시 재생',
+      fallback: '이 브라우저에서는 영상을 재생할 수 없습니다.',
+      watch: '전체 영상 보기',
+      soundOn: { en: '소리 켜기', zh: '소리 켜기' },
+      soundOnText: { en: '소리 켜기', zh: '소리 켜기' },
+      mute: '음소거',
+      captions: '자막',
+      captionsOff: '끄기',
+      narration: { en: '영어 내레이션', zh: '중국어 내레이션' },
+      narrationNote: { en: '영어 내레이션.', zh: '중국어 내레이션.' },
+    },
+  },
+  watch: {
+    meta: {
+      title: '1분 만에 보는 yomado — 제품 영상',
+      description:
+        '1분짜리 yomado 시뮬레이션 데모: Codex를 위해 이름 붙인 가상 화면, 제어판에서 그 화면으로 끌어 옮기는 앱, 스크린샷과 클릭, 키 입력으로 Blender에서 작업하는 Codex.',
+    },
+    title: '1분 만에 보는 yomado.',
+    lede: '화면을 열고, 에이전트의 앱을 옮겨 작업을 맡긴 뒤, 창을 다시 돌려놓습니다.',
+    note: '시뮬레이션 데모이며, 에이전트가 실제로 작업한 녹화가 아닙니다. 앱 창은 단순하게 재현한 것이고, 아이콘은 각 앱의 것입니다. 실제 디스플레이를 끈 상태의 동작은 아직 검증하지 않았습니다.',
+    downloads: '영상 다운로드',
+    withSubtitles: '자막 포함 ({language})',
+    withoutSubtitles: '자막 없음',
+    wide: '가로 영상',
+    tall: '세로 영상',
+    mp4: 'MP4 · 1920 × 1080 · 1:00 · {size}',
+    mp4Tall: 'MP4 · 1080 × 1350 · 1:00 · {size}',
+    srt: '자막 파일',
+    back: 'yomado로 돌아가기',
+  },
+  story: {
+    label: '사용 방법',
+    acts: [
+      { title: '화면을 열고, 이름을 붙이세요.', text: '가상 디스플레이를 추가하고, 그 화면을 쓸 에이전트의 이름을 붙입니다.' },
+      { title: '에이전트의 앱만 옮기고, 내 창은 그대로.', text: '에이전트가 쓸 앱만 그 화면으로 보냅니다. 나머지는 두었던 자리에 그대로 있습니다.' },
+      { title: '에이전트마다 화면 하나.', text: 'Codex에 하나, GrokBot에 하나. 화면마다 자기 앱을 둡니다.' },
+    ],
+  },
+  panel: {
+    title: '모든 화면을 패널 하나로.',
+    text: '디스플레이를 실제 비율로 보여 주고, 앱은 각자 있는 화면에 표시합니다.',
+    imageAlt:
+      'yomado 제어판: Studio Display 1에는 WeChat, Studio Display 2에는 Google Chrome, 1920 × 1080 크기의 가상 화면 Codex에는 Blender와 Marvelous Designer가 있습니다. 각 카드에는 그 화면에 있는 앱의 아이콘이 표시됩니다.',
+    caption: '앱의 레이아웃을 바탕으로 예시 디스플레이와 각 앱의 아이콘으로 다시 만든 제어판입니다. 앱의 인터페이스는 중국어 간체입니다.',
+  },
+  agent: {
+    textHtml: '<strong>에이전트의 화면을 직접 준비하지 않아도 됩니다.</strong> yomado 스킬이 에이전트가 yomado 패널에서 스스로 작업 화면을 준비하도록 안내합니다.',
+    requestLabel: '이렇게 요청해 보세요',
+    request: 'yomado로 이번 Blender 작업용 가상 화면을 Codex라는 이름으로 준비하고, 이 작업의 창만 그 화면으로 옮긴 다음, 끝나면 원래대로 돌려놓아 주세요.',
+    copyName: '요청 복사',
+    skill: 'GitHub의 yomado 스킬',
+    setup: '스킬 설치',
+  },
+  finale: {
+    title: '에이전트를 위해 불을 밝힌 창.',
+    cta: 'Mac용 다운로드',
+    meta: `실험 버전 ${r.version} · Apple 실리콘 · macOS 14 이상 · 무료 오픈 소스`,
+    details: '설치 및 검증',
+    source: 'GitHub 소스 코드',
+  },
+  footer: {
+    navLabel: '바닥글',
+    tagline: '시각 에이전트를 위한 작업 화면.',
+    details: '자세히',
+    film: '영상',
+    releases: '릴리스',
+    source: '앱 소스 코드',
+    site: '웹사이트 소스 코드',
+    license: 'MIT 라이선스',
+    fine: 'macOS 비공개 API를 사용하는 실험적 소프트웨어입니다. Blender, Marvelous Designer, Google Chrome, WeChat, Codex, GrokBot, macOS는 각 소유자에게 속합니다. 이름과 아이콘은 앱을 가리키기 위한 것일 뿐이며 보증을 뜻하지 않습니다.',
+  },
+  details: {
+    meta: {
+      title: `yomado ${r.version} — 설치, 체크섬, 요구 사항`,
+      description: `Apple 실리콘 Mac용 yomado ${r.version} 다운로드: 필요한 환경, 설치 방법, 압축 파일을 검증하는 방법, 아직 검증하지 않은 점.`,
+    },
+    eyebrow: '자세히',
+    title: `yomado ${r.version}`,
+    lede: 'Apple 실리콘 Mac용 실험 버전. MIT 라이선스의 무료 오픈 소스입니다.',
+    cta: 'Mac용 다운로드',
+    ctaMeta: `${r.fileName} · ${r.size}`,
+    specsTitle: '요구 사항',
+    specs: [
+      { term: '버전', value: `${r.version}(빌드 ${r.build}) · 프리릴리스 · ${r.date}` },
+      { term: 'Mac', value: 'Apple 실리콘(arm64). Intel용 빌드는 없습니다.' },
+      { term: 'macOS', value: 'macOS 14 이상을 대상으로 빌드했으며, 모든 버전에서 테스트하지는 않았습니다.' },
+      { term: '서명', value: 'CHEKUSU의 Developer ID로 서명되었고 Apple의 공증을 받았습니다.' },
+      { term: '인터페이스', value: '중국어 간체' },
+    ],
+    installTitle: '설치',
+    installHtml: [
+      '압축을 풀고 <strong>Yomado.app</strong>을 엽니다. 메뉴 막대에 머무르며, 패널을 닫아도 종료되지 않습니다.',
+      '앱에는 Apple 공증 티켓이 포함되어 있습니다. 그래도 다운로드한 앱을 처음 열 때 macOS가 확인을 요청할 수 있습니다.',
+      '창을 옮기려면 손쉬운 사용 권한이 필요합니다. 패널의 자물쇠 아이콘을 누르면 시스템 설정의 해당 페이지가 열리며, 권한은 직접 켭니다.',
+    ],
+    agent: {
+      title: '에이전트에게 준비 맡기기',
+      lede: 'yomado 스킬은 에이전트가 yomado의 패널에서 작업 화면을 만들어 이름을 붙이고, 이 작업의 창만 옮기고, 그 창들을 보고 조작할 수 있는지 확인한 뒤, 끝나면 되돌려 놓도록 안내합니다. 별도의 API나 자체 입력 수단은 추가하지 않습니다.',
+      stepsHtml: [
+        '위와 같이 yomado를 설치하고 손쉬운 사용 권한을 켭니다.',
+        '에이전트에게 가상 화면을 캡처하고 포인터와 키보드를 조작할 수 있는 컴퓨터 사용 도구를 갖춰 줍니다. 처음에는 macOS 권한을 직접 허용합니다.',
+        'Codex에서는 yomado 저장소의 {skill} 폴더를 <code>$CODEX_HOME/skills</code>(기본값 <code>~/.codex/skills</code>)에 넣습니다. 다음 턴부터 사용할 수 있으며, 다시 시작할 것은 없습니다. 다른 에이전트는 각자의 스킬 방식으로 같은 <code>SKILL.md</code>를 읽을 수 있습니다.',
+        '그런 다음, 예를 들어 이렇게 요청합니다.',
+      ],
+      note: '에이전트가 작업하는 동안 Mac은 로그인되어 있고 잠기지 않은 상태여야 하며, 사용자와 에이전트가 포인터, 키보드, 포커스를 함께 씁니다. 어떤 앱에서 작업할 수 있는지는 에이전트의 도구에 달려 있습니다.',
+    },
+    verifyTitle: '다운로드 검증',
+    verifyText: '압축 파일의 SHA-256이 다음 값과 같은지 확인하세요.',
+    hashLabel: 'SHA-256',
+    copy: '복사',
+    copied: '복사됨',
+    copyFallback: '선택됨 — ⌘C를 누르세요',
+    knowTitle: '알아 둘 점',
+    know: [
+      'yomado는 디스플레이만 제공합니다. 화면을 보고 조작하는 일은 에이전트의 스크린샷 도구와 입력 도구가 합니다.',
+      '가상 화면은 로그인 세션의 일부이므로, 사용자와 에이전트가 키보드, 포인터, 포커스를 하나씩 함께 씁니다.',
+      'yomado를 종료하면 가상 화면이 닫히고, 다시 시작해도 자동으로 다시 만들어지지 않습니다.',
+      '아직 검증하지 않은 것: 실제 디스플레이를 끈 상태의 에이전트 작업, 전력 절감, 장시간 무인 실행.',
+    ],
+    links: { notes: '릴리스 노트', checksums: '체크섬 파일', source: '앱 소스 코드', site: '웹사이트 소스 코드' },
+    back: 'yomado로 돌아가기',
+  },
+  notFound: {
+    meta: '페이지를 찾을 수 없음 — yomado',
+    title: '이 창은 꺼져 있습니다.',
+    text: '이 주소에는 아무것도 없습니다. 다운로드는 홈 페이지에 있습니다.',
+    home: 'yomado로 돌아가기',
+  },
+});

@@ -1,7 +1,9 @@
 ---
-// The one-minute product film in this page's language (src/lib/media.ts), rendered from its own
-// timeline (src/lib/film.ts) and narrated (English or Simplified Chinese; the Japanese film has
-// the English narration and its sound button says so). It starts muted and inline after the page
+// The one-minute product film this page's language shows (src/lib/captions.ts: the Chinese film
+// for both Chinese, the Japanese film for Japanese, the English film for every other language),
+// rendered from its own timeline (src/lib/film.ts) and narrated (English or Simplified Chinese;
+// the Japanese film has the English narration and its sound button says so). It starts muted and
+// inline after the page
 // has loaded and while it is in view, never under reduced motion; the sound button turns the
 // narration on (src/scripts/film.ts). Subtitles in 16 languages (src/lib/captions.ts) show under
 // the film, never over it; a language that follows the other narration brings its own film. Without
@@ -9,9 +11,9 @@
 // nothing is muted: a film someone starts plays with its sound. The watch page plays it with full
 // controls.
 import Icon from './Icon.astro';
-import { CAPTION_LOCALES, captionGroups, filmConfig, PAGE_NARRATION } from '../lib/captions';
+import { CAPTION_LOCALES, captionGroups, filmConfig, PAGE_NARRATION, PAGE_VISUAL } from '../lib/captions';
 import { MP4_TYPE, NARROW, WEBM_TYPE, filmUrl, posterUrl } from '../lib/media';
-import { localeHref, type Locale } from '../lib/site';
+import { SENTENCE_GAP, localeHref, type Locale } from '../lib/site';
 import type { Copy } from '../i18n';
 
 interface Props {
@@ -21,6 +23,7 @@ interface Props {
 
 const { locale, copy } = Astro.props;
 const film = copy.hero.film;
+const visual = PAGE_VISUAL[locale];
 const narration = PAGE_NARRATION[locale];
 const label = film.label.replace('{narration}', film.narration[narration]);
 ---
@@ -32,16 +35,16 @@ const label = film.label.replace('{narration}', film.narration[narration]);
       playsinline
       controls
       preload="none"
-      poster={posterUrl(locale, 'wide')}
-      data-poster-narrow={posterUrl(locale, 'tall')}
+      poster={posterUrl(visual, 'wide')}
+      data-poster-narrow={posterUrl(visual, 'tall')}
       data-narrow={NARROW}
       aria-label={label}
     >
-      <source src={filmUrl(locale, 'tall', 'mp4')} type={MP4_TYPE} media={NARROW} />
-      <source src={filmUrl(locale, 'tall', 'webm')} type={WEBM_TYPE} media={NARROW} />
-      <source src={filmUrl(locale, 'wide', 'mp4')} type={MP4_TYPE} />
-      <source src={filmUrl(locale, 'wide', 'webm')} type={WEBM_TYPE} />
-      <p>{film.fallback} <a href={filmUrl(locale, 'wide', 'mp4')}>MP4</a></p>
+      <source src={filmUrl(visual, 'tall', 'mp4')} type={MP4_TYPE} media={NARROW} />
+      <source src={filmUrl(visual, 'tall', 'webm')} type={WEBM_TYPE} media={NARROW} />
+      <source src={filmUrl(visual, 'wide', 'mp4')} type={MP4_TYPE} />
+      <source src={filmUrl(visual, 'wide', 'webm')} type={WEBM_TYPE} />
+      <p>{film.fallback} <a href={filmUrl(visual, 'wide', 'mp4')}>MP4</a></p>
     </video>
     <div class="controls">
       <label class="cc" hidden data-film-cc>
@@ -53,7 +56,7 @@ const label = film.label.replace('{narration}', film.narration[narration]);
             captionGroups(locale).map((group) => (
               <optgroup label={film.narration[group.narration]}>
                 {group.tags.map((tag) => (
-                  <option value={tag} lang={tag}>
+                  <option value={tag} lang={tag} dir={CAPTION_LOCALES[tag].dir}>
                     {CAPTION_LOCALES[tag].name}
                   </option>
                 ))}
@@ -95,7 +98,7 @@ const label = film.label.replace('{narration}', film.narration[narration]);
   </div>
   <p class="subtitle" hidden data-film-subtitle></p>
   <figcaption class="fine caption">
-    <span><span data-film-narration>{film.narrationNote[narration]}</span>{locale === 'en' ? ' ' : ''}{film.caption}</span>
+    <span><span data-film-narration>{film.narrationNote[narration]}</span>{SENTENCE_GAP(locale)}{film.caption}</span>
     <a class="more watch" href={localeHref(locale, 'watch/')} data-watch-link>{film.watch}</a>
   </figcaption>
   <script is:inline type="application/json" data-film-config set:html={JSON.stringify(filmConfig(locale, copy)).replace(/</g, '\\u003c')} />
@@ -126,7 +129,7 @@ const label = film.label.replace('{narration}', film.narration[narration]);
   /* Sound, then play/pause, in the corner: one row of frosted controls. */
   .controls {
     position: absolute;
-    right: clamp(12px, 2vw, 22px);
+    inset-inline-end: clamp(12px, 2vw, 22px);
     bottom: clamp(12px, 2vw, 22px);
     display: flex;
     align-items: center;

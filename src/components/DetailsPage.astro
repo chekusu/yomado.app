@@ -136,7 +136,7 @@ const skillLink = `<a href="${SKILL_URL}">skills/yomado</a>`;
     max-width: 34ch;
   }
 
-  :lang(zh-CN) .head .sub,
+  :lang(zh) .head .sub,
   :lang(ja) .head .sub {
     max-width: 24em;
   }
@@ -166,7 +166,8 @@ const skillLink = `<a href="${SKILL_URL}">skills/yomado</a>`;
   }
 
   /* A heading that needs two lines breaks between phrases, never inside a word. */
-  h2:lang(zh-CN) {
+  h2:lang(zh),
+  h2:lang(ko) {
     word-break: keep-all;
   }
 
@@ -199,7 +200,7 @@ const skillLink = `<a href="${SKILL_URL}">skills/yomado</a>`;
     display: grid;
     gap: 12px;
     margin: 0;
-    padding-left: 1.3em;
+    padding-inline-start: 1.3em;
   }
 
   .steps li::marker {
@@ -242,6 +243,7 @@ const skillLink = `<a href="${SKILL_URL}">skills/yomado</a>`;
     overflow-wrap: anywhere;
   }
 
+  /* Commands read left to right in every language. */
   pre {
     margin: 0;
     padding: 12px 16px;
@@ -249,6 +251,8 @@ const skillLink = `<a href="${SKILL_URL}">skills/yomado</a>`;
     border-radius: 12px;
     background: #1d1d1f;
     color: #f5f5f7;
+    direction: ltr;
+    text-align: left;
   }
 
   .links {

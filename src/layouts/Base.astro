@@ -3,7 +3,7 @@
 import '@fontsource-variable/inter/opsz.css';
 import '../styles/global.css';
 import AutoLanguage from '../components/AutoLanguage.astro';
-import { LOCALES, LOCALE_PATH, LOCALE_TAG, OG_LOCALE, RELEASE, SITE, canonical, withBase, type Locale } from '../lib/site';
+import { LOCALES, LOCALE_DIR, LOCALE_PATH, LOCALE_TAG, OG_LOCALE, RELEASE, SITE, canonical, withBase, type Locale } from '../lib/site';
 
 interface Props {
   locale: Locale;
@@ -17,7 +17,7 @@ interface Props {
   /** The page's path below each locale's root, e.g. '' for home or 'details/'. */
   route?: string;
   noindex?: boolean;
-  /** The English home page sends Chinese and Japanese browsers on to their language. */
+  /** The English home page sends browsers in the other languages on to theirs. */
   autoLanguage?: boolean;
 }
 
@@ -46,7 +46,7 @@ const structuredData = {
 ---
 
 <!doctype html>
-<html lang={LOCALE_TAG[locale]}>
+<html lang={LOCALE_TAG[locale]} dir={LOCALE_DIR(locale)}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

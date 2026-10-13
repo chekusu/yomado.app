@@ -42,7 +42,7 @@ const { locale, copy, route = '' } = Astro.props;
               data-lang-switch
               data-locale={l}
             >
-              {LOCALE_NAME[l].full}
+              <bdi>{LOCALE_NAME[l].full}</bdi>
             </a>
           ))
         }

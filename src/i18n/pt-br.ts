@@ -1,0 +1,161 @@
+import type { ReleaseFacts } from '../lib/site';
+import type { Copy } from './types';
+
+// Brazilian Portuguese, also offered to other Portuguese browsers. The film is the English one with
+// the English narration, and the copy says so; the app's own interface is Simplified Chinese only.
+export default (r: ReleaseFacts): Copy => ({
+  meta: {
+    title: 'yomado — uma tela para os seus agentes',
+    description:
+      'O yomado dá ao Codex e a outros agentes visuais uma tela virtual no seu Mac para que trabalhem em apps como o Blender e o Marvelous Designer com capturas de tela, cliques e teclas, sem um MCP específico para cada app. Gratuito, de código aberto e experimental.',
+    ogAlt: 'yomado — Uma tela para os seus agentes.',
+  },
+  skip: 'Pular para o conteúdo',
+  nav: {
+    label: 'Navegação principal',
+    details: 'Detalhes',
+    download: 'Baixar',
+    language: 'Idioma',
+    home: 'Início do yomado',
+  },
+  hero: {
+    title: 'Uma tela para os seus agentes.',
+    sub: 'Uma tela virtual para o Blender, o Marvelous Designer e outros apps. O Codex e outros agentes trabalham com capturas de tela, cliques e teclas, sem um MCP específico para cada app.',
+    cta: 'Baixar para Mac',
+    meta: `Versão experimental · v${r.version} · Apple silicon`,
+    film: {
+      label:
+        'Vídeo do produto, um minuto; uma demonstração simulada. {narration}. O Codex trabalha no Blender na sua tela com capturas e cliques. O ícone do yomado na barra de menus abre o painel de controle, que adiciona uma tela virtual à direita das suas duas telas; ela é renomeada para Codex. O Blender e o Marvelous Designer são arrastados para ela e as janelas deles se movem, enquanto as suas ficam onde estão. No Codex, o Codex faz uma captura, adiciona um modificador Subdivision Surface, digita 3, gira a visão e muda para o sombreamento renderizado. Uma segunda tela, GrokBot, recebe o Google Chrome; o Marvelous Designer é arrastado de volta; ao fechar o GrokBot pela barra de menus, o Chrome volta primeiro para a tela de origem. A noite cai e o Codex se torna o símbolo do yomado.',
+      caption: 'Demonstração simulada, não uma gravação de um agente trabalhando. O funcionamento com as telas físicas desligadas ainda não foi verificado em hardware real.',
+      play: 'Reproduzir o vídeo',
+      pause: 'Pausar o vídeo',
+      replay: 'Reproduzir o vídeo de novo',
+      fallback: 'O seu navegador não consegue reproduzir este vídeo.',
+      watch: 'Assistir ao vídeo completo',
+      soundOn: { en: 'Ativar o som', zh: 'Ativar o som' },
+      soundOnText: { en: 'Som', zh: 'Som' },
+      mute: 'Silenciar',
+      captions: 'Legendas',
+      captionsOff: 'Não',
+      narration: { en: 'Narração em inglês', zh: 'Narração em chinês' },
+      narrationNote: { en: 'Narração em inglês.', zh: 'Narração em chinês.' },
+    },
+  },
+  watch: {
+    meta: {
+      title: 'O yomado em um minuto — o vídeo do produto',
+      description:
+        'Uma demonstração simulada de um minuto do yomado: uma tela virtual com nome para o Codex, apps arrastados para ela pelo painel de controle e o Codex trabalhando no Blender com capturas de tela, cliques e teclas.',
+    },
+    title: 'O yomado em um minuto.',
+    lede: 'Abra uma tela, leve os apps de um agente para ela, deixe-o trabalhar e traga as janelas de volta.',
+    note: 'Uma demonstração simulada, não uma gravação do trabalho real de um agente. As janelas dos apps são recriações simplificadas; os ícones são os dos próprios apps. O funcionamento com as telas físicas desligadas ainda não foi verificado.',
+    downloads: 'Baixar o vídeo',
+    withSubtitles: 'Com legendas ({language})',
+    withoutSubtitles: 'Sem legendas',
+    wide: 'Vídeo horizontal',
+    tall: 'Vídeo vertical',
+    mp4: 'MP4 · 1920 × 1080 · 1:00 · {size}',
+    mp4Tall: 'MP4 · 1080 × 1350 · 1:00 · {size}',
+    srt: 'Arquivo de legendas',
+    back: 'Voltar ao yomado',
+  },
+  story: {
+    label: 'Como funciona',
+    acts: [
+      { title: 'Abra uma tela. Dê um nome a ela.', text: 'Adicione uma tela virtual e dê a ela o nome do agente que vai usá-la.' },
+      { title: 'Os apps dele mudam de tela. Os seus ficam.', text: 'Mande um app para a tela do agente. Todo o resto fica onde você deixou.' },
+      { title: 'Uma tela por agente.', text: 'Uma para o Codex, outra para o GrokBot, cada uma com os próprios apps.' },
+    ],
+  },
+  panel: {
+    title: 'Todas as telas. Um painel.',
+    text: 'Suas telas em escala, cada app na tela em que está.',
+    imageAlt:
+      'O painel de controle do yomado: Studio Display 1 com o WeChat, Studio Display 2 com o Google Chrome e uma tela virtual chamada Codex, de 1920 × 1080, com o Blender e o Marvelous Designer. Cada cartão mostra os ícones dos apps daquela tela.',
+    caption: 'O painel de controle, recriado a partir do layout do app com telas de exemplo e os ícones dos próprios apps. A interface dele é em chinês simplificado.',
+  },
+  agent: {
+    textHtml: '<strong>Você não precisa preparar a tela do seu agente à mão.</strong> A skill do yomado orienta o agente a preparar a própria tela de trabalho no painel do yomado.',
+    requestLabel: 'Experimente pedir',
+    request: 'Use o yomado para preparar uma tela virtual chamada Codex para esta tarefa no Blender, mova para ela só as janelas desta tarefa e devolva-as ao lugar quando terminar.',
+    copyName: 'Copiar o pedido',
+    skill: 'A skill do yomado no GitHub',
+    setup: 'Instalar a skill',
+  },
+  finale: {
+    title: 'Uma janela acesa para os seus agentes.',
+    cta: 'Baixar para Mac',
+    meta: `Versão experimental ${r.version} · Apple silicon · macOS 14 ou posterior · Gratuito e de código aberto`,
+    details: 'Instalar e verificar',
+    source: 'Código-fonte no GitHub',
+  },
+  footer: {
+    navLabel: 'Rodapé',
+    tagline: 'Uma tela de trabalho para agentes visuais.',
+    details: 'Detalhes',
+    film: 'Vídeo',
+    releases: 'Versões',
+    source: 'Código do app',
+    site: 'Código do site',
+    license: 'Licença MIT',
+    fine: 'Software experimental que usa APIs privadas do macOS. Blender, Marvelous Designer, Google Chrome, WeChat, Codex, GrokBot e macOS pertencem aos seus respectivos donos; seus nomes e ícones apenas identificam os apps e não implicam endosso.',
+  },
+  details: {
+    meta: {
+      title: `yomado ${r.version} — instalação, checksum e requisitos`,
+      description: `Baixe o yomado ${r.version} para Mac com Apple silicon: o que você precisa, como instalar, como verificar o arquivo e o que ainda não foi verificado.`,
+    },
+    eyebrow: 'Detalhes',
+    title: `yomado ${r.version}`,
+    lede: 'Uma versão experimental para Mac com Apple silicon. Gratuita e de código aberto, sob a licença MIT.',
+    cta: 'Baixar para Mac',
+    ctaMeta: `${r.fileName} · ${r.size}`,
+    specsTitle: 'Requisitos',
+    specs: [
+      { term: 'Versão', value: `${r.version} (build ${r.build}) · pré-lançamento · ${r.date}` },
+      { term: 'Mac', value: 'Apple silicon (arm64). Não há versão para Intel.' },
+      { term: 'macOS', value: 'Compilado para o macOS 14 e posteriores; nem todas as versões foram testadas.' },
+      { term: 'Assinatura', value: 'Assinado com Developer ID pela CHEKUSU e notarizado pela Apple.' },
+      { term: 'Interface', value: 'Chinês simplificado' },
+    ],
+    installTitle: 'Instalação',
+    installHtml: [
+      'Descompacte o arquivo e abra o <strong>Yomado.app</strong>. Ele fica na barra de menus; fechar o painel não encerra o app.',
+      'O app inclui o tíquete de notarização da Apple. Mesmo assim, o macOS pode pedir uma confirmação na primeira vez que você abrir um app baixado.',
+      'Para mover janelas, é preciso a permissão de Acessibilidade. O ícone de cadeado no painel abre a página certa dos Ajustes do Sistema; quem ativa é você.',
+    ],
+    agent: {
+      title: 'Deixe o seu agente preparar',
+      lede: 'A skill do yomado orienta um agente pelo próprio painel do yomado: criar uma tela de trabalho e dar um nome a ela, levar para lá só as janelas da tarefa, conferir se consegue vê-las e operá-las e devolvê-las quando terminar. Ela não adiciona nenhuma API nem uma entrada própria.',
+      stepsHtml: [
+        'Instale o yomado e ative a Acessibilidade, como acima.',
+        'Dê ao seu agente ferramentas de uso do computador que consigam capturar a tela virtual e operar o ponteiro e o teclado. As permissões do macOS para elas você concede na primeira vez.',
+        'No Codex, coloque a pasta {skill} do repositório do yomado em <code>$CODEX_HOME/skills</code> (por padrão, <code>~/.codex/skills</code>). Ela fica disponível a partir do turno seguinte; não é preciso reiniciar nada. Outros agentes podem ler o mesmo <code>SKILL.md</code> com o próprio mecanismo de skills.',
+        'Depois peça, por exemplo:',
+      ],
+      note: 'Enquanto ele trabalha, o seu Mac continua com a sessão iniciada e desbloqueado, e você e o agente compartilham o mesmo ponteiro, teclado e foco. Os apps em que ele consegue trabalhar dependem das ferramentas dele.',
+    },
+    verifyTitle: 'Verifique o download',
+    verifyText: 'Compare o SHA-256 do arquivo com este valor:',
+    hashLabel: 'SHA-256',
+    copy: 'Copiar',
+    copied: 'Copiado',
+    copyFallback: 'Selecionado — pressione ⌘C',
+    knowTitle: 'Bom saber',
+    know: [
+      'O yomado fornece as telas. O seu agente vê e age com as próprias ferramentas de captura e de entrada.',
+      'As telas virtuais fazem parte da sua sessão, então você e o agente compartilham o mesmo teclado, ponteiro e foco.',
+      'Ao encerrar o yomado, as telas dele se fecham, e elas não são recriadas depois de reiniciar.',
+      'Ainda não verificado: o trabalho do agente com as telas físicas desligadas, a economia de energia e execuções longas sem supervisão.',
+    ],
+    links: { notes: 'Notas da versão', checksums: 'Arquivo de checksums', source: 'Código do app', site: 'Código do site' },
+    back: 'Voltar ao yomado',
+  },
+  notFound: {
+    meta: 'Página não encontrada — yomado',
+    title: 'Esta janela está apagada.',
+    text: 'Não há nada neste endereço. O download está na página inicial.',
+    home: 'Voltar ao yomado',
+  },
+});

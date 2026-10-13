@@ -15,7 +15,7 @@ import { MENUBAR_ICON } from '../lib/menubar';
 import { exampleCards } from '../lib/panel';
 import { RELEASE } from '../lib/site';
 import { phrased } from '../lib/text';
-import type { Copy } from '../i18n';
+import type { FilmScript } from '../i18n';
 import {
   BLENDER,
   FILM_SIZE,
@@ -39,13 +39,12 @@ import {
 
 interface Props {
   layout: FilmLayout;
-  copy: Copy;
+  script: FilmScript;
   lang: string;
 }
 
-const { layout, copy, lang } = Astro.props;
+const { layout, script, lang } = Astro.props;
 const size = FILM_SIZE[layout];
-const script = copy.filmScript;
 const SCREENS = SCREENS_BY_LAYOUT[layout];
 
 const box = (b: { x: number; y: number; w: number; h: number }) => `left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px`;

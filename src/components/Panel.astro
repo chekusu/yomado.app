@@ -67,7 +67,7 @@ const cards = exampleCards({ one: ['wechat'], two: ['chrome'], codex: ['blender'
     max-width: 30ch;
   }
 
-  :lang(zh-CN) .copy .sub,
+  :lang(zh) .copy .sub,
   :lang(ja) .copy .sub {
     max-width: 22em;
   }
@@ -115,7 +115,8 @@ const cards = exampleCards({ one: ['wechat'], two: ['chrome'], codex: ['blender'
     font-weight: 600;
   }
 
-  :lang(zh-CN) .agent-text {
+  :lang(zh) .agent-text,
+  :lang(ko) .agent-text {
     word-break: keep-all;
     overflow-wrap: anywhere;
   }
