@@ -3,19 +3,19 @@
   "appRepository": "https://github.com/chekusu/yomado",
   "siteRepository": "https://github.com/chekusu/yomado.app",
   "release": {
-    "version": "0.3.4",
-    "build": "10",
-    "tag": "v0.3.4",
+    "version": "0.3.5",
+    "build": "11",
+    "tag": "v0.3.5",
     "publishedAt": "2026-10-14",
     "prerelease": false,
-    "url": "https://github.com/chekusu/yomado/releases/download/v0.3.4/Yomado-v0.3.4.zip",
-    "fileName": "Yomado-v0.3.4.zip",
-    "bytes": 2081307,
-    "sha256": "8be3a3d35cea8b162f0fa5fb9c9fb5d3d17fe224e454c79cb461bbe414cc8fa0",
+    "url": "https://github.com/chekusu/yomado/releases/download/v0.3.5/Yomado-v0.3.5.zip",
+    "fileName": "Yomado-v0.3.5.zip",
+    "bytes": 2107717,
+    "sha256": "620357abd8e2133f8f98e721754b20c58ceaa1e6854cc6cf1fc52b267e4293e6",
     "bundleIdentifier": "dev.chekusu.yomado",
     "architecture": "arm64",
     "minimumSystemVersion": "14.0",
-    "notesUrl": "https://github.com/chekusu/yomado/releases/tag/v0.3.4",
-    "checksumsUrl": "https://github.com/chekusu/yomado/releases/download/v0.3.4/yomado-v0.3.4-SHA256SUMS.txt"
+    "notesUrl": "https://github.com/chekusu/yomado/releases/tag/v0.3.5",
+    "checksumsUrl": "https://github.com/chekusu/yomado/releases/download/v0.3.5/yomado-v0.3.5-SHA256SUMS.txt"
   }
 }
