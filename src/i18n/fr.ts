@@ -113,7 +113,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: 'Configuration requise',
     specs: [
-      { term: 'Version', value: `${r.version} (build ${r.build}) · préversion · ${r.date}` },
+      { term: 'Version', value: `${r.version} (build ${r.build}) · ${r.prerelease ? 'préversion' : 'version stable'} · ${r.date}` },
       { term: 'Mac', value: 'Apple silicon (arm64). Il n’y a pas de version Intel.' },
       { term: 'macOS', value: 'Compilée pour macOS 14 et ultérieur\u202f; toutes les versions n’ont pas été testées.' },
       { term: 'Signature', value: 'Signée avec un Developer ID par CHEKUSU et notarisée par Apple.' },
@@ -121,7 +121,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'Installation',
     installHtml: [
-      'Décompressez l’archive et ouvrez <strong>Yomado.app</strong>. L’app vit dans la barre des menus\u202f; fermer le panneau ne la quitte pas.',
+      'Décompressez l’archive et ouvrez <strong>Yomado.app</strong>. L’app apparaît dans le Dock et dans la barre des menus\u202f; fermer le panneau ne la quitte pas, et l’icône du Dock ou le menu de la barre des menus le rouvrent.',
       'L’app contient son ticket de notarisation Apple. macOS peut tout de même vous demander une confirmation la première fois que vous ouvrez une app téléchargée.',
       'Déplacer des fenêtres nécessite l’autorisation Accessibilité. L’icône de cadenas du panneau ouvre la bonne page des Réglages Système\u202f; c’est vous qui l’activez.',
     ],

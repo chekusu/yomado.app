@@ -113,7 +113,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: 'Systemvoraussetzungen',
     specs: [
-      { term: 'Version', value: `${r.version} (Build ${r.build}) · Vorabversion · ${r.date}` },
+      { term: 'Version', value: `${r.version} (Build ${r.build}) · ${r.prerelease ? 'Vorabversion' : 'stabile Version'} · ${r.date}` },
       { term: 'Mac', value: 'Apple Silicon (arm64). Einen Intel-Build gibt es nicht.' },
       { term: 'macOS', value: 'Gebaut für macOS 14 und neuer; nicht jede Version wurde getestet.' },
       { term: 'Signatur', value: 'Mit Developer ID von CHEKUSU signiert und von Apple notarisiert.' },
@@ -121,7 +121,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'Installation',
     installHtml: [
-      'Entpacke das Archiv und öffne <strong>Yomado.app</strong>. Die App lebt in der Menüleiste; Schließen des Panels beendet sie nicht.',
+      'Entpacke das Archiv und öffne <strong>Yomado.app</strong>. Die App erscheint im Dock und in der Menüleiste; Schließen des Panels beendet sie nicht, und über das Dock-Symbol oder das Menü in der Menüleiste öffnest du es wieder.',
       'Die App enthält ihr Notarisierungsticket von Apple. Beim ersten Öffnen einer geladenen App kann macOS trotzdem um Bestätigung bitten.',
       'Zum Verschieben von Fenstern braucht die App die Berechtigung „Bedienungshilfen“. Das Schloss im Panel öffnet die passende Seite in den Systemeinstellungen; einschalten musst du sie selbst.',
     ],

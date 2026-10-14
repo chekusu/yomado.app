@@ -115,7 +115,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: '系统要求',
     specs: [
-      { term: '版本', value: `${r.version}（build ${r.build}）· 预发布 · ${r.date}` },
+      { term: '版本', value: `${r.version}（build ${r.build}）· ${r.prerelease ? '预发布' : '正式版'} · ${r.date}` },
       { term: 'Mac', value: 'Apple Silicon（arm64），不提供 Intel 版本。' },
       { term: 'macOS', value: '以 macOS 14 为部署目标，并非所有 14 及以上版本都经过测试。' },
       { term: '签名', value: '已通过 CHEKUSU Developer ID 签名及 Apple 公证。' },
@@ -123,7 +123,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: '安装',
     installHtml: [
-      '解压后打开 <strong>Yomado.app</strong>。它常驻菜单栏，关闭面板不会退出应用。',
+      '解压后打开 <strong>Yomado.app</strong>。它同时显示在 Dock 和菜单栏；关闭面板不会退出应用，点按 Dock 图标或通过菜单栏菜单即可重新打开面板。',
       '应用已附带 Apple 公证票据。首次打开下载的应用时，macOS 仍可能要求你确认。',
       '移动窗口需要辅助功能权限。点击面板中的锁形图标会打开系统设置中的对应页面，由你自己开启。',
     ],

@@ -113,7 +113,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: 'Wymagania',
     specs: [
-      { term: 'Wersja', value: `${r.version} (kompilacja ${r.build}) · wersja przedpremierowa · ${r.date}` },
+      { term: 'Wersja', value: `${r.version} (kompilacja ${r.build}) · ${r.prerelease ? 'wersja przedpremierowa' : 'wersja stabilna'} · ${r.date}` },
       { term: 'Mac', value: 'Apple silicon (arm64). Nie ma wersji dla procesorów Intel.' },
       { term: 'macOS', value: 'Zbudowana dla macOS 14 i nowszych; nie każda wersja była testowana.' },
       { term: 'Podpis', value: 'Podpisana przez CHEKUSU certyfikatem Developer ID i poświadczona notarialnie przez Apple.' },
@@ -121,7 +121,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'Instalacja',
     installHtml: [
-      'Rozpakuj archiwum i otwórz <strong>Yomado.app</strong>. Aplikacja działa na pasku menu; zamknięcie panelu jej nie wyłącza.',
+      'Rozpakuj archiwum i otwórz <strong>Yomado.app</strong>. Aplikacja jest widoczna w Docku i na pasku menu; zamknięcie panelu jej nie wyłącza, a ikona w Docku lub menu na pasku menu otwiera go ponownie.',
       'Aplikacja zawiera bilet poświadczenia notarialnego Apple. Mimo to przy pierwszym otwarciu pobranej aplikacji macOS może poprosić o potwierdzenie.',
       'Przenoszenie okien wymaga uprawnienia Dostępność. Ikona kłódki w panelu otwiera odpowiednią stronę Ustawień systemowych; włączasz je samodzielnie.',
     ],

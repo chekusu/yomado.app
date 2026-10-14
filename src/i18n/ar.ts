@@ -117,7 +117,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${ltr(r.fileName)} · ${r.size}`,
     specsTitle: 'المتطلبات',
     specs: [
-      { term: 'الإصدار', value: `${ltr(r.version)} (البناء ${r.build}) · إصدار أولي · ${r.date}` },
+      { term: 'الإصدار', value: `${ltr(r.version)} (البناء ${r.build}) · ${r.prerelease ? 'إصدار أولي' : 'إصدار مستقر'} · ${r.date}` },
       { term: 'Mac', value: 'شريحة Apple Silicon (arm64). لا يوجد إصدار لمعالجات Intel.' },
       { term: 'macOS', value: 'مبني لنظام macOS 14 والإصدارات الأحدث، ولم تُختبر كل الإصدارات.' },
       { term: 'التوقيع', value: 'موقَّع بشهادة Developer ID من CHEKUSU وموثَّق من Apple.' },
@@ -125,7 +125,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'التثبيت',
     installHtml: [
-      'فُكّ ضغط الأرشيف وافتح <strong>Yomado.app</strong>. يعمل التطبيق من شريط القوائم، وإغلاق اللوحة لا يُنهيه.',
+      'فُكّ ضغط الأرشيف وافتح <strong>Yomado.app</strong>. يظهر التطبيق في Dock وفي شريط القوائم، وإغلاق اللوحة لا يُنهيه؛ ويمكنك إعادة فتحها من أيقونته في Dock أو من قائمته في شريط القوائم.',
       'يتضمّن التطبيق تذكرة التوثيق من Apple، ومع ذلك قد يطلب منك macOS التأكيد عند فتح تطبيق مُنزَّل لأول مرة.',
       'يحتاج نقل النوافذ إلى إذن «تسهيلات الاستخدام». تفتح أيقونة القفل في اللوحة الصفحة المناسبة في إعدادات النظام، وأنت من يفعّل الإذن.',
     ],

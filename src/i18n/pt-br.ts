@@ -113,7 +113,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: 'Requisitos',
     specs: [
-      { term: 'Versão', value: `${r.version} (build ${r.build}) · pré-lançamento · ${r.date}` },
+      { term: 'Versão', value: `${r.version} (build ${r.build}) · ${r.prerelease ? 'pré-lançamento' : 'versão estável'} · ${r.date}` },
       { term: 'Mac', value: 'Apple silicon (arm64). Não há versão para Intel.' },
       { term: 'macOS', value: 'Compilado para o macOS 14 e posteriores; nem todas as versões foram testadas.' },
       { term: 'Assinatura', value: 'Assinado com Developer ID pela CHEKUSU e notarizado pela Apple.' },
@@ -121,7 +121,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'Instalação',
     installHtml: [
-      'Descompacte o arquivo e abra o <strong>Yomado.app</strong>. Ele fica na barra de menus; fechar o painel não encerra o app.',
+      'Descompacte o arquivo e abra o <strong>Yomado.app</strong>. Ele aparece no Dock e na barra de menus; fechar o painel não encerra o app, e dá para reabrir o painel pelo ícone no Dock ou pelo menu da barra de menus.',
       'O app inclui o tíquete de notarização da Apple. Mesmo assim, o macOS pode pedir uma confirmação na primeira vez que você abrir um app baixado.',
       'Para mover janelas, é preciso a permissão de Acessibilidade. O ícone de cadeado no painel abre a página certa dos Ajustes do Sistema; quem ativa é você.',
     ],

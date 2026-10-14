@@ -113,7 +113,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: 'Gereksinimler',
     specs: [
-      { term: 'Sürüm', value: `${r.version} (derleme ${r.build}) · ön sürüm · ${r.date}` },
+      { term: 'Sürüm', value: `${r.version} (derleme ${r.build}) · ${r.prerelease ? 'ön sürüm' : 'kararlı sürüm'} · ${r.date}` },
       { term: 'Mac', value: 'Apple silicon (arm64). Intel sürümü yoktur.' },
       { term: 'macOS', value: 'macOS 14 ve sonrası için derlendi; her sürüm test edilmedi.' },
       { term: 'İmza', value: 'CHEKUSU tarafından Developer ID ile imzalandı ve Apple tarafından onaylandı (notarized).' },
@@ -121,7 +121,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'Kurulum',
     installHtml: [
-      'Arşivi açın ve <strong>Yomado.app</strong>’i açın. Uygulama menü çubuğunda çalışır; paneli kapatmak uygulamadan çıkmaz.',
+      'Arşivi açın ve <strong>Yomado.app</strong>’i açın. Uygulama hem Dock’ta hem menü çubuğunda görünür; paneli kapatmak uygulamadan çıkmaz, paneli Dock simgesinden veya menü çubuğundaki menüden yeniden açabilirsiniz.',
       'Uygulama, Apple onay (notarization) biletini içerir. Yine de indirilen bir uygulamayı ilk kez açtığınızda macOS onay isteyebilir.',
       'Pencereleri taşımak için Erişilebilirlik izni gerekir. Paneldeki kilit simgesi Sistem Ayarları’nda ilgili sayfayı açar; izni kendiniz açarsınız.',
     ],

@@ -293,9 +293,10 @@ film's copy, and `npm run assets` after the story scene changes.
 - **`siteUrl`** — the canonical origin used for canonical links, `hreflang`, Open Graph,
   structured data, `robots.txt` and the sitemap. `SITE_URL=https://example.com npm run build`
   overrides it for one build. Re-run `npm run assets` after changing it (the cards show the host).
-- **`release`** — the version, download URL, file name, size and SHA-256 the page offers. When a
-  new release is published, update this block and run `npm run test:download`; the page must
-  never link a source archive or an unverified file.
+- **`release`** — the version, download URL, file name, size and SHA-256 the page offers, and
+  `prerelease`, which decides whether the details page calls it a pre-release or a stable release.
+  When a new release is published, update this block and run `npm run test:download`; the page
+  must never link a source archive or an unverified file.
 
 The site builds for the domain root. To serve it under a path, set `SITE_BASE`:
 

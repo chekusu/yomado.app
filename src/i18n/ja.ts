@@ -125,7 +125,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: '動作環境',
     specs: [
-      { term: 'バージョン', value: `${r.version}（ビルド ${r.build}）· プレリリース · ${r.date}` },
+      { term: 'バージョン', value: `${r.version}（ビルド ${r.build}）· ${r.prerelease ? 'プレリリース' : '正式版'} · ${r.date}` },
       { term: 'Mac', value: 'Apple シリコン（arm64）。Intel 版はありません。' },
       { term: 'macOS', value: 'macOS 14 以降を対象にビルドしています。すべてのバージョンでテストしたわけではありません。' },
       { term: '署名', value: 'CHEKUSU の Developer ID で署名し、Apple の公証を受けています。' },
@@ -133,7 +133,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'インストール',
     installHtml: [
-      'zip を展開して <strong>Yomado.app</strong> を開きます。メニューバーに常駐し、パネルを閉じても終了しません。',
+      'zip を展開して <strong>Yomado.app</strong> を開きます。Dock とメニューバーの両方に表示され、パネルを閉じても終了しません。Dock のアイコンかメニューバーのメニューから、パネルをもう一度開けます。',
       'アプリには Apple の公証チケットを添付しています。ダウンロードしたアプリを初めて開く際、macOS が確認を求めることがあります。',
       'ウィンドウの移動にはアクセシビリティの許可が必要です。パネルの鍵アイコンからシステム設定の該当ページが開くので、ご自身でオンにしてください。',
     ],

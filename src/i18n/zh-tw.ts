@@ -112,7 +112,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: '系統需求',
     specs: [
-      { term: '版本', value: `${r.version}（build ${r.build}）· 預先發行版 · ${r.date}` },
+      { term: '版本', value: `${r.version}（build ${r.build}）· ${r.prerelease ? '預先發行版' : '正式版'} · ${r.date}` },
       { term: 'Mac', value: 'Apple 晶片（arm64），不提供 Intel 版本。' },
       { term: 'macOS', value: '以 macOS 14 為部署目標，並非所有 14 以上版本都經過測試。' },
       { term: '簽署', value: '已由 CHEKUSU 以 Developer ID 簽署，並經 Apple 公證。' },
@@ -120,7 +120,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: '安裝',
     installHtml: [
-      '解壓縮後打開 <strong>Yomado.app</strong>。它常駐在選單列，關閉面板不會結束 App。',
+      '解壓縮後打開 <strong>Yomado.app</strong>。它會同時顯示在 Dock 和選單列；關閉面板不會結束 App，按一下 Dock 圖示或透過選單列選單就能重新打開面板。',
       'App 已附帶 Apple 公證票證。第一次打開下載的 App 時，macOS 仍可能要求你確認。',
       '移動視窗需要「輔助使用」權限。按一下面板中的鎖頭圖示，會打開系統設定中的對應頁面，由你自己開啟。',
     ],

@@ -124,7 +124,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: 'Requirements',
     specs: [
-      { term: 'Version', value: `${r.version} (build ${r.build}) · pre-release · ${r.date}` },
+      { term: 'Version', value: `${r.version} (build ${r.build}) · ${r.prerelease ? 'pre-release' : 'stable release'} · ${r.date}` },
       { term: 'Mac', value: 'Apple silicon (arm64). There’s no Intel build.' },
       { term: 'macOS', value: 'Built for macOS 14 and later; not every release has been tested.' },
       { term: 'Signature', value: 'Developer ID signed by CHEKUSU and notarized by Apple.' },
@@ -132,7 +132,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'Install',
     installHtml: [
-      'Unzip it and open <strong>Yomado.app</strong>. It lives in the menu bar; closing the panel doesn’t quit it.',
+      'Unzip it and open <strong>Yomado.app</strong>. It appears in the Dock and the menu bar. Closing the panel doesn’t quit the app; the Dock icon or the menu bar menu brings the panel back.',
       'The app includes its Apple notarization ticket. macOS may still ask you to confirm the first time you open a downloaded app.',
       'Moving windows needs Accessibility permission. The lock icon in the panel opens the right page in System Settings; you switch it on yourself.',
     ],

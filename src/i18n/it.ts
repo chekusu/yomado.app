@@ -113,7 +113,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: 'Requisiti',
     specs: [
-      { term: 'Versione', value: `${r.version} (build ${r.build}) · pre-release · ${r.date}` },
+      { term: 'Versione', value: `${r.version} (build ${r.build}) · ${r.prerelease ? 'pre-release' : 'versione stabile'} · ${r.date}` },
       { term: 'Mac', value: 'Apple silicon (arm64). Non esiste una versione per Intel.' },
       { term: 'macOS', value: 'Compilata per macOS 14 e versioni successive; non tutte le versioni sono state provate.' },
       { term: 'Firma', value: 'Firmata con Developer ID da CHEKUSU e notarizzata da Apple.' },
@@ -121,7 +121,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'Installazione',
     installHtml: [
-      'Decomprimi l’archivio e apri <strong>Yomado.app</strong>. Vive nella barra dei menu; chiudere il pannello non la chiude.',
+      'Decomprimi l’archivio e apri <strong>Yomado.app</strong>. Compare nel Dock e nella barra dei menu; chiudere il pannello non la chiude, e l’icona nel Dock o il menu nella barra dei menu lo riaprono.',
       'L’app include il suo ticket di notarizzazione Apple. Alla prima apertura di un’app scaricata, macOS potrebbe comunque chiederti una conferma.',
       'Per spostare le finestre serve il permesso Accessibilità. L’icona del lucchetto nel pannello apre la pagina giusta di Impostazioni di Sistema; il permesso lo attivi tu.',
     ],

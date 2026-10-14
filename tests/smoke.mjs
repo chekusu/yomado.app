@@ -105,31 +105,32 @@ const captionTiming = JSON.parse(await readFile(new URL('../captions/timing.json
 const captionText = {};
 for (const tag of captionIndex.order) captionText[tag] = JSON.parse(await readFile(new URL(`../captions/${tag}.json`, import.meta.url), 'utf8'));
 // All 16 website languages, the subtitle languages (captions/index.json): each one's Open Graph
-// locale, its name in the menu (in full and short), its home page's headline, and the note under the
-// hero film that names its narration (the English one, except for both Chinese).
+// locale, its name in the menu (in full and short), its home page's headline, the note under the
+// hero film that names its narration (the English one, except for both Chinese), and what the
+// details page calls a pre-release and a stable release.
 const SITE_TABLE = {
-  en: ['en_US', 'English', 'EN', /A screen for your agents/, 'English narration.'],
-  'zh-cn': ['zh_CN', '简体中文', '简体', /给 Agent\s*一块屏幕/, '中文旁白。'],
-  'zh-tw': ['zh_TW', '繁體中文', '繁體', /給 Agent\s*一塊螢幕/, '中文旁白。'],
-  ja: ['ja_JP', '日本語', '日本語', /エージェントに、\s*専用の画面を。/, '英語ナレーション付き。'],
-  ko: ['ko_KR', '한국어', '한국어', /에이전트에게, 전용 화면을/, '영어 내레이션.'],
-  es: ['es_ES', 'Español', 'ES', /Una pantalla para tus agentes/, 'Narración en inglés.'],
-  fr: ['fr_FR', 'Français', 'FR', /Un écran pour vos agents/, 'Narration en anglais.'],
-  de: ['de_DE', 'Deutsch', 'DE', /Ein Bildschirm für deine Agenten/, 'Englische Sprecherstimme.'],
-  it: ['it_IT', 'Italiano', 'IT', /Uno schermo per i tuoi agenti/, 'Narrazione in inglese.'],
-  'pt-br': ['pt_BR', 'Português (Brasil)', 'PT', /Uma tela para os seus agentes/, 'Narração em inglês.'],
-  nl: ['nl_NL', 'Nederlands', 'NL', /Een scherm voor je agents/, 'Engelse voice-over.'],
-  pl: ['pl_PL', 'Polski', 'PL', /Ekran dla twoich agentów/, 'Narracja po angielsku.'],
-  tr: ['tr_TR', 'Türkçe', 'TR', /Ajanlarınız için bir ekran/, 'İngilizce anlatım.'],
-  ar: ['ar_AR', 'العربية', 'عربي', /شاشة لوكلائك/, 'تعليق صوتي بالإنجليزية.'],
-  hi: ['hi_IN', 'हिन्दी', 'हिन्दी', /आपके एजेंट्स के लिए एक स्क्रीन/, 'अंग्रेज़ी वॉइसओवर।'],
-  id: ['id_ID', 'Bahasa Indonesia', 'ID', /Layar untuk agen Anda/, 'Narasi bahasa Inggris.'],
+  en: ['en_US', 'English', 'EN', /A screen for your agents/, 'English narration.', ['pre-release', 'stable release']],
+  'zh-cn': ['zh_CN', '简体中文', '简体', /给 Agent\s*一块屏幕/, '中文旁白。', ['预发布', '正式版']],
+  'zh-tw': ['zh_TW', '繁體中文', '繁體', /給 Agent\s*一塊螢幕/, '中文旁白。', ['預先發行版', '正式版']],
+  ja: ['ja_JP', '日本語', '日本語', /エージェントに、\s*専用の画面を。/, '英語ナレーション付き。', ['プレリリース', '正式版']],
+  ko: ['ko_KR', '한국어', '한국어', /에이전트에게, 전용 화면을/, '영어 내레이션.', ['프리릴리스', '정식 버전']],
+  es: ['es_ES', 'Español', 'ES', /Una pantalla para tus agentes/, 'Narración en inglés.', ['versión preliminar', 'versión estable']],
+  fr: ['fr_FR', 'Français', 'FR', /Un écran pour vos agents/, 'Narration en anglais.', ['préversion', 'version stable']],
+  de: ['de_DE', 'Deutsch', 'DE', /Ein Bildschirm für deine Agenten/, 'Englische Sprecherstimme.', ['Vorabversion', 'stabile Version']],
+  it: ['it_IT', 'Italiano', 'IT', /Uno schermo per i tuoi agenti/, 'Narrazione in inglese.', ['pre-release', 'versione stabile']],
+  'pt-br': ['pt_BR', 'Português (Brasil)', 'PT', /Uma tela para os seus agentes/, 'Narração em inglês.', ['pré-lançamento', 'versão estável']],
+  nl: ['nl_NL', 'Nederlands', 'NL', /Een scherm voor je agents/, 'Engelse voice-over.', ['pre-release', 'stabiele versie']],
+  pl: ['pl_PL', 'Polski', 'PL', /Ekran dla twoich agentów/, 'Narracja po angielsku.', ['wersja przedpremierowa', 'wersja stabilna']],
+  tr: ['tr_TR', 'Türkçe', 'TR', /Ajanlarınız için bir ekran/, 'İngilizce anlatım.', ['ön sürüm', 'kararlı sürüm']],
+  ar: ['ar_AR', 'العربية', 'عربي', /شاشة لوكلائك/, 'تعليق صوتي بالإنجليزية.', ['إصدار أولي', 'إصدار مستقر']],
+  hi: ['hi_IN', 'हिन्दी', 'हिन्दी', /आपके एजेंट्स के लिए एक स्क्रीन/, 'अंग्रेज़ी वॉइसओवर।', ['प्री-रिलीज़', 'स्टेबल रिलीज़']],
+  id: ['id_ID', 'Bahasa Indonesia', 'ID', /Layar untuk agen Anda/, 'Narasi bahasa Inggris.', ['pra-rilis', 'rilis stabil']],
 };
 const SITE_LOCALES = captionIndex.order.map((tag) => {
   const key = tag.toLowerCase();
-  const [og, name, short, title, narrationNote] = SITE_TABLE[key];
+  const [og, name, short, title, narrationNote, [prerelease, stable]] = SITE_TABLE[key];
   const { dir, visual, family } = captionIndex.locales[tag];
-  return { key, tag, lang: tag, path: key === 'en' ? '' : `${key}/`, dir, visual, family, og, name, short, title, narrationNote };
+  return { key, tag, lang: tag, path: key === 'en' ? '' : `${key}/`, dir, visual, family, og, name, short, title, narrationNote, prerelease, stable };
 });
 const siteLocale = (key) => SITE_LOCALES.find((l) => l.key === key);
 /** The subtitle a language shows at a moment of its film (null between cues). */
@@ -986,7 +987,12 @@ for (const locale of SITE_LOCALES) {
       }
       assert.ok((await page.locator('header [data-lang-menu] summary').innerText()).includes(locale.short), 'the bar names the language');
       for (const href of await page.$$eval('a[data-download]', (els) => els.map((e) => e.href))) assert.equal(href, RELEASE.url);
+      // The release is what the configuration says it is: no page calls a stable release a pre-release.
+      const [status, other] = RELEASE.prerelease ? [locale.prerelease, locale.stable] : [locale.stable, locale.prerelease];
+      assert.ok(!(await page.content()).includes(other), `never says "${other}"`);
       if (route === 'details/') {
+        const version = await page.locator('.specs div').first().innerText();
+        for (const fact of [RELEASE.version, RELEASE.build, status]) assert.ok(version.includes(fact), `the version line says ${fact}: ${version}`);
         assert.equal((await page.locator('#sha256').innerText()).trim(), RELEASE.sha256, 'the checksum');
         assert.equal(await page.locator(`.details a[href="${SKILL_URL}"]`).count() >= 1, true, 'the skill');
       }

@@ -113,7 +113,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: '요구 사항',
     specs: [
-      { term: '버전', value: `${r.version}(빌드 ${r.build}) · 프리릴리스 · ${r.date}` },
+      { term: '버전', value: `${r.version}(빌드 ${r.build}) · ${r.prerelease ? '프리릴리스' : '정식 버전'} · ${r.date}` },
       { term: 'Mac', value: 'Apple 실리콘(arm64). Intel용 빌드는 없습니다.' },
       { term: 'macOS', value: 'macOS 14 이상을 대상으로 빌드했으며, 모든 버전에서 테스트하지는 않았습니다.' },
       { term: '서명', value: 'CHEKUSU의 Developer ID로 서명되었고 Apple의 공증을 받았습니다.' },
@@ -121,7 +121,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: '설치',
     installHtml: [
-      '압축을 풀고 <strong>Yomado.app</strong>을 엽니다. 메뉴 막대에 머무르며, 패널을 닫아도 종료되지 않습니다.',
+      '압축을 풀고 <strong>Yomado.app</strong>을 엽니다. Dock과 메뉴 막대에 모두 표시되며, 패널을 닫아도 종료되지 않습니다. Dock 아이콘이나 메뉴 막대의 메뉴에서 패널을 다시 열 수 있습니다.',
       '앱에는 Apple 공증 티켓이 포함되어 있습니다. 그래도 다운로드한 앱을 처음 열 때 macOS가 확인을 요청할 수 있습니다.',
       '창을 옮기려면 손쉬운 사용 권한이 필요합니다. 패널의 자물쇠 아이콘을 누르면 시스템 설정의 해당 페이지가 열리며, 권한은 직접 켭니다.',
     ],

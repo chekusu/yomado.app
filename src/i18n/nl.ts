@@ -113,7 +113,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: 'Systeemvereisten',
     specs: [
-      { term: 'Versie', value: `${r.version} (build ${r.build}) · pre-release · ${r.date}` },
+      { term: 'Versie', value: `${r.version} (build ${r.build}) · ${r.prerelease ? 'pre-release' : 'stabiele versie'} · ${r.date}` },
       { term: 'Mac', value: 'Apple silicon (arm64). Er is geen Intel-versie.' },
       { term: 'macOS', value: 'Gebouwd voor macOS 14 en later; niet elke versie is getest.' },
       { term: 'Handtekening', value: 'Met een Developer ID ondertekend door CHEKUSU en genotariseerd door Apple.' },
@@ -121,7 +121,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'Installeren',
     installHtml: [
-      'Pak het archief uit en open <strong>Yomado.app</strong>. Het staat in de menubalk; het paneel sluiten stopt de app niet.',
+      'Pak het archief uit en open <strong>Yomado.app</strong>. Het staat in het Dock en in de menubalk; het paneel sluiten stopt de app niet, en met het Dock-symbool of het menu in de menubalk open je het paneel weer.',
       'De app bevat zijn notarisatieticket van Apple. Toch kan macOS de eerste keer dat je een gedownloade app opent om bevestiging vragen.',
       'Voor het verplaatsen van vensters is toestemming voor Toegankelijkheid nodig. Het slotje in het paneel opent de juiste pagina in Systeeminstellingen; aanzetten doe je zelf.',
     ],

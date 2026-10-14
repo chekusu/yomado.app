@@ -113,7 +113,7 @@ export default (r: ReleaseFacts): Copy => ({
     ctaMeta: `${r.fileName} · ${r.size}`,
     specsTitle: 'Persyaratan',
     specs: [
-      { term: 'Versi', value: `${r.version} (build ${r.build}) · pra-rilis · ${r.date}` },
+      { term: 'Versi', value: `${r.version} (build ${r.build}) · ${r.prerelease ? 'pra-rilis' : 'rilis stabil'} · ${r.date}` },
       { term: 'Mac', value: 'Apple silicon (arm64). Tidak ada build untuk Intel.' },
       { term: 'macOS', value: 'Dibuat untuk macOS 14 dan yang lebih baru; tidak semua versi sudah diuji.' },
       { term: 'Tanda tangan', value: 'Ditandatangani dengan Developer ID oleh CHEKUSU dan dinotarisasi oleh Apple.' },
@@ -121,7 +121,7 @@ export default (r: ReleaseFacts): Copy => ({
     ],
     installTitle: 'Instalasi',
     installHtml: [
-      'Ekstrak arsipnya, lalu buka <strong>Yomado.app</strong>. Aplikasi ini berjalan di bilah menu; menutup panel tidak menghentikannya.',
+      'Ekstrak arsipnya, lalu buka <strong>Yomado.app</strong>. Aplikasi ini muncul di Dock dan di bilah menu; menutup panel tidak menghentikannya, dan panel bisa dibuka lagi lewat ikon Dock atau menu di bilah menu.',
       'Aplikasi ini menyertakan tiket notarisasi Apple. Meski begitu, macOS mungkin tetap meminta konfirmasi saat Anda pertama kali membuka aplikasi yang diunduh.',
       'Memindahkan jendela memerlukan izin Aksesibilitas. Ikon gembok di panel membuka halaman yang tepat di Pengaturan Sistem; Anda sendiri yang menyalakannya.',
     ],
