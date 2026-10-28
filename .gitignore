@@ -11,3 +11,6 @@ test-output/
 
 # Film render scratch
 .film-build/
+
+# Local development handoff data.
+/.sandbank/
