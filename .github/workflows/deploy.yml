@@ -40,20 +40,40 @@ jobs:
 
       - run: npm test
 
-      # Runs only where Cloudflare credentials are configured; elsewhere the job just builds and tests.
-      # A push to main updates the production site; a push to preview/<name> only publishes a
-      # preview deployment at <branch alias>.<project>.pages.dev and leaves production alone.
-      - name: Deploy to Cloudflare Pages
+      - name: Keep the built site for the deploy job
         if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-dist
+          path: dist
+          retention-days: 1
+
+  # Deploys run on the sandbank-tyo runner reserved for public repositories. It can read
+  # only this site's Cloudflare token from the key store; the repository has no GitHub secrets.
+  # Pull requests never reach it: the job runs only for pushes, and workflows from outside
+  # contributors need approval before they run at all.
+  # A push to main updates the production site; a push to preview/<name> only publishes a
+  # preview deployment at <branch alias>.<project>.pages.dev and leaves production alone.
+  deploy:
+    needs: site
+    if: github.event_name == 'push'
+    runs-on: [self-hosted, tyo-deploy-public]
+    steps:
+      # The checkout supplies the Pages functions; the site itself comes from the build job.
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-dist
+          path: dist
+
+      - name: Load deploy keys
+        run: vas-ci-env deploy.yomado.app
+
+      - name: Deploy to Cloudflare Pages
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           DEPLOY_BRANCH: ${{ github.ref_name }}
         run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "No Cloudflare credentials here; skipping deploy."
-            exit 0
-          fi
           if [ -z "$DEPLOY_BRANCH" ]; then
             echo "No branch name for this push; refusing to guess where to deploy."
             exit 1
