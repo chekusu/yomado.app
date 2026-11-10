@@ -5,9 +5,9 @@ import type { Copy } from './types';
 // with the Chinese narration; the app's own interface is Simplified Chinese only.
 export default (r: ReleaseFacts): Copy => ({
   meta: {
-    title: 'yomado 夜窗 — 給 Agent 一塊螢幕',
+    title: 'yomado 夜窗 — 給 AI Agent 的 Mac 虛擬螢幕',
     description:
-      'yomado 在 Mac 上為 Codex 等視覺 Agent 開一塊虛擬螢幕，讓它們透過截圖與鍵盤滑鼠操作 Blender、Marvelous Designer 等 App，不需要 App 專用的 MCP。免費開源，實驗版本。',
+      'yomado 在 Mac 上為 Codex 等 computer use 視覺 Agent 加入專屬的虛擬螢幕，讓它們透過截圖與鍵盤滑鼠操作 Blender、Marvelous Designer 等 App，你的視窗留在原處。不需要 HDMI 假負載，也不需要 App 專用 MCP。免費開源，實驗版本。',
     ogAlt: 'yomado 夜窗 — 給 Agent 一塊螢幕。',
   },
   skip: '跳到主要內容',
@@ -26,7 +26,7 @@ export default (r: ReleaseFacts): Copy => ({
     film: {
       label:
         '產品短片，1 分鐘，{narration}，模擬示範。Codex 在你的顯示器上用截圖和點按操作 Blender；從選單列圖示打開 yomado 控制面板，在兩台顯示器右側新增一塊虛擬螢幕，並重新命名為 Codex；把 Blender 和 Marvelous Designer 拖進去，它們的視窗移過去，你的視窗留在原處；在 Codex 上，Codex 截圖、加入表面細分修改器、輸入 3、轉動視角並切換到渲染著色；第二塊螢幕 GrokBot 放入 Google Chrome，Marvelous Designer 被拖回原來的螢幕；從選單列關閉 GrokBot 時，Chrome 先回到原來的顯示器；夜幕降臨，Codex 化為 yomado 的標誌。',
-      caption: '模擬示範，並非 Agent 實際工作的錄影。關閉實體顯示器後的運作尚待實機驗證。',
+      caption: '模擬示範，並非 Agent 實際工作的錄影。關閉實體螢幕後的運作尚待實機驗證。',
       play: '播放短片',
       pause: '暫停短片',
       replay: '重播短片',
@@ -48,7 +48,7 @@ export default (r: ReleaseFacts): Copy => ({
     },
     title: '一分鐘看懂 yomado。',
     lede: '開一塊螢幕，把 Agent 要用的 App 搬過去，讓它工作，再把視窗拿回來。',
-    note: '模擬示範，並非 Agent 實際工作的錄影。App 視窗為簡化重現，圖示為各 App 自己的圖示。關閉實體顯示器後的運作尚待驗證。',
+    note: '模擬示範，並非 Agent 實際工作的錄影。App 視窗為簡化重現，圖示為各 App 自己的圖示。關閉實體螢幕後的運作尚待驗證。',
     downloads: '下載短片',
     withSubtitles: '附字幕（{language}）',
     withoutSubtitles: '無字幕',
@@ -146,8 +146,45 @@ export default (r: ReleaseFacts): Copy => ({
       'yomado 只提供顯示器，截圖和鍵盤滑鼠輸入由 Agent 自己的工具完成。',
       '虛擬螢幕屬於目前的登入工作階段，你和 Agent 共用同一組鍵盤、指標和焦點。',
       '結束 yomado 會關閉它的虛擬螢幕，重新啟動後不會自動重建。',
-      '尚未驗證：關閉實體顯示器後的 Agent 操作、節電效果和長時間無人值守運作。',
+      '尚未驗證：關閉實體螢幕後的 Agent 操作、節電效果和長時間無人值守運作。',
     ],
+    faq: {
+      title: '常見問題',
+      items: [
+        {
+          q: 'yomado 是什麼？',
+          a: 'yomado（夜窗）是一款免費開源的 macOS App，為使用 computer use 的 AI Agent 在 Mac 上加入虛擬螢幕。Codex 等 Agent 透過截圖、滑鼠和鍵盤工作；每塊虛擬螢幕以 Agent 命名，放它的 App，你自己的視窗留在原處。',
+        },
+        {
+          q: '怎樣在 Mac 上給 Codex 或其他 computer use Agent 一塊專屬螢幕？',
+          a: '安裝 yomado，新增一塊虛擬螢幕並以 Agent 命名，再把工作需要的 App 拖進去。Agent 用它自己的 computer use 工具擷取和操作這塊螢幕。裝上 yomado skill 後，Agent 可以自己準備螢幕，完成後再把視窗放回原處。',
+        },
+        {
+          q: '為什麼不直接讓 Agent 用我的主螢幕？',
+          a: '靠截圖和點按工作的 Agent，需要它的 App 顯示在某塊螢幕上。放在主螢幕，就會蓋住你正在做的事；放在虛擬螢幕，它們在一旁算繪，你的視窗不受影響，也隨時能在 yomado 面板或任何看螢幕的工具裡查看 Agent 的螢幕。',
+        },
+        {
+          q: '需要 HDMI 假負載（顯卡欺騙器）或螢幕管理工具嗎？',
+          a: '不需要。yomado 用軟體建立虛擬螢幕，不需要任何硬體假負載。通用的螢幕管理工具也能加入虛擬螢幕；yomado 專為 Agent 工作設計：每個 Agent 一塊命名的螢幕，把工作視窗移進移出，還有一個讓 Agent 自己完成這些操作的 skill。',
+        },
+        {
+          q: 'Agent 有獨立的滑鼠和鍵盤嗎？',
+          a: '沒有。虛擬螢幕屬於你目前的登入工作階段，你和 Agent 共用一套指標、鍵盤和焦點。能在背景直接操作 App 的 Agent 工具對你的打擾最少。',
+        },
+        {
+          q: 'yomado 是虛擬機器、遠端桌面還是 MCP 伺服器？',
+          a: '都不是，它只提供螢幕。和 macOS 虛擬機器不同，Agent 直接使用你工作階段裡已安裝的 App。查看、截圖和輸入由 Agent 自己的工具完成，不需要 App 專用的 MCP 整合。',
+        },
+        {
+          q: '關掉螢幕後，Agent 還能繼續工作嗎？',
+          a: '這是目標，但尚未驗證：關閉實體螢幕後的 Agent 工作、節能效果以及長時間無人值守的執行都還在測試中。',
+        },
+        {
+          q: '支援哪些 Mac？要收費嗎？',
+          a: `支援 Apple 晶片的 Mac，針對 macOS ${r.minimumSystemVersion} 以上建置。免費開源（MIT 授權），以 Developer ID 簽署並經 Apple 公證。這是實驗版本，使用了 macOS 私有 API，系統更新後可能失效。`,
+        },
+      ],
+    },
     links: { notes: '版本說明', checksums: '校驗碼檔案', source: 'App 原始碼', site: '網站原始碼' },
     back: '回到 yomado 首頁',
   },

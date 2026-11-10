@@ -3,9 +3,9 @@ import type { Copy } from './types';
 
 export default (r: ReleaseFacts): Copy => ({
   meta: {
-    title: 'yomado 夜窗 — 给 Agent 一块屏幕',
+    title: 'yomado 夜窗 — 给 AI Agent 的 Mac 虚拟显示器',
     description:
-      'yomado 在 Mac 上为 Codex 等视觉 Agent 开一块虚拟屏，让它们通过截图与键鼠操作 Blender、Marvelous Designer 等应用，无需应用专用 MCP。免费开源，实验版本。',
+      'yomado 在 Mac 上为 Codex 等 computer use 视觉 Agent 添加专属的虚拟显示器，让它们通过截图与键鼠操作 Blender、Marvelous Designer 等应用，你的窗口留在原处。无需显卡欺骗器，无需应用专用 MCP。免费开源，实验版本。',
     ogAlt: 'yomado 夜窗 — 给 Agent 一块屏幕。',
   },
   skip: '跳到正文',
@@ -151,6 +151,43 @@ export default (r: ReleaseFacts): Copy => ({
       '退出 yomado 会关闭它的虚拟屏，重启后不会自动重建。',
       '尚未验证：实体显示器关闭后的 Agent 操作、节电效果和长时间无人值守运行。',
     ],
+    faq: {
+      title: '常见问题',
+      items: [
+        {
+          q: 'yomado 是什么？',
+          a: 'yomado（夜窗）是一款免费开源的 macOS 应用，为使用 computer use 的 AI Agent 在 Mac 上添加虚拟显示器。Codex 等 Agent 通过截图、鼠标和键盘工作；每块虚拟屏以 Agent 命名，放它的应用，你自己的窗口留在原处。',
+        },
+        {
+          q: '怎样在 Mac 上给 Codex 或其他 computer use Agent 一块单独的屏幕？',
+          a: '安装 yomado，新建一块虚拟屏并以 Agent 命名，再把任务需要的应用拖进去。Agent 用它自己的 computer use 工具截取和操作这块屏。装上 yomado skill 后，Agent 可以自己准备屏幕，做完再把窗口放回原处。',
+        },
+        {
+          q: '为什么不直接让 Agent 用我的主屏？',
+          a: '靠截图和点击工作的 Agent，需要它的应用显示在某块屏幕上。放在主屏，就会盖住你正在做的事；放在虚拟屏，它们在一旁渲染，你的窗口不受影响，也随时能在 yomado 面板或任何看屏工具里查看 Agent 的屏幕。',
+        },
+        {
+          q: '需要显卡欺骗器（HDMI 假负载）或显示器管理工具吗？',
+          a: '不需要。yomado 用软件创建显示器，无需任何硬件欺骗器。通用的显示器工具也能添加虚拟屏；yomado 专为 Agent 工作设计：每个 Agent 一块命名的屏，把任务窗口移进移出，还有一个让 Agent 自己完成这些操作的 skill。',
+        },
+        {
+          q: 'Agent 有独立的鼠标和键盘吗？',
+          a: '没有。虚拟屏属于你当前的登录会话，你和 Agent 共用一套指针、键盘和焦点。能在后台直接操作应用的 Agent 工具对你的打扰最少。',
+        },
+        {
+          q: 'yomado 是虚拟机、远程桌面还是 MCP 服务器？',
+          a: '都不是，它只提供显示器。和 macOS 虚拟机不同，Agent 直接使用你会话里已装好的应用。查看、截图和输入由 Agent 自己的工具完成，不需要应用专用的 MCP 集成。',
+        },
+        {
+          q: '关掉显示器后，Agent 还能继续工作吗？',
+          a: '这是目标，但尚未验证：关闭实体显示器后的 Agent 工作、节能效果以及长时间无人值守运行都还在测试中。',
+        },
+        {
+          q: '支持哪些 Mac？收费吗？',
+          a: `支持 Apple 芯片的 Mac，面向 macOS ${r.minimumSystemVersion} 及以上构建。免费开源（MIT 许可证），使用 Developer ID 签名并经 Apple 公证。这是实验版本，使用了 macOS 私有 API，系统更新后可能失效。`,
+        },
+      ],
+    },
     links: { notes: '版本说明', checksums: '校验和文件', source: '应用源码', site: '网站源码' },
     back: '回到 yomado 首页',
   },

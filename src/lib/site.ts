@@ -12,6 +12,34 @@ export const LOCALES: Locale[] = ['en', 'zh-cn', 'zh-tw', 'ja', 'ko', 'es', 'fr'
 export const SITE = config;
 export const RELEASE = config.release;
 
+/** Who makes yomado, as structured data. */
+export const PUBLISHER = { '@type': 'Organization', name: 'CHEKUSU INC.', url: 'https://github.com/chekusu' };
+
+/**
+ * What the app is and does, in the words people use when they ask a search engine or an AI
+ * assistant for it. Structured data and /llms.txt only; the pages keep their own copy.
+ */
+export const STRUCTURED_KEYWORDS = [
+  'virtual display',
+  'virtual monitor',
+  'macOS',
+  'AI agents',
+  'computer use',
+  'Codex',
+  'visual agents',
+  'headless Mac',
+  'HDMI dummy plug alternative',
+  'Blender',
+  'Marvelous Designer',
+];
+export const STRUCTURED_FEATURES = [
+  'Named virtual displays for AI agents on macOS, 1920 × 1080 or 2560 × 1440, optional HiDPI',
+  'Move an app’s windows onto an agent’s screen and back by dragging its icon in the control panel',
+  'Your own windows stay on your physical displays',
+  'A skill that lets Codex and other agents prepare their own work screen',
+  'No HDMI dummy plug and no app-specific MCP integration needed',
+];
+
 /** Route prefix of each locale, relative to the site base. */
 export const LOCALE_PATH = Object.fromEntries(LOCALES.map((l) => [l, l === 'en' ? '' : `${l}/`])) as Record<Locale, string>;
 

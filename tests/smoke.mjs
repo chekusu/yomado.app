@@ -2223,6 +2223,14 @@ await check('404 page, sitemap and robots.txt', async () => {
   await stray.context.close();
   const robots = await (await page.request.get(`${base}robots.txt`)).text();
   assert.match(robots, /^User-agent: \*/);
+  // The plain-text summary for AI assistants, linked from nowhere but found at its well-known address.
+  for (const file of ['llms.txt', 'llms-full.txt']) {
+    const response = await page.request.get(`${base}${file}`);
+    assert.equal(response.status(), 200, file);
+    assert.match(response.headers()['content-type'], /^text\/plain/, `${file} content type`);
+    const text = await response.text();
+    assert.ok(text.startsWith('# yomado\n') && text.includes(RELEASE.url), `${file} names the release`);
+  }
   await context.close();
 });
 

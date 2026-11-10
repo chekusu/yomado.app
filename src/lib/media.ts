@@ -15,6 +15,9 @@ import { formatSize, withBase, type Locale } from './site';
 
 export type FilmLayout = 'wide' | 'tall';
 
+/** When the narrated, subtitled film was first published, for its structured data. */
+export const FILM_PUBLISHED = filmMedia.published;
+
 /** The films there are, by the language of their supers. */
 export type FilmLocale = 'en' | 'zh-cn' | 'ja';
 export const FILM_LOCALES: FilmLocale[] = ['en', 'zh-cn', 'ja'];

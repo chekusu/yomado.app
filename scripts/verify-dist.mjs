@@ -13,6 +13,9 @@
 // - each watch page plays its language's film and offers that language's captioned MP4s as downloads
 // - no internal film render page and no file of the old 16-second film is published
 // - the app icons are byte for byte the PNGs recorded in apps/sources.json
+// - every page has one JSON-LD block about the release; watch pages add the film, details pages
+//   exactly the questions they show; /llms.txt and /llms-full.txt name the release and their links
+//   resolve; the IndexNow key file answers with the key
 // - neither the build nor the tracked sources contain machine paths, private hosts or credentials
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -311,6 +314,57 @@ const sitemap = await readFile(join(dist, 'sitemap.xml'), 'utf8').catch(() => ''
 for (const loc of Object.values(LOCALES).flatMap((p) => ROUTES.map((r) => `${site}${p}${r}`))) {
   if (!sitemap.includes(`<loc>${loc}</loc>`)) fail('sitemap.xml', `missing ${loc}`);
 }
+
+// What search engines and AI assistants read. Every page says what the app is in one JSON-LD block,
+// with the configured release; the watch pages add the film, whose files are in the build; a details
+// page with questions marks up exactly the questions it shows, and one without has none.
+const ldOf = (html) => [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map((m) => JSON.parse(m[1]));
+for (const [locale, prefix] of Object.entries(LOCALES)) {
+  for (const route of ROUTES) {
+    const where = `${prefix}${route}index.html`;
+    const html = await readFile(join(dist, prefix, route, 'index.html'), 'utf8').catch(() => '');
+    const blocks = ldOf(html);
+    if (blocks.length !== 1) {
+      fail(where, `${blocks.length} JSON-LD blocks, expected 1`);
+      continue;
+    }
+    const [ld] = blocks;
+    if (ld['@type'] !== 'SoftwareApplication' || ld.softwareVersion !== config.release.version || ld.downloadUrl !== config.release.url) fail(where, 'structured data is not the configured release');
+    if (ld.inLanguage !== TAG[locale] || ld.mainEntityOfPage !== `${site}${prefix}${route}`) fail(where, 'structured data is not about this page');
+    if (route === 'watch/') {
+      const v = ld.video;
+      if (v?.['@type'] !== 'VideoObject' || !v.transcript || v.url !== `${site}${prefix}watch/`) fail(where, 'no VideoObject for the film');
+      for (const u of [v?.contentUrl, v?.thumbnailUrl]) if (!u?.startsWith(site) || !existsSync(join(dist, u.slice(site.length)))) fail(where, `film structured data names ${u}, not in the build`);
+    } else if (ld.video) fail(where, 'a VideoObject on a page without the film player');
+    if (route === 'details/') {
+      const shown = attr(html, /<dl class="faq[^"]*"[^>]*>([\s\S]*?)<\/dl>/g)[0];
+      const questions = shown ? attr(shown, /<dt[^>]*>([^<]+)<\/dt>/g) : [];
+      const marked = ld.subjectOf?.mainEntity?.map((q) => q.name) ?? [];
+      if (JSON.stringify(questions.map(unescape)) !== JSON.stringify(marked)) fail(where, `shows ${questions.length} questions, marks up ${marked.length}`);
+    } else if (ld.subjectOf) fail(where, 'FAQ structured data on a page without the questions');
+  }
+}
+
+// /llms.txt and /llms-full.txt: the configured release, and links that resolve.
+for (const file of ['llms.txt', 'llms-full.txt']) {
+  const text = await readFile(join(dist, file), 'utf8').catch(() => '');
+  if (!text.startsWith('# yomado\n')) {
+    fail(file, 'missing or without its title');
+    continue;
+  }
+  if (!text.includes(config.release.url) || !text.includes(`Latest release: ${config.release.version} `)) fail(file, 'does not name the configured release');
+  for (const [, u] of text.matchAll(/(https?:\/\/[^\s)]+)/g)) {
+    if (!u.startsWith(site)) continue;
+    const path = u.slice(site.length).split(/[?#]/)[0];
+    if (!existsSync(join(dist, path)) && !existsSync(join(dist, path, 'index.html'))) fail(file, `broken link ${u}`);
+  }
+}
+const llmsFull = await readFile(join(dist, 'llms-full.txt'), 'utf8').catch(() => '');
+if ((llmsFull.match(/^### /gm) ?? []).length < 5) fail('llms-full.txt', 'fewer than five questions');
+
+// IndexNow (scripts/indexnow.mjs): the key file answers with the configured key.
+if (!/^[a-f0-9]{32}$/.test(config.indexNowKey ?? '')) fail('site.config.json', 'indexNowKey is not 32 hex digits');
+else if ((await readFile(join(dist, `${config.indexNowKey}.txt`), 'utf8').catch(() => '')) !== config.indexNowKey) fail(`${config.indexNowKey}.txt`, 'missing or not the key');
 
 // Tracked sources: same rules, minus the loopback address used by the local test server.
 let tracked = [];

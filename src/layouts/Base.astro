@@ -3,7 +3,7 @@
 import '@fontsource-variable/inter/opsz.css';
 import '../styles/global.css';
 import AutoLanguage from '../components/AutoLanguage.astro';
-import { LOCALES, LOCALE_DIR, LOCALE_PATH, LOCALE_TAG, OG_LOCALE, RELEASE, SITE, canonical, withBase, type Locale } from '../lib/site';
+import { LOCALES, LOCALE_DIR, LOCALE_PATH, LOCALE_TAG, OG_LOCALE, PUBLISHER, RELEASE, SITE, STRUCTURED_FEATURES, STRUCTURED_KEYWORDS, canonical, withBase, type Locale } from '../lib/site';
 
 interface Props {
   locale: Locale;
@@ -19,6 +19,11 @@ interface Props {
   noindex?: boolean;
   /** The English home page sends browsers in the other languages on to theirs. */
   autoLanguage?: boolean;
+  /**
+   * More about the app on this page, merged into its structured data: the film on the watch page
+   * (`video`), the questions on the details page (`subjectOf`). One JSON-LD block per page.
+   */
+  structuredData?: Record<string, unknown>;
 }
 
 const { locale, title, description, path, ogAlt, localized = true, route = '', autoLanguage = false } = Astro.props;
@@ -26,22 +31,37 @@ const noindex = Astro.props.noindex || process.env.SITE_NOINDEX === '1';
 const url = canonical(path);
 const ogImage = canonical(`og/${locale}.png`);
 
+// What the app is, for search engines and AI assistants: the same facts on every page, in the
+// page's language, plus what the page adds (Props.structuredData).
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
   name: 'yomado',
   alternateName: '夜窗',
   url: canonical(),
+  mainEntityOfPage: url,
+  inLanguage: LOCALE_TAG[locale],
   description,
   applicationCategory: 'UtilitiesApplication',
+  applicationSubCategory: 'Virtual display for AI agents',
   operatingSystem: `macOS ${RELEASE.minimumSystemVersion} or later (Apple Silicon)`,
+  processorRequirements: RELEASE.architecture,
   softwareVersion: RELEASE.version,
+  datePublished: RELEASE.publishedAt,
   downloadUrl: RELEASE.url,
+  fileSize: `${(RELEASE.bytes / 1_000_000).toFixed(1)} MB`,
   releaseNotes: RELEASE.notesUrl,
   license: 'https://opensource.org/license/mit',
   isAccessibleForFree: true,
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   codeRepository: SITE.appRepository,
+  image: ogImage,
+  keywords: STRUCTURED_KEYWORDS.join(', '),
+  featureList: STRUCTURED_FEATURES,
+  sameAs: [SITE.appRepository],
+  author: PUBLISHER,
+  publisher: PUBLISHER,
+  ...Astro.props.structuredData,
 };
 ---
 

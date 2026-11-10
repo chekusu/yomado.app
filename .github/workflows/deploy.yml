@@ -84,3 +84,10 @@ jobs:
             --branch "$DEPLOY_BRANCH" \
             --commit-hash "$GITHUB_SHA" \
             --commit-dirty=true
+
+      # Tell Bing and the other IndexNow search engines, whose index also feeds the web search of
+      # AI assistants, that the production pages changed. Production only, and never a failed deploy.
+      - name: Notify search engines (IndexNow)
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: node scripts/indexnow.mjs dist

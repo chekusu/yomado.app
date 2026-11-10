@@ -9,3 +9,14 @@ export function phrased(text: string, { html = false } = {}): string {
   const safe = html ? text : text.replace(/[&<>"]/g, (c) => ESCAPES[c]);
   return safe.replaceAll('|', '<wbr>');
 }
+
+/** Copy written as HTML, as plain text for /llms.txt: code in backticks, other tags dropped. */
+export function plain(html: string): string {
+  return html
+    .replace(/<code>(.*?)<\/code>/g, '`$1`')
+    .replace(/<[^>]+>/g, '')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&amp;', '&');
+}
