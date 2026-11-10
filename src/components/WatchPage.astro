@@ -8,14 +8,16 @@
 // language's captioned MP4s, landscape and portrait, and subtitle file, as downloads that save the
 // file (also on phones) rather than open it. Phones get the portrait composition. Nothing plays
 // until it is asked to.
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import Base from '../layouts/Base.astro';
 import Icon from './Icon.astro';
 import SiteFooter from './SiteFooter.astro';
 import SiteHeader from './SiteHeader.astro';
 import { copyFor } from '../i18n';
 import { CAPTION_LOCALES, PAGE_CAPTION, PAGE_NARRATION, PAGE_VISUAL, captionGroups, filmConfig, tagsFor } from '../lib/captions';
-import { MP4_TYPE, NARROW, WEBM_TYPE, bandFile, bandPosterFile, captionFile, captionedFile, downloadUrl, mediaSize, mediaUrl } from '../lib/media';
-import { LOCALE_PATH, RELEASE, SENTENCE_GAP, localeHref, type Locale } from '../lib/site';
+import { FILM_PUBLISHED, MP4_TYPE, NARROW, WEBM_TYPE, bandFile, bandPosterFile, captionFile, captionedFile, downloadUrl, filmName, mediaSize, mediaUrl } from '../lib/media';
+import { LOCALE_PATH, RELEASE, SENTENCE_GAP, canonical, localeHref, type Locale } from '../lib/site';
 import { phrased } from '../lib/text';
 
 interface Props {
@@ -34,9 +36,34 @@ const files = [
   { layout: 'wide', name: w.wide, meta: w.mp4 },
   { layout: 'tall', name: w.tall, meta: w.mp4Tall },
 ] as const;
+// The film as structured data about the app (Base.astro): this page's language, with its
+// subtitles in the picture, and the narration's words as the transcript.
+const cues = JSON.parse(readFileSync(join(process.cwd(), 'captions', `${caption}.json`), 'utf8')).cues as Record<string, string>;
+const videoData = {
+  video: {
+    '@type': 'VideoObject',
+    name: w.meta.title,
+    description: w.meta.description,
+    url: canonical(`${LOCALE_PATH[locale]}watch/`),
+    thumbnailUrl: canonical(`media/${filmName(visual, 'wide')}-poster.webp`),
+    contentUrl: canonical(`media/${captionedFile(caption, 'wide')}`),
+    uploadDate: FILM_PUBLISHED,
+    duration: 'PT1M',
+    inLanguage: caption,
+    transcript: Object.values(cues).join(' '),
+  },
+};
 ---
 
-<Base locale={locale} title={w.meta.title} description={w.meta.description} path={`${LOCALE_PATH[locale]}watch/`} route="watch/" ogAlt={copy.meta.ogAlt}>
+<Base
+  locale={locale}
+  title={w.meta.title}
+  description={w.meta.description}
+  path={`${LOCALE_PATH[locale]}watch/`}
+  route="watch/"
+  ogAlt={copy.meta.ogAlt}
+  structuredData={videoData}
+>
   <a class="skip" href="#main">{copy.skip}</a>
   <SiteHeader locale={locale} copy={copy} route="watch/" />
   <main id="main" class="watch">

@@ -3,9 +3,9 @@ import type { Copy } from './types';
 
 export default (r: ReleaseFacts): Copy => ({
   meta: {
-    title: 'yomado — a screen for your agents',
+    title: 'yomado — a virtual display for AI agents on your Mac',
     description:
-      'yomado gives Codex and other visual agents a virtual screen on your Mac, so they can work in apps like Blender and Marvelous Designer through screenshots, clicks and keystrokes — no app-specific MCP required. Free, open source, experimental.',
+      'yomado gives Codex and other computer-use agents a virtual display of their own on your Mac, so they can work in Blender, Marvelous Designer and other apps through screenshots, clicks and keystrokes while your windows stay put. No dummy plug, no app-specific MCP. Free, open source, experimental.',
     ogAlt: 'yomado — A screen for your agents.',
   },
   skip: 'Skip to content',
@@ -160,6 +160,43 @@ export default (r: ReleaseFacts): Copy => ({
       'Quitting yomado closes its screens, and they aren’t recreated after a restart.',
       'Not yet verified: agent work with physical displays switched off, power savings and long unattended runs.',
     ],
+    faq: {
+      title: 'Questions',
+      items: [
+        {
+          q: 'What is yomado?',
+          a: 'A free, open-source macOS app that adds virtual displays to your Mac for AI agents that use computer use: Codex and other agents that work by screenshot, mouse and keyboard. Each display is a named screen for one agent and its apps, so your own windows stay where they are.',
+        },
+        {
+          q: 'How do I give Codex or another computer-use agent its own screen on a Mac?',
+          a: 'Install yomado, add a virtual display and name it after the agent, then drag the task’s apps onto it. The agent’s own computer-use tools capture and operate that screen. With the yomado skill installed, the agent can set up the screen itself and move the windows back when it’s done.',
+        },
+        {
+          q: 'Why not just let the agent use my main screen?',
+          a: 'An agent that works through screenshots and clicks needs its apps visible somewhere. On your main screen they sit on top of your work. On a virtual display they render out of your way, while you keep your own windows, and you can still look at the agent’s screen in yomado’s panel or any screen viewer.',
+        },
+        {
+          q: 'Do I need an HDMI dummy plug or a display utility?',
+          a: 'No. yomado creates the displays in software, with no dummy plug. General display utilities can also add virtual displays; yomado is built around agent work: one named screen per agent, moving a task’s windows onto it and back, and a skill that lets the agent do this itself.',
+        },
+        {
+          q: 'Does the agent get its own mouse and keyboard?',
+          a: 'No. Virtual displays are part of your login session, so you and the agent share one pointer, keyboard and focus. Agent tools that act on an app in the background disturb you least.',
+        },
+        {
+          q: 'Is yomado a virtual machine, a remote desktop or an MCP server?',
+          a: 'None of these. It only supplies the display. Unlike a macOS virtual machine, the agent works with the apps already installed in your own session. Viewing, screenshots and input come from the agent’s own tools, and no app-specific MCP integration is needed.',
+        },
+        {
+          q: 'Can the agent keep working with my monitors switched off?',
+          a: 'That is the goal, but it has not been verified yet: agent work with physical displays off, power savings and long unattended runs are still being tested.',
+        },
+        {
+          q: 'Which Macs does it run on, and what does it cost?',
+          a: `Apple silicon Macs; it is built for macOS ${r.minimumSystemVersion} and later. It is free and open source under the MIT license, signed with Developer ID and notarized by Apple. It is experimental and uses private macOS APIs, so a system update can break it.`,
+        },
+      ],
+    },
     links: { notes: 'Release notes', checksums: 'Checksums file', source: 'App source', site: 'Website source' },
     back: 'Back to yomado',
   },

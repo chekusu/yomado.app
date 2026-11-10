@@ -30,6 +30,12 @@ screen. It is not an agent, a remote desktop or an MCP replacement — it only s
   carry no query. Without JavaScript the home page stays English and the menu still works
 - Every download button points at the configured GitHub Release archive
 - `sitemap.xml`, `robots.txt`, per-language Open Graph cards, `hreflang` alternates, structured data
+  (one JSON-LD block per page: the app, plus the film on the watch pages and the questions on the
+  details pages)
+- For search engines and AI assistants: `/llms.txt` and `/llms-full.txt` (built from the English
+  copy, the release facts and the questions), questions and answers on the details page in English,
+  both Chinese and Japanese (the other languages skip the section until it is translated), and an
+  IndexNow ping (`scripts/indexnow.mjs`, key in `site.config.json`) after every production deploy
 
 ## The page
 
@@ -293,6 +299,8 @@ film's copy, and `npm run assets` after the story scene changes.
 - **`siteUrl`** — the canonical origin used for canonical links, `hreflang`, Open Graph,
   structured data, `robots.txt` and the sitemap. `SITE_URL=https://example.com npm run build`
   overrides it for one build. Re-run `npm run assets` after changing it (the cards show the host).
+- **`indexNowKey`** — the public IndexNow key, served at `/<key>.txt`; `scripts/indexnow.mjs`
+  submits the sitemap's pages with it after a production deploy.
 - **`release`** — the version, download URL, file name, size and SHA-256 the page offers, and
   `prerelease`, which decides whether the details page calls it a pre-release or a stable release.
   When a new release is published, update this block and run `npm run test:download`; the page

@@ -2,5 +2,6 @@
   "version": "v2",
   "captions": "c1",
   "narration": { "en": "en", "zh-cn": "zh-cn", "ja": "en" },
-  "language": { "en": "eng", "zh-cn": "zho" }
+  "language": { "en": "eng", "zh-cn": "zho" },
+  "published": "2026-10-13"
 }

@@ -135,6 +135,13 @@ export interface Copy {
     copyFallback: string;
     knowTitle: string;
     know: string[];
+    /**
+     * Questions people ask about yomado, often of a search engine or an AI assistant, answered in
+     * plain text. Shown on the details page and published as FAQPage structured data and in
+     * /llms-full.txt. Only the languages most visitors read have it so far; the others skip the
+     * section until it is translated.
+     */
+    faq?: { title: string; items: { q: string; a: string }[] };
     links: { notes: string; checksums: string; source: string; site: string };
     back: string;
   };
