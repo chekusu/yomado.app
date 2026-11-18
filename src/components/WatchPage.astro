@@ -47,7 +47,8 @@ const videoData = {
     url: canonical(`${LOCALE_PATH[locale]}watch/`),
     thumbnailUrl: canonical(`media/${filmName(visual, 'wide')}-poster.webp`),
     contentUrl: canonical(`media/${captionedFile(caption, 'wide')}`),
-    uploadDate: FILM_PUBLISHED,
+    // Google wants a time zone on uploadDate; the film was published in Tokyo.
+    uploadDate: `${FILM_PUBLISHED}T00:00:00+09:00`,
     duration: 'PT1M',
     inLanguage: caption,
     transcript: Object.values(cues).join(' '),
