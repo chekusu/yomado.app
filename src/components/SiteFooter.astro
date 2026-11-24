@@ -2,15 +2,21 @@
 import Brand from './Brand.astro';
 import { LOCALES, LOCALE_NAME, LOCALE_PATH, LOCALE_TAG, SITE, localeHref, withBase, type Locale } from '../lib/site';
 import type { Copy } from '../i18n';
+import { GUIDE_ROUTES, guidesFor, isGuideLocale, type GuideKey } from '../lib/guides';
 
 interface Props {
   locale: Locale;
   copy: Copy;
   /** This page's path below each locale's root: '' for home, 'details/' or 'watch/'. */
   route?: string;
+  /** The languages this page exists in; the others link to their home page (the guides). */
+  locales?: readonly Locale[];
 }
 
-const { locale, copy, route = '' } = Astro.props;
+const { locale, copy, route = '', locales = LOCALES } = Astro.props;
+const routeIn = (l: Locale) => (locales.includes(l) ? route : '');
+const guides = isGuideLocale(locale) ? guidesFor(locale).guides : undefined;
+const guideKeys = Object.keys(GUIDE_ROUTES) as GuideKey[];
 ---
 
 <footer class="site-footer night" data-tone="night">
@@ -23,6 +29,7 @@ const { locale, copy, route = '' } = Astro.props;
       <nav aria-label={copy.footer.navLabel}>
         <a href={withBase(`${LOCALE_PATH[locale]}details/`)}>{copy.footer.details}</a>
         <a href={withBase(`${LOCALE_PATH[locale]}watch/`)}>{copy.footer.film}</a>
+        {guides && guideKeys.map((k) => <a href={withBase(`${LOCALE_PATH[locale]}${GUIDE_ROUTES[k]}`)}>{guides[k].navText}</a>)}
         <a href={`${SITE.appRepository}/releases`}>{copy.footer.releases}</a>
         <a href={SITE.appRepository}>{copy.footer.source}</a>
         <a href={SITE.siteRepository}>{copy.footer.site}</a>
@@ -35,7 +42,7 @@ const { locale, copy, route = '' } = Astro.props;
         {
           LOCALES.map((l) => (
             <a
-              href={localeHref(l, route)}
+              href={localeHref(l, routeIn(l))}
               hreflang={LOCALE_TAG[l]}
               lang={LOCALE_TAG[l]}
               aria-current={l === locale ? 'page' : undefined}

@@ -17,6 +17,11 @@ screen. It is not an agent, a remote desktop or an MCP replacement — it only s
   `/es/`, `/fr/`, `/de/`, `/it/`, `/pt-br/`, `/nl/`, `/pl/`, `/tr/`, `/ar/`, `/hi/` and `/id/`. Each
   has the home page, install, checksum and requirements at `details/`, and the one-minute film with
   the browser's own controls at `watch/`: 48 pages
+- Two guides in English, Simplified Chinese and Japanese only, for what people ask before they
+  know yomado's name: `compare/` (giving an AI agent its own screen on a Mac: yomado, SpaceO,
+  display utilities, dummy plugs, virtual machines) and `guides/codex-blender/` (Codex computer use
+  in Blender on its own screen): 6 more pages. Their `hreflang` alternates name those three, and
+  the language menu sends the other languages to their home page
 - A language menu in the header (and a list in the footer) links every page to the same page in
   the other languages and keeps the section in view
 - The bare home page (`/`, or the `SITE_BASE` root) follows the browser: a valid `?lang=` first
@@ -31,7 +36,7 @@ screen. It is not an agent, a remote desktop or an MCP replacement — it only s
 - Every download button points at the configured GitHub Release archive
 - `sitemap.xml`, `robots.txt`, per-language Open Graph cards, `hreflang` alternates, structured data
   (one JSON-LD block per page: the app, plus the film on the watch pages and the questions on the
-  details pages)
+  details pages and guides)
 - For search engines and AI assistants: `/llms.txt` and `/llms-full.txt` (built from the English
   copy, the release facts and the questions), questions and answers on the details page in English,
   both Chinese and Japanese (the other languages skip the section until it is translated), and an
@@ -146,12 +151,14 @@ src/i18n/          all copy, per language (16 files), and the film's supers for 
 src/lib/site.ts    languages (paths, tags, direction, Open Graph locales, names, dates, sizes) and
                    release facts
 src/lib/captions.ts  subtitle languages, and the film and narration each website language shows
-src/pages/         English at the root; [locale]/ builds the same three pages for the other 15
+src/pages/         English at the root; [locale]/ builds the same three pages for the other 15,
+                   and the guides for zh-cn and ja
+src/lib/guides.ts  the guides' routes and languages; their copy is in src/i18n/guides/
 src/lib/scene.ts   the story timeline: poses for every moment, in two layouts (wide, tall)
 src/lib/film.ts    the film timeline: world, camera, pointer, panel, Blender, supers, end card
 src/lib/apps.ts    the apps shown and their icons; panel.ts the panel's layout; media.ts the films
 src/components/    Scene, FilmStage, ControlPanel, AppIcon, Hero + Film, Story, Panel, Finale,
-                   DetailsPage, WatchPage
+                   DetailsPage, WatchPage, GuidePage
 src/scripts/       scene-view, story, film (playback), film-view (poses the film), film-garment
                    (the film's 3D views, three.js)
 src/assets/        the night-window app icon (from chekusu/yomado)

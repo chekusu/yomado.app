@@ -8,9 +8,12 @@ interface Props {
   copy: Copy;
   /** This page's path below each locale's root: '' for home, 'details/' for the details page. */
   route?: string;
+  /** The languages this page exists in; the others link to their home page (the guides). */
+  locales?: readonly Locale[];
 }
 
-const { locale, copy, route = '' } = Astro.props;
+const { locale, copy, route = '', locales = LOCALES } = Astro.props;
+const routeIn = (l: Locale) => (locales.includes(l) ? route : '');
 const onDetails = route === 'details/';
 ---
 
@@ -35,7 +38,7 @@ const onDetails = route === 'details/';
             LOCALES.map((l) => (
               <li>
                 <a
-                  href={localeHref(l, route)}
+                  href={localeHref(l, routeIn(l))}
                   hreflang={LOCALE_TAG[l]}
                   lang={LOCALE_TAG[l]}
                   aria-current={l === locale ? 'page' : undefined}

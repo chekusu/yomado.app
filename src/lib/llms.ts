@@ -4,6 +4,7 @@
  * release facts and the questions on the details page, so it never says something the site doesn't.
  */
 import { copyFor } from '../i18n';
+import { GUIDE_ROUTES, guidesFor, type Guide, type GuideKey } from './guides';
 import { SKILL_URL } from './skill';
 import { LOCALES, LOCALE_NAME, LOCALE_PATH, RELEASE, SITE, STRUCTURED_FEATURES, canonical } from './site';
 import { plain } from './text';
@@ -26,6 +27,40 @@ function facts(): string[] {
   ];
 }
 
+const guideKeys = Object.keys(GUIDE_ROUTES) as GuideKey[];
+const guides = () => guidesFor('en');
+
+/** A guide as Markdown: its sections, the table as a Markdown table, and its questions. */
+function guideMarkdown(g: Guide, url: string): string[] {
+  const cell = (c: string) => plain(c).replaceAll('|', '\\|');
+  return [
+    `## ${g.meta.title}`,
+    '',
+    `${url}`,
+    '',
+    g.lede,
+    '',
+    ...g.sections.flatMap((s) => [
+      `### ${s.title}`,
+      '',
+      ...(s.html ?? []).flatMap((p) => [plain(p), '']),
+      ...(s.items ? [...s.items.map((i) => `- ${plain(i)}`), ''] : []),
+      ...(s.steps ? [...s.steps.map((step, i) => `${i + 1}. ${plain(step)}`), ''] : []),
+      ...(s.request ? [`> ${s.request}`, ''] : []),
+      ...(s.table
+        ? [
+            `| ${s.table.head.map(cell).join(' | ')} |`,
+            `|${s.table.head.map(() => ' --- ').join('|')}|`,
+            ...s.table.rows.map((r) => `| ${r.map(cell).join(' | ')} |`),
+            '',
+          ]
+        : []),
+      ...(s.after ?? []).flatMap((p) => [plain(p), '']),
+    ]),
+    ...g.faq.items.flatMap((item) => [`#### ${item.q}`, '', item.a, '']),
+  ];
+}
+
 export function llmsTxt(): string {
   return [
     '# yomado',
@@ -41,6 +76,10 @@ export function llmsTxt(): string {
     `- [README](${README}): how it works, using the virtual displays, sharing the mouse and keyboard, building from source`,
     `- [yomado skill (SKILL.md)](${SKILL_MD}): instructions for a computer-use agent to create its own work screen, move in only its task’s windows, verify access and restore them`,
     `- [The film](${canonical('watch/')}): a one-minute simulated demo with subtitles in 16 languages`,
+    '',
+    '## Guides',
+    '',
+    ...guideKeys.map((k) => `- [${guides().guides[k].meta.title}](${canonical(GUIDE_ROUTES[k])}): ${guides().guides[k].meta.description}`),
     '',
     '## Optional',
     '',
@@ -96,6 +135,7 @@ export function llmsFullTxt(): string {
     '## Questions',
     '',
     ...faq.flatMap((item) => [`### ${item.q}`, '', item.a, '']),
+    ...guideKeys.flatMap((k) => guideMarkdown(guides().guides[k], canonical(GUIDE_ROUTES[k]))),
     '## In other languages',
     '',
     ...LOCALES.filter((l) => l !== 'en').map((l) => `- [${LOCALE_NAME[l].full}](${canonical(LOCALE_PATH[l])})`),
