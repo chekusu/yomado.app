@@ -345,7 +345,9 @@ for (const loc of GUIDE_LOCALES.flatMap((l) => GUIDE_ROUTES.map((r) => `${site}$
   if (!sitemap.includes(`<loc>${loc}</loc>`)) fail('sitemap.xml', `missing ${loc}`);
 }
 for (const loc of Object.values(LOCALES).flatMap((p) => ROUTES.map((r) => `${site}${p}${r}`))) {
-  if (!sitemap.includes(`<loc>${loc}</loc>`)) fail('sitemap.xml', `missing ${loc}`);
+  const entry = sitemap.split('<url>').find((url) => url.includes(`<loc>${loc}</loc>`))?.split('</url>')[0];
+  if (!entry) fail('sitemap.xml', `missing ${loc}`);
+  if (entry?.includes(`<lastmod>${config.release.publishedAt}</lastmod>`)) fail('sitemap.xml', `release date used as page date for ${loc}`);
 }
 
 // What search engines and AI assistants read. Every page says what the app is in one JSON-LD block,

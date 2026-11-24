@@ -1,10 +1,12 @@
 import type { APIRoute } from 'astro';
 import { GUIDES_UPDATED, GUIDE_LOCALES, GUIDE_ROUTES } from '../lib/guides';
-import { LOCALES, LOCALE_PATH, LOCALE_TAG, RELEASE, canonical, type Locale } from '../lib/site';
+import { LOCALES, LOCALE_PATH, LOCALE_TAG, canonical, type Locale } from '../lib/site';
 
 // Home, the download details and the film exist once per locale; the guides in three of them.
-const PAGES: { route: string; locales: readonly Locale[]; lastmod: string }[] = [
-  ...['', 'details/', 'watch/'].map((route) => ({ route, locales: LOCALES, lastmod: RELEASE.publishedAt })),
+// Only the guides carry a date: when they were last checked. The app's release date is not a
+// page's date, so the other pages go without one.
+const PAGES: { route: string; locales: readonly Locale[]; lastmod?: string }[] = [
+  ...['', 'details/', 'watch/'].map((route) => ({ route, locales: LOCALES })),
   ...Object.values(GUIDE_ROUTES).map((route) => ({ route, locales: GUIDE_LOCALES, lastmod: GUIDES_UPDATED })),
 ];
 
@@ -16,8 +18,7 @@ export const GET: APIRoute = () => {
     return locales.map(
       (l) => `  <url>
     <loc>${canonical(LOCALE_PATH[l] + route)}</loc>
-    <lastmod>${lastmod}</lastmod>
-${alternates}
+${lastmod ? `    <lastmod>${lastmod}</lastmod>\n` : ''}${alternates}
     <xhtml:link rel="alternate" hreflang="x-default" href="${canonical(route)}"/>
   </url>`,
     );
