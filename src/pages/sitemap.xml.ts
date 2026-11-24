@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { LOCALES, LOCALE_PATH, LOCALE_TAG, RELEASE, canonical } from '../lib/site';
+import { LOCALES, LOCALE_PATH, LOCALE_TAG, canonical } from '../lib/site';
 
 // Every page exists once per locale: home, the download details and the film.
 const ROUTES = ['', 'details/', 'watch/'];
@@ -12,7 +12,6 @@ export const GET: APIRoute = () => {
     return LOCALES.map(
       (l) => `  <url>
     <loc>${canonical(LOCALE_PATH[l] + route)}</loc>
-    <lastmod>${RELEASE.publishedAt}</lastmod>
 ${alternates}
     <xhtml:link rel="alternate" hreflang="x-default" href="${canonical(route)}"/>
   </url>`,
