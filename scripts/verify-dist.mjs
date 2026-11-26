@@ -16,6 +16,8 @@
 // - every page has one JSON-LD block about the release; watch pages add the film, details pages
 //   exactly the questions they show; /llms.txt and /llms-full.txt name the release and their links
 //   resolve; the IndexNow key file answers with the key
+// - the guides exist in English, Simplified Chinese and Japanese, with alternates for those three only,
+//   the questions they show as structured data, and a place in the sitemap
 // - neither the build nor the tracked sources contain machine paths, private hosts or credentials
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -310,7 +312,38 @@ try {
   fail('apps/sources.json', `missing or unreadable (${e.message})`);
 }
 
+// The guides: English, Simplified Chinese and Japanese, each with alternates for exactly those three
+// plus x-default, the FAQ it shows as structured data, and the release download.
+const GUIDE_LOCALES = ['en', 'zh-cn', 'ja'];
+const GUIDE_ROUTES = ['compare/', 'guides/codex-blender/'];
+for (const locale of GUIDE_LOCALES) {
+  for (const route of GUIDE_ROUTES) {
+    const where = `${LOCALES[locale]}${route}index.html`;
+    const html = await readFile(join(dist, LOCALES[locale], route, 'index.html'), 'utf8').catch(() => '');
+    if (!html) {
+      fail(where, 'missing');
+      continue;
+    }
+    if (!html.includes(`<html lang="${TAG[locale]}" dir="ltr"`)) fail(where, `not <html lang="${TAG[locale]}">`);
+    if (attr(html, /<link rel="canonical" href="([^"]+)"/g)[0] !== `${site}${LOCALES[locale]}${route}`) fail(where, 'canonical is not the page itself');
+    const alternates = attr(html, /<link rel="alternate" hreflang="([^"]+)"/g).sort();
+    if (JSON.stringify(alternates) !== JSON.stringify([...GUIDE_LOCALES.map((l) => TAG[l]), 'x-default'].sort())) fail(where, `hreflang ${alternates.join(', ')}`);
+    const blocks = attr(html, /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g);
+    if (blocks.length !== 1) fail(where, `${blocks.length} JSON-LD blocks, expected 1`);
+    else {
+      const ld = JSON.parse(blocks[0]);
+      if (ld.softwareVersion !== config.release.version) fail(where, 'JSON-LD names another release');
+      const faq = ld.subjectOf?.find?.((s) => s['@type'] === 'FAQPage')?.mainEntity?.length ?? 0;
+      const shown = (html.match(/<dt[ >]/g) ?? []).length;
+      if (!faq || faq !== shown) fail(where, `${faq} questions in JSON-LD, ${shown} on the page`);
+    }
+  }
+}
+
 const sitemap = await readFile(join(dist, 'sitemap.xml'), 'utf8').catch(() => '');
+for (const loc of GUIDE_LOCALES.flatMap((l) => GUIDE_ROUTES.map((r) => `${site}${LOCALES[l]}${r}`))) {
+  if (!sitemap.includes(`<loc>${loc}</loc>`)) fail('sitemap.xml', `missing ${loc}`);
+}
 for (const loc of Object.values(LOCALES).flatMap((p) => ROUTES.map((r) => `${site}${p}${r}`))) {
   const entry = sitemap.split('<url>').find((url) => url.includes(`<loc>${loc}</loc>`))?.split('</url>')[0];
   if (!entry) fail('sitemap.xml', `missing ${loc}`);

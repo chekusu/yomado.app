@@ -1,0 +1,342 @@
+---
+// A guide (src/lib/guides.ts): an answer to a question people ask before they know yomado's name,
+// in English, Simplified Chinese and Japanese. Laid out like the details page: a head, then rows.
+import Base from '../layouts/Base.astro';
+import CopyText from './CopyText.astro';
+import Icon from './Icon.astro';
+import SiteFooter from './SiteFooter.astro';
+import SiteHeader from './SiteHeader.astro';
+import { copyFor } from '../i18n';
+import { phrased } from '../lib/text';
+import { GUIDES_UPDATED, GUIDE_LOCALES, GUIDE_ROUTES, guidesFor, type GuideKey, type GuideLocale } from '../lib/guides';
+import { LOCALE_PATH, LOCALE_TAG, PUBLISHER, RELEASE, canonical, formatDate, localeHref, withBase } from '../lib/site';
+
+interface Props {
+  locale: GuideLocale;
+  guide: GuideKey;
+}
+
+const { locale, guide: key } = Astro.props;
+const copy = copyFor(locale);
+const all = guidesFor(locale);
+const g = all.guides[key];
+const route = GUIDE_ROUTES[key];
+const path = `${LOCALE_PATH[locale]}${route}`;
+const others = (Object.keys(GUIDE_ROUTES) as GuideKey[]).filter((k) => k !== key);
+
+// The page as an article about the app, with the questions it answers (Base.astro adds the app).
+const structuredData = {
+  subjectOf: [
+    {
+      '@type': 'TechArticle',
+      headline: g.meta.title,
+      description: g.meta.description,
+      url: canonical(path),
+      inLanguage: LOCALE_TAG[locale],
+      dateModified: GUIDES_UPDATED,
+      author: PUBLISHER,
+      publisher: PUBLISHER,
+    },
+    {
+      '@type': 'FAQPage',
+      url: canonical(`${path}#faq`),
+      inLanguage: LOCALE_TAG[locale],
+      mainEntity: g.faq.items.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    },
+  ],
+};
+---
+
+<Base
+  locale={locale}
+  title={g.meta.title}
+  description={g.meta.description}
+  path={path}
+  route={route}
+  locales={GUIDE_LOCALES}
+  ogAlt={copy.meta.ogAlt}
+  structuredData={structuredData}
+>
+  <a class="skip" href="#main">{copy.skip}</a>
+  <SiteHeader locale={locale} copy={copy} route={route} locales={GUIDE_LOCALES} />
+  <main id="main" class="guide">
+    <header class="head wrap">
+      <p class="eyebrow">{g.eyebrow}</p>
+      <h1 class="headline" set:html={phrased(g.title)} />
+      <p class="sub">{g.lede}</p>
+      <p class="fine">{all.updated.replace('{date}', formatDate(GUIDES_UPDATED, locale))}</p>
+    </header>
+
+    <div class="rows wrap">
+      {
+        g.sections.map((s) => (
+          <section class="row" id={s.id} aria-labelledby={`${s.id}-title`}>
+            <h2 id={`${s.id}-title`}>{s.title}</h2>
+            <div class="body">
+              {s.html?.map((p) => <p set:html={p} />)}
+              {s.items && <ul class="list">{s.items.map((item) => <li set:html={item} />)}</ul>}
+              {s.steps && (
+                <ol class="list steps">
+                  {s.steps.map((step, i) => (
+                    <li>
+                      <span set:html={step} />
+                      {s.request && i === s.steps!.length - 1 && (
+                        <CopyText
+                          id={`${s.id}-request`}
+                          text={s.request}
+                          copy={copy.details.copy}
+                          name={copy.agent.copyName}
+                          copied={copy.details.copied}
+                          fallback={copy.details.copyFallback}
+                        />
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              )}
+              {s.table && (
+                <div class="table" role="region" aria-label={s.table.caption} tabindex="0">
+                  <table>
+                    <caption class="visually-hidden">{s.table.caption}</caption>
+                    <thead>
+                      <tr>{s.table.head.map((h) => <th scope="col">{h}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                      {s.table.rows.map(([name, ...cells]) => (
+                        <tr>
+                          <th scope="row">{name}</th>
+                          {cells.map((c) => <td set:html={c} />)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {s.after?.map((p) => <p class="note" set:html={p} />)}
+            </div>
+          </section>
+        ))
+      }
+
+      <section class="row" id="faq" aria-labelledby="faq-title">
+        <h2 id="faq-title">{g.faq.title}</h2>
+        <dl class="faq">
+          {
+            g.faq.items.map((item) => (
+              <div>
+                <dt>{item.q}</dt>
+                <dd>{item.a}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </section>
+
+      <section class="row get" aria-label={all.cta}>
+        <div class="actions">
+          <a class="btn btn-night" href={RELEASE.url} data-download="guide"><Icon name="download" size={18} />{all.cta}</a>
+          <p class="fine">{all.ctaMeta}</p>
+        </div>
+      </section>
+
+      <nav class="row links" aria-label={all.label}>
+        {others.map((k) => <a class="more" href={withBase(`${LOCALE_PATH[locale]}${GUIDE_ROUTES[k]}`)}>{all.guides[k].linkText}</a>)}
+        <a class="more" href={withBase(`${LOCALE_PATH[locale]}details/`)}>{copy.nav.details}</a>
+        <a class="more" href={localeHref(locale)}>{copy.details.back}</a>
+      </nav>
+    </div>
+  </main>
+  <SiteFooter locale={locale} copy={copy} route={route} locales={GUIDE_LOCALES} />
+</Base>
+
+<script>
+  import '../scripts/page';
+</script>
+
+<style>
+  .guide {
+    padding-bottom: clamp(64px, 10vh, 120px);
+  }
+
+  .head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 12px;
+    padding-block: clamp(48px, 9vh, 104px) clamp(40px, 7vh, 80px);
+    text-align: center;
+  }
+
+  .head .sub {
+    max-width: 40ch;
+  }
+
+  :lang(zh) .head .sub,
+  :lang(ja) .head .sub {
+    max-width: 28em;
+  }
+
+  .rows {
+    max-width: 980px;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.6fr);
+    gap: 12px 40px;
+    padding-block: 28px;
+    border-top: 1px solid var(--rule);
+  }
+
+  /* The table needs the full width. */
+  #at-a-glance {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.3125rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  h2:lang(zh),
+  h2:lang(ko) {
+    word-break: keep-all;
+  }
+
+  h2:lang(ja) {
+    word-break: auto-phrase;
+  }
+
+  .body {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .body p {
+    margin: 0;
+  }
+
+  .body .note {
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  .list {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding-inline-start: 1.3em;
+  }
+
+  .list li::marker {
+    color: var(--ink-3);
+  }
+
+  .steps li::marker {
+    color: var(--ink-2);
+    font-weight: 600;
+  }
+
+  .steps :global(.copy-text) {
+    margin-top: 10px;
+  }
+
+  .body :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+  }
+
+  .table {
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+  }
+
+  table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+
+  th,
+  td {
+    padding: 12px 14px;
+    text-align: start;
+    vertical-align: top;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+
+  thead th {
+    color: var(--ink-2);
+    font-weight: 600;
+    font-size: 0.8125rem;
+  }
+
+  tbody th {
+    font-weight: 650;
+    width: 16%;
+  }
+
+  td {
+    color: var(--ink-2);
+  }
+
+  .faq {
+    display: grid;
+    gap: 22px;
+    margin: 0;
+  }
+
+  .faq dt {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .faq dd {
+    margin: 6px 0 0;
+    color: var(--ink-2);
+  }
+
+  .get {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+  }
+
+  .get .actions {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+  }
+
+  .get .fine {
+    margin: 0;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 28px;
+  }
+
+  @media (max-width: 720px) {
+    .row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

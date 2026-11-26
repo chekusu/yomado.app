@@ -7,8 +7,9 @@ import Icon from './Icon.astro';
 import SiteFooter from './SiteFooter.astro';
 import SiteHeader from './SiteHeader.astro';
 import { copyFor } from '../i18n';
-import { LOCALE_PATH, LOCALE_TAG, RELEASE, SITE, canonical, localeHref, type Locale } from '../lib/site';
+import { LOCALE_PATH, LOCALE_TAG, RELEASE, SITE, canonical, localeHref, withBase, type Locale } from '../lib/site';
 import { SKILL_URL } from '../lib/skill';
+import { GUIDE_ROUTES, guidesFor, isGuideLocale, type GuideKey } from '../lib/guides';
 
 interface Props {
   locale: Locale;
@@ -18,6 +19,8 @@ const { locale } = Astro.props;
 const copy = copyFor(locale);
 const d = copy.details;
 const skillLink = `<a href="${SKILL_URL}">skills/yomado</a>`;
+const guides = isGuideLocale(locale) ? guidesFor(locale).guides : undefined;
+const guideKeys = Object.keys(GUIDE_ROUTES) as GuideKey[];
 // The questions on this page, as structured data about the app (Base.astro).
 const faqData = d.faq && {
   subjectOf: {
@@ -136,6 +139,7 @@ const faqData = d.faq && {
       }
 
       <nav class="row links" aria-label={d.eyebrow}>
+        {guides && guideKeys.map((k) => <a class="more" href={withBase(`${LOCALE_PATH[locale]}${GUIDE_ROUTES[k]}`)}>{guides[k].linkText}</a>)}
         <a class="more" href={RELEASE.notesUrl}>{d.links.notes}</a>
         <a class="more" href={SITE.appRepository}>{d.links.source}</a>
         <a class="more" href={SITE.siteRepository}>{d.links.site}</a>

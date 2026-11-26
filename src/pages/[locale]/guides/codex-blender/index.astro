@@ -1,0 +1,11 @@
+---
+// The Codex and Blender guide in its other languages (src/pages/guides/codex-blender/index.astro is English).
+import GuidePage from '../../../../components/GuidePage.astro';
+import { GUIDE_LOCALES, type GuideLocale } from '../../../../lib/guides';
+
+export const getStaticPaths = () => GUIDE_LOCALES.filter((locale) => locale !== 'en').map((locale) => ({ params: { locale } }));
+
+const locale = Astro.params.locale as GuideLocale;
+---
+
+<GuidePage locale={locale} guide="codexBlender" />

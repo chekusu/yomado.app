@@ -1,18 +1,24 @@
 import type { APIRoute } from 'astro';
-import { LOCALES, LOCALE_PATH, LOCALE_TAG, canonical } from '../lib/site';
+import { GUIDES_UPDATED, GUIDE_LOCALES, GUIDE_ROUTES } from '../lib/guides';
+import { LOCALES, LOCALE_PATH, LOCALE_TAG, canonical, type Locale } from '../lib/site';
 
-// Every page exists once per locale: home, the download details and the film.
-const ROUTES = ['', 'details/', 'watch/'];
+// Home, the download details and the film exist once per locale; the guides in three of them.
+// Only the guides carry a date: when they were last checked. The app's release date is not a
+// page's date, so the other pages go without one.
+const PAGES: { route: string; locales: readonly Locale[]; lastmod?: string }[] = [
+  ...['', 'details/', 'watch/'].map((route) => ({ route, locales: LOCALES })),
+  ...Object.values(GUIDE_ROUTES).map((route) => ({ route, locales: GUIDE_LOCALES, lastmod: GUIDES_UPDATED })),
+];
 
 export const GET: APIRoute = () => {
-  const urls = ROUTES.flatMap((route) => {
-    const alternates = LOCALES.map(
-      (l) => `    <xhtml:link rel="alternate" hreflang="${LOCALE_TAG[l]}" href="${canonical(LOCALE_PATH[l] + route)}"/>`,
-    ).join('\n');
-    return LOCALES.map(
+  const urls = PAGES.flatMap(({ route, locales, lastmod }) => {
+    const alternates = locales
+      .map((l) => `    <xhtml:link rel="alternate" hreflang="${LOCALE_TAG[l]}" href="${canonical(LOCALE_PATH[l] + route)}"/>`)
+      .join('\n');
+    return locales.map(
       (l) => `  <url>
     <loc>${canonical(LOCALE_PATH[l] + route)}</loc>
-${alternates}
+${lastmod ? `    <lastmod>${lastmod}</lastmod>\n` : ''}${alternates}
     <xhtml:link rel="alternate" hreflang="x-default" href="${canonical(route)}"/>
   </url>`,
     );

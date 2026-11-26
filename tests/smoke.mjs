@@ -92,6 +92,9 @@ const LOCALES = [
   },
 ];
 const ROUTES = ['', 'details/', 'watch/'];
+// The guides exist in three languages (src/lib/guides.ts).
+const GUIDE_LOCALES = ['en', 'zh-cn', 'ja'];
+const GUIDE_ROUTES = ['compare/', 'guides/codex-blender/'];
 // The yomado skill's public folder in the app's repository.
 const SKILL_URL = 'https://github.com/chekusu/yomado/tree/main/skills/yomado';
 const CLIPBOARD = ['clipboard-read', 'clipboard-write'];
@@ -2202,6 +2205,40 @@ for (const locale of SITE_LOCALES) {
 }
 await scrollbars.close();
 
+// The guides: English, Simplified Chinese and Japanese only. Their alternates name those three;
+// the language menus lead to the same guide there and to the home page in every other language.
+for (const key of GUIDE_LOCALES) {
+  const locale = siteLocale(key);
+  await check(`${locale.lang}: the guides, with alternates in their three languages`, async () => {
+    for (const route of GUIDE_ROUTES) {
+      const { context, page, errors } = await open(`${locale.path}${route}`, { reducedMotion: 'reduce' });
+      assert.equal(await page.getAttribute('html', 'lang'), locale.lang);
+      assert.equal(await page.locator('h1').count(), 1);
+      assert.equal(await page.getAttribute('link[rel=canonical]', 'href'), `${SITE}${locale.path}${route}`);
+      const alternates = await page.$$eval('link[rel=alternate][hreflang]', (els) => els.map((e) => `${e.hreflang} ${e.href}`));
+      const expected = [...GUIDE_LOCALES.map((k) => `${siteLocale(k).lang} ${SITE}${siteLocale(k).path}${route}`), `x-default ${SITE}${route}`];
+      assert.deepEqual(alternates.sort(), expected.sort(), 'hreflang for the three and x-default');
+      for (const where of ['header [data-lang-menu]', 'footer']) {
+        const links = await page.$$eval(`${where} a[data-lang-switch]`, (els) => els.map((e) => [e.getAttribute('hreflang'), new URL(e.href).pathname + new URL(e.href).search]));
+        const there = SITE_LOCALES.map((l) => {
+          const r = GUIDE_LOCALES.includes(l.key) ? route : '';
+          return [l.lang, `${new URL(base).pathname}${l.path}${r}${l.key === 'en' && !r ? '?lang=en' : ''}`];
+        });
+        assert.deepEqual(links, there, `${where} keeps the guide where it exists`);
+      }
+      // One JSON-LD block: the app, with the guide's questions exactly as shown.
+      const ld = JSON.parse(await page.locator('script[type="application/ld+json"]').innerText());
+      assert.equal(ld.softwareVersion, RELEASE.version);
+      const shown = await page.$$eval('#faq dt', (els) => els.map((e) => e.textContent.trim()));
+      const marked = ld.subjectOf.find((s) => s['@type'] === 'FAQPage').mainEntity.map((q) => q.name);
+      assert.ok(shown.length >= 3 && JSON.stringify(shown) === JSON.stringify(marked), 'FAQ structured data matches the page');
+      for (const href of await page.$$eval('a[data-download]', (els) => els.map((e) => e.href))) assert.equal(href, RELEASE.url);
+      assert.deepEqual(errors, []);
+      await context.close();
+    }
+  });
+}
+
 await check('404 page, sitemap and robots.txt', async () => {
   const { context, page } = await open('does-not-exist/');
   assert.match(await page.locator('h1').innerText(), /dark/);
@@ -2210,7 +2247,10 @@ await check('404 page, sitemap and robots.txt', async () => {
   for (const loc of SITE_LOCALES.flatMap((l) => ROUTES.map((r) => `${SITE}${l.path}${r}`))) {
     assert.ok(sitemap.includes(`<loc>${loc}</loc>`), `sitemap ${loc}`);
   }
-  assert.equal((sitemap.match(/<loc>/g) ?? []).length, SITE_LOCALES.length * ROUTES.length, '48 pages');
+  for (const loc of GUIDE_LOCALES.flatMap((key) => GUIDE_ROUTES.map((r) => `${SITE}${siteLocale(key).path}${r}`))) {
+    assert.ok(sitemap.includes(`<loc>${loc}</loc>`), `sitemap ${loc}`);
+  }
+  assert.equal((sitemap.match(/<loc>/g) ?? []).length, SITE_LOCALES.length * ROUTES.length + GUIDE_LOCALES.length * GUIDE_ROUTES.length, '48 pages and 6 guides');
   for (const l of SITE_LOCALES) assert.ok(sitemap.includes(`hreflang="${l.lang}"`), `sitemap hreflang ${l.lang}`);
   // Every other language's way home, in its own words, on the 404 page.
   const homes = await page.$$eval('.not-found a[hreflang]', (els) => els.map((e) => e.getAttribute('hreflang')));
