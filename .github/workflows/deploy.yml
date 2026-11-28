@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   site:
-    runs-on: ubuntu-latest
+    runs-on: hayabuild-linux
     steps:
       - uses: actions/checkout@v4
 
@@ -32,7 +32,9 @@ jobs:
 
       - name: Install Chromium for the smoke test
         run: |
-          if [ "${ACT:-}" = "true" ]; then
+          # act and self-hosted runners (Hayabuild Linux) have no sudo for apt-get; the libraries Chromium needs
+          # are already installed there.
+          if [ "${ACT:-}" = "true" ] || [ "${RUNNER_ENVIRONMENT:-}" = "self-hosted" ]; then
             npx playwright install chromium
           else
             npx playwright install --with-deps chromium
@@ -40,18 +42,12 @@ jobs:
 
       - run: npm test
 
-      - name: Keep the built site for the deploy job
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
-        with:
-          name: site-dist
-          path: dist
-          retention-days: 1
-
   # Deploys run on the sandbank-tyo runner reserved for public repositories. It can read
   # only this site's Cloudflare token from the key store; the repository has no GitHub secrets.
   # Pull requests never reach it: the job runs only for pushes, and workflows from outside
   # contributors need approval before they run at all.
+  # It builds the site itself from the same commit, after the site job's checks passed, so no
+  # artifact goes through GitHub's Actions storage. The build runs before the deploy keys load.
   # A push to main updates the production site; a push to preview/<name> only publishes a
   # preview deployment at <branch alias>.<project>.pages.dev and leaves production alone.
   deploy:
@@ -59,13 +55,16 @@ jobs:
     if: github.event_name == 'push'
     runs-on: [self-hosted, tyo-deploy-public]
     steps:
-      # The checkout supplies the Pages functions; the site itself comes from the build job.
+      # The checkout supplies the Pages functions and the site's source.
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/setup-node@v4
         with:
-          name: site-dist
-          path: dist
+          node-version: 22
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm run verify
 
       - name: Load deploy keys
         run: vas-ci-env deploy.yomado.app
